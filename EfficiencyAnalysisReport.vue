@@ -651,56 +651,56 @@
                         <tbody class="text-gray-700">
                             <template v-if="showEmployeesTable" v-for="(emp, empIndex) in selectedEmployees" :key="'emp-' + empIndex">
                                 <!-- Employee row with categories -->
-                                <template v-if="emp.categories && emp.categories.length > 0">
-                                    <template v-for="(cat, catIndex) in emp.categories" :key="'emp-' + empIndex + '-cat-' + catIndex">
+                                <template v-if="emp.unique_categories_array && emp.unique_categories_array.length > 0">
+                                    <template v-for="(category, catIndex) in emp.unique_categories_array" :key="'emp-' + empIndex + '-cat-' + catIndex">
                                         <tr class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
                                             <!-- SL No (rowspan for first category row) -->
-                                            <td v-if="catIndex === 0" :rowspan="emp.categories.length" class="px-3 py-2 group-hover:!bg-white">{{ empIndex + 1 }}</td>
+                                            <td v-if="catIndex === 0" :rowspan="emp.unique_categories_array.length" class="px-3 py-2 group-hover:!bg-white">{{ empIndex + 1 }}</td>
                                             
                                             <!-- Employee Name (rowspan for first category row) -->
-                                            <td v-if="catIndex === 0" :rowspan="emp.categories.length" class="px-3 py-2 group-hover:!bg-white">{{ emp.name }}</td>
+                                            <td v-if="catIndex === 0" :rowspan="emp.unique_categories_array.length" class="px-3 py-2 group-hover:!bg-white">{{ emp.name }}</td>
                                             
                                             <!-- No. of Bags (rowspan for first category row) -->
-                                            <td v-if="catIndex === 0" :rowspan="emp.categories.length" class="px-3 py-2 font-semibold text-center bg-blue-50">{{ emp.bag_count || 0 }}</td>
+                                            <td v-if="catIndex === 0" :rowspan="emp.unique_categories_array.length" class="px-3 py-2 font-semibold text-center bg-blue-50">{{ emp.bag_count || 0 }}</td>
                                             
                                             <!-- Item Category -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ cat.category_name || 'N/A' }}</td>
+                                            <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
                                             
                                             <!-- Starting Qty Gold -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(cat.starting_quantity_gold || 0) }}</td>
+                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                             
                                             <!-- Actual Production Gold -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(cat.actual_production_gold || 0) }}</td>
+                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                             
                                             <!-- Loss Qty Gold -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(cat.loss_quantity_gold || 0) }}</td>
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                             
                                             <!-- Gold Loss % -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(cat.actual_production_gold, cat.loss_quantity_gold)) }}%</td>
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                             
                                             <!-- Starting Qty Diamond -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(cat.starting_quantity_diamond || 0) }}</td>
+                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
 
                                             <!-- Actual Production Diamond -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(cat.actual_production_diamond || 0) }}</td>
+                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                             
                                             <!-- Loss Qty Diamond -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(cat.loss_quantity_diamond || 0) }}</td>
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                             
                                             <!-- Diamond Loss % -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(cat.actual_production_diamond, cat.loss_quantity_diamond)) }}%</td>
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                             
                                             <!-- Gold Recovery Weight (rowspan for first category row) -->
-                                            <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                             
                                             <!-- Net Loss Gold (rowspan for first category row) -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                             
                                             <!-- Diamond Recovery Weight (empty, rowspan for first category row) -->
-                                            <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                             
                                             <!-- Net Loss Diamond (empty, rowspan for first category row) -->
-                                            <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         </tr>
                                     </template>
                                 </template>
@@ -761,6 +761,11 @@
                                     <td class="px-3 py-2 group-hover:shadow-md"></td>
                                 </tr>
                             </template>
+
+                            <!-- No data found row when selectedEmployees is empty -->
+                            <tr v-if="showEmployeesTable && selectedEmployees.length === 0" class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
+                                <td colspan="16" style="text-align: center;" class="px-3 py-2 text-gray-900 italic">No data found for this Employee</td>
+                            </tr>
 
                             <!-- Total Row for Employees -->
                             <tr v-if="showEmployeesTable" class="bg-gray-100 font-bold border-t text-[11px]">
