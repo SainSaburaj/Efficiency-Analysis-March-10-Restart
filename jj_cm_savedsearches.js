@@ -8866,33 +8866,49 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         }
 
                         // Add employee to department if employee exists
-                        if (employeeId && !groupedData[locationId].departments[departmentId].employees[employeeId]) {
-                            const fullName = [record.firstname, record.lastname].filter(Boolean).join(" ");
-                            groupedData[locationId].departments[departmentId].employees[employeeId] = {
-                                employee_id: employeeId,
-                                name: fullName || "Unknown Employee"
-                            };
+                        if (employeeId) {
+                            if (!groupedData[locationId].departments[departmentId].employees[employeeId]) {
+                                const fullName = [record.firstname, record.lastname].filter(Boolean).join(" ");
+                                groupedData[locationId].departments[departmentId].employees[employeeId] = {
+                                    employee_id: employeeId,
+                                    name: fullName || "Unknown Employee",
+                                    unique_bags: new Set()
+                                };
+                            }
+                            // Add unique bag to employee
+                            if (bagName) {
+                                groupedData[locationId].departments[departmentId].employees[employeeId].unique_bags.add(bagName);
+                            }
                         }
                     });
 
-                    // Convert employees object to array and bags Set to count for each department
-                    let logMessage = "=== DEPARTMENT BAG COUNTS ===\n";
+                    // Convert employees object to array and bags Set to count for each department and employee
+                    let logMessage = "=== DEPARTMENT & EMPLOYEE BAG COUNTS ===\n";
                     Object.keys(groupedData).forEach(locationId => {
                         logMessage += `Location ${locationId}: ${groupedData[locationId].location_name}\n`;
                         Object.keys(groupedData[locationId].departments).forEach(departmentId => {
                             const dept = groupedData[locationId].departments[departmentId];
-                            dept.employees_array = Object.values(dept.employees);
+                            dept.employees_array = Object.values(dept.employees).map(emp => ({
+                                employee_id: emp.employee_id,
+                                name: emp.name,
+                                bag_count: emp.unique_bags.size,
+                                unique_bags_array: Array.from(emp.unique_bags)
+                            }));
                             dept.bag_count = dept.unique_bags.size;
                             dept.unique_bags_array = Array.from(dept.unique_bags);
                             
-                            logMessage += `  Dept ${departmentId} (${dept.department_name}): ${dept.bag_count} bags | Employees: ${dept.employees_array.length} | Bags: [${dept.unique_bags_array.join(', ')}]\n`;
+                            logMessage += `  Dept ${departmentId} (${dept.department_name}): ${dept.bag_count} bags | Employees: ${dept.employees_array.length}\n`;
+                            logMessage += `    Dept Bags: [${dept.unique_bags_array.join(', ')}]\n`;
+                            dept.employees_array.forEach(emp => {
+                                logMessage += `    - Employee: ${emp.name} | Bags: ${emp.bag_count} | Bag Names: [${emp.unique_bags_array.join(', ')}]\n`;
+                            });
                             
                             delete dept.employees;
                             delete dept.unique_bags;
                         });
                     });
-                    logMessage += "=============================";
-                    log.debug("getOverallEfficiencyData - Department Bag Counts", logMessage);
+                    logMessage += "========================================";
+                    log.debug("getOverallEfficiencyData - Department & Employee Bag Counts", logMessage);
 
                     return groupedData;
 

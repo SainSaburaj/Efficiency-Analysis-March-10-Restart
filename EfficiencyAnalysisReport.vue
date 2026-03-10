@@ -1920,11 +1920,27 @@ export default {
                                     unique_bags_array: dept.unique_bags_array || [],
                                     employees: (dept.employees_array || []).map(emp => ({
                                         id: emp.employee_id,
-                                        name: emp.name
+                                        name: emp.name,
+                                        bag_count: emp.bag_count || 0,
+                                        unique_bags_array: emp.unique_bags_array || []
                                     }))
                                 };
                             })
                         }));
+
+                        // Log processed locations with employee bag counts
+                        let processedLog = '\n=== PROCESSED LOCATIONS (UI DATA) ===\n';
+                        locations.value.forEach(loc => {
+                            processedLog += `Location: ${loc.name.value}\n`;
+                            loc.departments.forEach(dept => {
+                                processedLog += `  Dept: ${dept.name} | Bag Count: ${dept.bag_count} | Employees: ${dept.employees.length}\n`;
+                                dept.employees.forEach(emp => {
+                                    processedLog += `    - Employee: ${emp.name} | Bag Count: ${emp.bag_count} | Bags: [${emp.unique_bags_array.join(', ')}]\n`;
+                                });
+                            });
+                        });
+                        processedLog += '=====================================';
+                        console.log(processedLog);
                     }
 
                     isInitialLoading.value = false;
