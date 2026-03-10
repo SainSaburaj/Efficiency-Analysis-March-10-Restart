@@ -8750,7 +8750,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         endDate: sqlEndDate
                     });
 
-                    // Build the SQL query to fetch departments, employees, and bags based on your provided query structure
+                    // Build the SQL query to fetch departments, employees, bags, and categories
                     let sqlQuery = `
                         SELECT DISTINCT
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB."ID") AS department_id,
@@ -8761,7 +8761,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_STRING(employee.firstname) AS firstname,
                             BUILTIN_RESULT.TYPE_STRING(employee.lastname) AS lastname,
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno) AS bag_id,
-                            BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name
+                            BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name
                         FROM CUSTOMRECORD_JJ_OPERATIONS,
                             (SELECT 
                                 CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_operations AS custrecord_jj_operations_join,
@@ -8773,8 +8774,18 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 CUSTOMRECORD_JJ_BAG_GENERATION."ID" AS id_1,
                                 CUSTOMRECORD_JJ_BAG_GENERATION."ID" AS id_join,
                                 CUSTOMRECORD_JJ_BAG_GENERATION.name AS bag_name_original,
-                                CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname
-                            FROM CUSTOMRECORD_JJ_BAG_GENERATION
+                                CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0
+                            FROM CUSTOMRECORD_JJ_BAG_GENERATION,
+                                (SELECT CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_0,
+                                        CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_join,
+                                        item_SUB.name AS name_0
+                                FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING,
+                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name
+                                    FROM item item_0, CUSTOMRECORD_JJ_CATEGORY
+                                    WHERE item_0.custitem_jj_category = CUSTOMRECORD_JJ_CATEGORY."ID"(+)) item_SUB
+                                WHERE CUSTOMRECORD_JJ_BAG_CORE_TRACKING.custrecord_jj_bagcore_kt_col = item_SUB."ID"(+)) CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB
+                            WHERE CUSTOMRECORD_JJ_BAG_GENERATION.custrecord_jj_baggen_bagcore = CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.id_0(+)
                             ) CUSTOMRECORD_JJ_BAG_GENERATION_SUB,
                             (SELECT 
                                 CUSTOMRECORD_JJ_MANUFACTURING_DEPT."ID" AS "ID",
@@ -8824,7 +8835,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     // Log first 10 raw results to see bag data
                     let rawLogMsg = "=== RAW QUERY RESULTS (First 10) ===\n";
                     rawResults.slice(0, 10).forEach((record, idx) => {
-                        rawLogMsg += `Row ${idx + 1}: Dept=${record.department_name}, Bag ID=${record.bag_id}, Bag Name=${record.bag_name}, Employee=${record.firstname} ${record.lastname}\n`;
+                        rawLogMsg += `Row ${idx + 1}: Dept=${record.department_name}, Bag=${record.bag_name}, Employee=${record.firstname} ${record.lastname}\n`;
                     });
                     rawLogMsg += "====================================";
                     log.debug("getOverallEfficiencyData - Raw Results Sample", rawLogMsg);
@@ -8837,6 +8848,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         const departmentId = record.department_id;
                         const employeeId = record.employee_id;
                         const bagName = record.bag_name;
+                        const categoryName = record.category_name;
 
                         if (!locationId || !departmentId) {
                             return;
@@ -8856,13 +8868,19 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 department_id: departmentId,
                                 department_name: record.department_name,
                                 employees: {},
-                                unique_bags: new Set()
+                                unique_bags: new Set(),
+                                unique_categories: new Set()
                             };
                         }
 
-                        // Add unique bag to department (bag_name is already NVL(altname, name) from subquery)
+                        // Add unique bag to department
                         if (bagName) {
                             groupedData[locationId].departments[departmentId].unique_bags.add(bagName);
+                        }
+
+                        // Add unique category to department
+                        if (categoryName) {
+                            groupedData[locationId].departments[departmentId].unique_categories.add(categoryName);
                         }
 
                         // Add employee to department if employee exists
@@ -8872,12 +8890,17 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 groupedData[locationId].departments[departmentId].employees[employeeId] = {
                                     employee_id: employeeId,
                                     name: fullName || "Unknown Employee",
-                                    unique_bags: new Set()
+                                    unique_bags: new Set(),
+                                    unique_categories: new Set()
                                 };
                             }
                             // Add unique bag to employee
                             if (bagName) {
                                 groupedData[locationId].departments[departmentId].employees[employeeId].unique_bags.add(bagName);
+                            }
+                            // Add unique category to employee
+                            if (categoryName) {
+                                groupedData[locationId].departments[departmentId].employees[employeeId].unique_categories.add(categoryName);
                             }
                         }
                     });
@@ -8892,19 +8915,25 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 employee_id: emp.employee_id,
                                 name: emp.name,
                                 bag_count: emp.unique_bags.size,
-                                unique_bags_array: Array.from(emp.unique_bags)
+                                unique_bags_array: Array.from(emp.unique_bags),
+                                category_count: emp.unique_categories.size,
+                                unique_categories_array: Array.from(emp.unique_categories)
                             }));
                             dept.bag_count = dept.unique_bags.size;
                             dept.unique_bags_array = Array.from(dept.unique_bags);
+                            dept.category_count = dept.unique_categories.size;
+                            dept.unique_categories_array = Array.from(dept.unique_categories);
                             
-                            logMessage += `  Dept ${departmentId} (${dept.department_name}): ${dept.bag_count} bags | Employees: ${dept.employees_array.length}\n`;
+                            logMessage += `  Dept ${departmentId} (${dept.department_name}): ${dept.bag_count} bags, ${dept.category_count} categories | Employees: ${dept.employees_array.length}\n`;
                             logMessage += `    Dept Bags: [${dept.unique_bags_array.join(', ')}]\n`;
+                            logMessage += `    Dept Categories: [${dept.unique_categories_array.join(', ')}]\n`;
                             dept.employees_array.forEach(emp => {
-                                logMessage += `    - Employee: ${emp.name} | Bags: ${emp.bag_count} | Bag Names: [${emp.unique_bags_array.join(', ')}]\n`;
+                                logMessage += `    - Employee: ${emp.name} | Bags: ${emp.bag_count} | Categories: ${emp.category_count} | Bag Names: [${emp.unique_bags_array.join(', ')}] | Categories: [${emp.unique_categories_array.join(', ')}]\n`;
                             });
                             
                             delete dept.employees;
                             delete dept.unique_bags;
+                            delete dept.unique_categories;
                         });
                     });
                     logMessage += "========================================";

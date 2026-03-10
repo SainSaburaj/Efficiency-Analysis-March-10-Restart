@@ -496,53 +496,53 @@
                             <!-- Department Details with Categories -->
                             <template v-if="!showEmployeesTable" v-for="(dept, deptIndex) in selectedDepartmentData" :key="'dept-' + deptIndex">
                                 <!-- If department has categories, show them with rowspan -->
-                                <template v-if="dept.categories && dept.categories.length > 0">
-                                    <tr v-for="(category, catIndex) in dept.categories" :key="'dept-' + deptIndex + '-cat-' + catIndex" 
+                                <template v-if="dept.unique_categories_array && dept.unique_categories_array.length > 0">
+                                    <tr v-for="(category, catIndex) in dept.unique_categories_array" :key="'dept-' + deptIndex + '-cat-' + catIndex" 
                                         class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
                                         <!-- SL No - only show on first category row -->
-                                        <td v-if="catIndex === 0" :rowspan="dept.categories.length" class="px-3 py-2 group-hover:!bg-white border-r">{{ deptIndex + 1 }}</td>
+                                        <td v-if="catIndex === 0" :rowspan="dept.unique_categories_array.length" class="px-3 py-2 group-hover:!bg-white border-r">{{ deptIndex + 1 }}</td>
                                         
                                         <!-- Department Name - only show on first category row -->
-                                        <td v-if="catIndex === 0" :rowspan="dept.categories.length" class="px-3 py-2 group-hover:!bg-white border-r">{{ dept.name }}</td>
+                                        <td v-if="catIndex === 0" :rowspan="dept.unique_categories_array.length" class="px-3 py-2 group-hover:!bg-white border-r">{{ dept.name }}</td>
                                         
                                         <!-- No. of Bags - only show on first category row -->
-                                        <td v-if="catIndex === 0" :rowspan="dept.categories.length" class="px-3 py-2 font-semibold text-center bg-blue-50 border-r">{{ dept.bag_count || 0 }}</td>
+                                        <td v-if="catIndex === 0" :rowspan="dept.unique_categories_array.length" class="px-3 py-2 font-semibold text-center bg-blue-50 border-r">{{ dept.bag_count || 0 }}</td>
                                         
                                         <!-- Item Category -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ category.category_name || 'N/A' }}</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
 
                                         <!-- Starting Qty Gold -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.starting_quantity_gold || 0) }}</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         
                                         <!-- Actual Production Gold -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.actual_production_gold || 0) }}</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         
                                         <!-- Gross Loss Gold -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(category.loss || 0) }}</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                         
                                         <!-- Gold Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(category.actual_production_gold, category.loss)) }}%</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                         
                                         <!-- Starting Qty Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.starting_quantity_diamond || 0) }}</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         
                                         <!-- Actual Production Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(category.actual_production_diamond || 0) }}</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         
                                         <!-- Gross Loss Diamond -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(category.loss_diamond || 0) }}</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                         
                                         <!-- Diamond Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(category.actual_production_diamond, category.loss_diamond)) }}%</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                         
                                         <!-- Gold Recovery Weight -->
-                                        <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         
                                         <!-- Net Loss Gold -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                         
                                         <!-- Diamond Recovery Weight (empty) -->
-                                        <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         
                                         <!-- Net Loss Diamond (empty) -->
                                         <td class="px-3 py-2 group-hover:shadow-md"></td>
@@ -1918,11 +1918,15 @@ export default {
                                     name: dept.department_name,
                                     bag_count: dept.bag_count || 0,
                                     unique_bags_array: dept.unique_bags_array || [],
+                                    category_count: dept.category_count || 0,
+                                    unique_categories_array: dept.unique_categories_array || [],
                                     employees: (dept.employees_array || []).map(emp => ({
                                         id: emp.employee_id,
                                         name: emp.name,
                                         bag_count: emp.bag_count || 0,
-                                        unique_bags_array: emp.unique_bags_array || []
+                                        unique_bags_array: emp.unique_bags_array || [],
+                                        category_count: emp.category_count || 0,
+                                        unique_categories_array: emp.unique_categories_array || []
                                     }))
                                 };
                             })
@@ -1933,9 +1937,9 @@ export default {
                         locations.value.forEach(loc => {
                             processedLog += `Location: ${loc.name.value}\n`;
                             loc.departments.forEach(dept => {
-                                processedLog += `  Dept: ${dept.name} | Bag Count: ${dept.bag_count} | Employees: ${dept.employees.length}\n`;
+                                processedLog += `  Dept: ${dept.name} | Bag Count: ${dept.bag_count} | Category Count: ${dept.category_count} | Employees: ${dept.employees.length}\n`;
                                 dept.employees.forEach(emp => {
-                                    processedLog += `    - Employee: ${emp.name} | Bag Count: ${emp.bag_count} | Bags: [${emp.unique_bags_array.join(', ')}]\n`;
+                                    processedLog += `    - Employee: ${emp.name} | Bag Count: ${emp.bag_count} | Category Count: ${emp.category_count} | Bags: [${emp.unique_bags_array.join(', ')}] | Categories: [${emp.unique_categories_array.join(', ')}]\n`;
                                 });
                             });
                         });
@@ -2034,7 +2038,8 @@ export default {
                 let deptLogMsg = "=== DEPARTMENTS WITH BAG COUNTS ===\n";
                 selectedDepartments.value.forEach(dept => {
                     const bagNames = dept.unique_bags_array || [];
-                    deptLogMsg += `Dept: ${dept.name} | Bag Count: ${dept.bag_count || 0} | Bags: [${bagNames.join(', ')}]\n`;
+                    const categoryNames = dept.unique_categories_array || [];
+                    deptLogMsg += `Dept: ${dept.name} | Bag Count: ${dept.bag_count || 0} | Category Count: ${dept.category_count || 0} | Bags: [${bagNames.join(', ')}] | Categories: [${categoryNames.join(', ')}]\n`;
                 });
                 deptLogMsg += "===================================";
                 console.log(deptLogMsg);
