@@ -210,6 +210,9 @@
                         <div class="bg-green-50 p-1 rounded mb-2 text-center">
                             <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ dept.bag_count || 0 }}</span></p>
                         </div>
+                        <div class="bg-green-50 p-1 rounded mb-2 text-center">
+                            <p class="text-[10px] font-semibold text-gray-700">Issued Pieces: <span class="text-blue-600">{{ (getDepartmentTotalIssuedPiecesDiamond(dept) || 0).toFixed(2) }}</span></p>
+                        </div>
 
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
 
@@ -247,7 +250,7 @@
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.loss_quantity_diamond || 0) }}</p>
+                                            <p class="text-red-500 text-[11px]">0.00</p>
                                         </div>
                                     </div>
 

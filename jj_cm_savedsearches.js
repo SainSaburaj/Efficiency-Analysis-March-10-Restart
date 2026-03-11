@@ -8762,12 +8762,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_STRING(employee.lastname) AS lastname,
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno) AS bag_id,
                             BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
-                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name,
+                            BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info) AS issued_pieces_diamond,
+                            BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_loss_pieces_info) AS loss_pieces_diamond
                         FROM CUSTOMRECORD_JJ_OPERATIONS,
                             (SELECT 
                                 CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_operations AS custrecord_jj_operations_join,
                                 CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_issued_quantity AS custrecord_jj_issued_quantity_crit,
-                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_starting_qty AS custrecord_jj_dir_starting_qty_crit
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_starting_qty AS custrecord_jj_dir_starting_qty_crit,
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_issued_pieces_info,
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_loss_pieces_info
                             FROM CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN
                             ) CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB,
                             (SELECT 
@@ -8842,6 +8846,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                     // Group employees and bags by department and location
                     const groupedData = {};
+                    const deptPiecesMap = {}; // Map to store total pieces per department
 
                     rawResults.forEach(record => {
                         const locationId = record.location_id;
@@ -8853,6 +8858,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         if (!locationId || !departmentId) {
                             return;
                         }
+
+                        // Aggregate pieces data per department
+                        if (!deptPiecesMap[departmentId]) {
+                            deptPiecesMap[departmentId] = {
+                                issued_pieces_diamond: 0,
+                                loss_pieces_diamond: 0
+                            };
+                        }
+                        deptPiecesMap[departmentId].issued_pieces_diamond += parseFloat(record.issued_pieces_diamond || 0);
+                        deptPiecesMap[departmentId].loss_pieces_diamond += parseFloat(record.loss_pieces_diamond || 0);
 
                         // Initialize location if not exists
                         if (!groupedData[locationId]) {
@@ -8869,7 +8884,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 department_name: record.department_name,
                                 employees: {},
                                 unique_bags: new Set(),
-                                unique_categories: new Set()
+                                unique_categories: new Set(),
+                                issued_pieces_diamond: 0,
+                                loss_pieces_diamond: 0
                             };
                         }
 
@@ -8974,7 +8991,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25) THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_gold,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_diamond,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25) THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_gold,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_diamond
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) ELSE 0 END)) AS issued_pieces_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond
                                 FROM CUSTOMRECORD_JJ_OPERATIONS op
                                 LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
                                     ON dir.custrecord_jj_operations = op.ID
@@ -9052,7 +9071,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                         scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
                                         scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
                                         balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
-                                        balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0)
+                                        balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
+                                        issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
+                                        loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                     };
                                 }
                                 
@@ -9075,7 +9096,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
                                     scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
                                     balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
-                                    balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0)
+                                    balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
+                                    issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
+                                    loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                 };
                                 
                                 // Initialize employee-level aggregation
@@ -9099,7 +9122,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
                                     scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
                                     balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
-                                    balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0)
+                                    balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
+                                    issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
+                                    loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                 });
                                 
                                 // Accumulate employee-level totals
@@ -9124,8 +9149,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     groupedData[locationId].departments[departmentId].loss_qty = lossQtyMap[departmentId] || 0;
                                     groupedData[locationId].departments[departmentId].category_qty_map = categoryQtyMap;
                                     groupedData[locationId].departments[departmentId].employee_category_qty_map = employeeCategoryQtyMap;
+                                    groupedData[locationId].departments[departmentId].issued_pieces_diamond = deptPiecesMap[departmentId]?.issued_pieces_diamond || 0;
+                                    groupedData[locationId].departments[departmentId].loss_pieces_diamond = deptPiecesMap[departmentId]?.loss_pieces_diamond || 0;
                                     
-                                    // Populate employee-level data from employeeLevelMap
                                     groupedData[locationId].departments[departmentId].employees_array.forEach(emp => {
                                         const empKey = `${departmentId}_${emp.employee_id}`;
                                         const empLevelData = employeeLevelMap[empKey];
