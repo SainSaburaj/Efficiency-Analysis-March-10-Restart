@@ -256,11 +256,11 @@
                                         <span class="text-[11px] text-gray-700">pieces</span>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.issued_pieces_diamond || 0) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ (getDepartmentTotalIssuedPiecesDiamond(dept) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.loss_pieces_diamond || 0) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ (getDepartmentTotalLossPiecesDiamond(dept) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -279,11 +279,7 @@
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.actual_production_gold || 0) }}</p>
-                                </div>
-                                <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.actualLossGold || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ (getDepartmentTotalActualProductionGold(dept) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
@@ -295,11 +291,7 @@
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(dept.actual_production_diamond || 0) }}</p>
-                                </div>
-                                <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(dept.actualLossDiamond || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ (getDepartmentTotalActualProductionDiamond(dept) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -1710,6 +1702,72 @@ export default {
             return sum;
         };
 
+        // Helper function to get total actual production gold for a department
+        const getDepartmentTotalActualProductionGold = (dept) => {
+            if (!dept.category_qty_map) return 0;
+            let sum = 0;
+            Object.keys(dept.category_qty_map).forEach(key => {
+                if (key.startsWith(`${dept.id}_`)) {
+                    const catData = dept.category_qty_map[key];
+                    const actualProd = (
+                        parseFloat(catData.starting_qty_gold || 0) +
+                        parseFloat(catData.issued_qty_gold || 0) -
+                        parseFloat(catData.loss_qty_gold || 0) -
+                        parseFloat(catData.scrap_qty_gold || 0) -
+                        parseFloat(catData.balance_qty_gold || 0)
+                    );
+                    sum += actualProd;
+                }
+            });
+            return sum;
+        };
+
+        // Helper function to get total actual production diamond for a department
+        const getDepartmentTotalActualProductionDiamond = (dept) => {
+            if (!dept.category_qty_map) return 0;
+            let sum = 0;
+            Object.keys(dept.category_qty_map).forEach(key => {
+                if (key.startsWith(`${dept.id}_`)) {
+                    const catData = dept.category_qty_map[key];
+                    const actualProd = (
+                        parseFloat(catData.starting_qty_diamond || 0) +
+                        parseFloat(catData.issued_qty_diamond || 0) -
+                        parseFloat(catData.loss_qty_diamond || 0) -
+                        parseFloat(catData.scrap_qty_diamond || 0) -
+                        parseFloat(catData.balance_qty_diamond || 0)
+                    );
+                    sum += actualProd;
+                }
+            });
+            return sum;
+        };
+
+        // Helper function to get total issued pieces diamond for a department
+        const getDepartmentTotalIssuedPiecesDiamond = (dept) => {
+            if (!dept.category_qty_map) return 0;
+            let sum = 0;
+            Object.keys(dept.category_qty_map).forEach(key => {
+                if (key.startsWith(`${dept.id}_`)) {
+                    const catData = dept.category_qty_map[key];
+                    sum += parseFloat(catData.issued_pieces_diamond || 0);
+                }
+            });
+            return sum;
+        };
+
+        // Helper function to get total loss pieces diamond for a department
+        const getDepartmentTotalLossPiecesDiamond = (dept) => {
+            if (!dept.category_qty_map) return 0;
+            let sum = 0;
+            Object.keys(dept.category_qty_map).forEach(key => {
+                if (key.startsWith(`${dept.id}_`)) {
+                    const catData = dept.category_qty_map[key];
+                    sum += parseFloat(catData.loss_pieces_diamond || 0);
+                }
+            });
+            return sum;
+        };
+
         // Helper function to get raw numeric category-level starting quantity for Gold (for calculations)
         const getCategoryStartingQtyGoldRaw = (dept, category) => {
             if (!dept.category_qty_map) return 0;
@@ -3079,6 +3137,10 @@ export default {
             getDepartmentTotalIssuedQtyGold,
             getDepartmentTotalIssuedQtyDiamond,
             getDepartmentTotalLossQtyGold,
+            getDepartmentTotalActualProductionGold,
+            getDepartmentTotalActualProductionDiamond,
+            getDepartmentTotalIssuedPiecesDiamond,
+            getDepartmentTotalLossPiecesDiamond,
             getCategoryStartingQty,
             getCategoryStartingQtyGold,
             getCategoryStartingQtyGoldRaw,
