@@ -331,11 +331,11 @@
                                 <span class="text-[11px] text-gray-700 mt-1">grams</span>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.issued_quantity_gold || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalIssuedQtyAllCategories(emp) || 0).toFixed(2) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.loss_quantity_gold || 0) }}</p>
+                                    <p class="text-red-500 text-[11px]">{{ (getEmployeeTotalLossQtyAllCategories(emp) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
@@ -1705,6 +1705,11 @@ export default {
             return sum;
         };
 
+        // Helper function to get total issued quantity for an employee (gold + diamond)
+        const getEmployeeTotalIssuedQty = (emp) => {
+            return parseFloat(emp.issued_quantity_gold || 0) + parseFloat(emp.issued_quantity_diamond || 0);
+        };
+
         // Helper function to get total actual production gold for a department
         const getDepartmentTotalActualProductionGold = (dept) => {
             if (!dept.category_qty_map) return 0;
@@ -2151,8 +2156,47 @@ export default {
             return getEmployeeCategoryBalanceQtyGold(emp, category);
         };
 
+        // Helper function to sum total starting quantity (gold + diamond) for an employee across all categories
+        const getEmployeeTotalStartingQtyAllCategories = (emp) => {
+            if (!emp.category_qty_map || !emp.unique_categories_array) return 0;
+            let sum = 0;
+            emp.unique_categories_array.forEach(category => {
+                const key = `${emp.id}_${category}`;
+                const data = emp.category_qty_map[key];
+                if (data) {
+                    sum += parseFloat(data.starting_qty_gold || 0) + parseFloat(data.starting_qty_diamond || 0);
+                }
+            });
+            return sum;
+        };
 
+        // Helper function to sum total issued quantity (gold + diamond) for an employee across all categories
+        const getEmployeeTotalIssuedQtyAllCategories = (emp) => {
+            if (!emp.category_qty_map || !emp.unique_categories_array) return 0;
+            let sum = 0;
+            emp.unique_categories_array.forEach(category => {
+                const key = `${emp.id}_${category}`;
+                const data = emp.category_qty_map[key];
+                if (data) {
+                    sum += parseFloat(data.issued_qty_gold || 0) + parseFloat(data.issued_qty_diamond || 0);
+                }
+            });
+            return sum;
+        };
 
+        // Helper function to sum total loss quantity (gold + diamond) for an employee across all categories
+        const getEmployeeTotalLossQtyAllCategories = (emp) => {
+            if (!emp.category_qty_map || !emp.unique_categories_array) return 0;
+            let sum = 0;
+            emp.unique_categories_array.forEach(category => {
+                const key = `${emp.id}_${category}`;
+                const data = emp.category_qty_map[key];
+                if (data) {
+                    sum += parseFloat(data.loss_qty_gold || 0) + parseFloat(data.loss_qty_diamond || 0);
+                }
+            });
+            return sum;
+        };
 
         // Function to fetch efficiency analysis data for a specific location
         // const fetchEfficiencyAnalysisData = async (locationId = null) => {
@@ -3140,6 +3184,10 @@ export default {
             getDepartmentTotalIssuedQtyGold,
             getDepartmentTotalIssuedQtyDiamond,
             getDepartmentTotalLossQtyGold,
+            getEmployeeTotalIssuedQty,
+            getEmployeeTotalStartingQtyAllCategories,
+            getEmployeeTotalIssuedQtyAllCategories,
+            getEmployeeTotalLossQtyAllCategories,
             getDepartmentTotalActualProductionGold,
             getDepartmentTotalActualProductionDiamond,
             getDepartmentTotalIssuedPiecesDiamond,
