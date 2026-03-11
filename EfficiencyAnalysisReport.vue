@@ -211,24 +211,14 @@
                             <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ dept.bag_count || 0 }}</span></p>
                         </div>
 
-                        <!-- Debug Values -->
-                        <div class="bg-yellow-50 p-1 rounded mb-2 text-left">
-                            <p class="text-[8px] text-gray-600 font-bold mb-1">GOLD:</p>
-                            <p class="text-[7px] text-gray-600">Start: {{ (dept.starting_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Issued: {{ (dept.issued_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Loss: {{ (dept.loss_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Scrap: {{ (dept.scrap_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Balance: {{ (dept.balance_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-yellow-600 font-bold">Calc Actual: {{ ((dept.starting_quantity_gold || 0) + (dept.issued_quantity_gold || 0) - (dept.loss_quantity_gold || 0) - (dept.scrap_quantity_gold || 0) - (dept.balance_quantity_gold || 0)).toFixed(2) }}</p>
+                        <!-- Starting Quantity -->
+                        <div class="bg-purple-50 p-1 rounded mb-2 text-center">
+                            <p class="text-[10px] font-semibold text-gray-700">Starting Qty: <span class="text-purple-600">{{ (dept.starting_qty || 0).toFixed(2) }}</span></p>
                         </div>
-                        <div class="bg-blue-50 p-1 rounded mb-2 text-left">
-                            <p class="text-[8px] text-gray-600 font-bold mb-1">DIAMOND:</p>
-                            <p class="text-[7px] text-gray-600">Start: {{ (dept.starting_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Issued: {{ (dept.issued_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Loss: {{ (dept.loss_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Scrap: {{ (dept.scrap_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Balance: {{ (dept.balance_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-blue-600 font-bold">Calc Actual: {{ ((dept.starting_quantity_diamond || 0) + (dept.issued_quantity_diamond || 0) - (dept.loss_quantity_diamond || 0) - (dept.scrap_quantity_diamond || 0) - (dept.balance_quantity_diamond || 0)).toFixed(2) }}</p>
+
+                        <!-- Loss Quantity -->
+                        <div class="bg-red-50 p-1 rounded mb-2 text-center">
+                            <p class="text-[10px] font-semibold text-gray-700">Loss Qty: <span class="text-red-600">{{ (dept.loss_qty || 0).toFixed(2) }}</span></p>
                         </div>
 
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
@@ -344,26 +334,6 @@
                             <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ emp.bag_count || 0 }}</span></p>
                         </div>
 
-                        <!-- Debug Values -->
-                        <div class="bg-yellow-50 p-1 rounded mb-2 text-left">
-                            <p class="text-[8px] text-gray-600 font-bold mb-1">GOLD:</p>
-                            <p class="text-[7px] text-gray-600">Start: {{ (emp.starting_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Issued: {{ (emp.issued_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Loss: {{ (emp.loss_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Scrap: {{ (emp.scrap_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Balance: {{ (emp.balance_quantity_gold || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-yellow-600 font-bold">Calc Actual: {{ ((emp.starting_quantity_gold || 0) + (emp.issued_quantity_gold || 0) - (emp.loss_quantity_gold || 0) - (emp.scrap_quantity_gold || 0) - (emp.balance_quantity_gold || 0)).toFixed(2) }}</p>
-                        </div>
-                        <div class="bg-blue-50 p-1 rounded mb-2 text-left">
-                            <p class="text-[8px] text-gray-600 font-bold mb-1">DIAMOND:</p>
-                            <p class="text-[7px] text-gray-600">Start: {{ (emp.starting_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Issued: {{ (emp.issued_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Loss: {{ (emp.loss_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Scrap: {{ (emp.scrap_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-gray-600">Balance: {{ (emp.balance_quantity_diamond || 0).toFixed(2) }}</p>
-                            <p class="text-[7px] text-blue-600 font-bold">Calc Actual: {{ ((emp.starting_quantity_diamond || 0) + (emp.issued_quantity_diamond || 0) - (emp.loss_quantity_diamond || 0) - (emp.scrap_quantity_diamond || 0) - (emp.balance_quantity_diamond || 0)).toFixed(2) }}</p>
-                        </div>
-
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
 
                         <div class="grid grid-cols-2 mt-1 gap-y-1">
@@ -477,14 +447,17 @@
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Dates</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">No. of Bags</th>
                                 <th class="px-3 py-2 text-left font-semibold">Item category</th>
+
                                 <th class="px-3 py-2 text-left font-semibold">Starting Qty Gold</th>
-                                <th class="px-3 py-2 text-left font-semibold">Actual Production Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Loss Qty Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Gold Loss %</th>
+                                <th class="px-3 py-2 text-left font-semibold">Actual Production Gold</th>
+
                                 <th class="px-3 py-2 text-left font-semibold">Starting Qty Diamond</th>
-                                <th class="px-3 py-2 text-left font-semibold">Actual Production Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Loss Qty Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Diamond Loss %</th>
+                                <th class="px-3 py-2 text-left font-semibold">Actual Production Diamond</th>
+
                                 <th class="px-3 py-2 text-left font-semibold">Gold Recovery Weight (gm)</th>
                                 <th class="px-3 py-2 text-left font-semibold">Net Loss Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Diamond Recovery Weight (ct)</th>
@@ -512,28 +485,28 @@
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
 
                                         <!-- Starting Qty Gold -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryStartingQty(dept, category) }}</td>
                                         
-                                        <!-- Actual Production Gold -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                        
-                                        <!-- Gross Loss Gold -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                        <!-- Loss Qty Gold -->
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getCategoryLossQty(dept, category) }}</td>
                                         
                                         <!-- Gold Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(getCategoryIssuedQtyGoldRaw(dept, category), getCategoryLossQtyGoldRaw(dept, category))) }}%</td>
                                         
+                                        <!-- Actual Production Gold -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getCategoryStartingQtyGoldRaw(dept, category) + getCategoryIssuedQtyGoldRaw(dept, category) - getCategoryLossQtyGoldRaw(dept, category) - getCategoryScrapQtyGoldRaw(dept, category) - getCategoryBalanceQtyGoldRaw(dept, category)) }}</td>
+
                                         <!-- Starting Qty Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryStartingQtyDiamond(dept, category) }}</td>
                                         
-                                        <!-- Actual Production Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                        
-                                        <!-- Gross Loss Diamond -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
-                                        
+                                        <!-- Loss Qty Diamond -->
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getCategoryLossQtyDiamond(dept, category) }}</td>
+
                                         <!-- Diamond Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getCategoryIssuedQtyDiamondRaw(dept, category), getCategoryLossQtyDiamondRaw(dept, category))) }}%</td>
+
+                                        <!-- Actual Production Diamond -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getCategoryStartingQtyDiamondRaw(dept, category) + getCategoryIssuedQtyDiamondRaw(dept, category) - getCategoryLossQtyDiamondRaw(dept, category) - getCategoryScrapQtyDiamondRaw(dept, category) - getCategoryBalanceQtyDiamondRaw(dept, category)) }}</td>
                                         
                                         <!-- Gold Recovery Weight -->
                                         <td class="px-3 py-2 group-hover:shadow-md">-</td>
@@ -541,76 +514,13 @@
                                         <!-- Net Loss Gold -->
                                         <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                         
-                                        <!-- Diamond Recovery Weight (empty) -->
+                                        <!-- Diamond Recovery Weight -->
                                         <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         
-                                        <!-- Net Loss Diamond (empty) -->
-                                        <td class="px-3 py-2 group-hover:shadow-md"></td>
+                                        <!-- Net Loss Diamond -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                     </tr>
-                                </template>
-                                
-                                <!-- If no categories, show department row without categories -->
-                                <tr v-else class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
-                                    <!-- SL No -->
-                                    <td class="px-3 py-2 group-hover:!bg-white">{{ deptIndex + 1 }}</td>
-                                    
-                                    <!-- Department Name -->
-                                    <td class="px-3 py-2 group-hover:!bg-white">{{ dept.name }}</td>
-                                    
-                                    <!-- No. of Bags -->
-                                    <td class="px-3 py-2 font-semibold text-center bg-blue-50">{{ dept.bag_count || 0 }}</td>
-                                    
-                                    <!-- Item Category -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">N/A</td>
-                                    
-                                    <!-- Issued Qty Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.issued_quantity_gold || 0) }}</td>
-                                    
-                                    <!-- Loss Qty Gold -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss_quantity_gold || 0) }}</td>
-                                    
-                                    <!-- Starting Qty Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.starting_quantity_gold || 0) }}</td>
-                                    
-                                    <!-- Actual Production Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.actual_production_gold || 0) }}</td>
-                                    
-                                    <!-- Gross Loss Gold -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss || 0) }}</td>
-                                    
-                                    <!-- Gold Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(dept.actual_production_gold, dept.loss)) }}%</td>
-                                    
-                                    <!-- Issued Qty Diamond -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.issued_quantity_diamond || 0) }}</td>
-                                    
-                                    <!-- Loss Qty Diamond -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss_quantity_diamond || 0) }}</td>
-                                    
-                                    <!-- Starting Qty Diamond -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.starting_quantity_diamond || 0) }}</td>
-                                    
-                                    <!-- Actual Production Diamond -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(dept.actual_production_diamond || 0) }}</td>
-                                    
-                                    <!-- Gross Loss Diamond -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(dept.loss_diamond || 0) }}</td>
-                                    
-                                    <!-- Diamond Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(dept.actual_production_diamond, dept.loss_diamond)) }}%</td>
-                                    
-                                    <!-- Gold Recovery Weight -->
-                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
-                                    
-                                    <!-- Net Loss Gold -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
-                                    
-                                    <!-- Diamond Recovery Weight (empty) -->
-                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
-                                    
-                                    <!-- Net Loss Diamond (empty) -->
-                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
-                                </tr>
+                                </template>                                
                             </template>
 
                             <!-- Total Row for Departments -->
@@ -622,27 +532,27 @@
                                 <td class="px-3 py-2 font-semibold"></td>
                                 <!-- Starting Qty Gold -->
                                 <td class="px-3 py-2">{{ totalDeptStartingQuantityGold }}</td>
-                                <!-- Actual Production Gold -->
-                                <td class="px-3 py-2">{{ totalDeptActualProductionGold }}</td>
-                                <!-- Gross Loss Gold -->
+                                <!-- Loss Qty Gold -->
                                 <td class="px-3 py-2 text-red-500">{{ totalDeptGrossLossGold }}</td>
                                 <!-- Gold Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
+                                <!-- Actual Production Gold -->
+                                <td class="px-3 py-2">{{ totalDeptActualProductionGold }}</td>
                                 <!-- Starting Qty Diamond -->
                                 <td class="px-3 py-2">{{ totalDeptStartingQuantityDiamond }}</td>
-                                <!-- Actual Production Diamond -->
-                                <td class="px-3 py-2">{{ totalDeptActualProductionDiamond }}</td>
-                                <!-- Gross Loss Diamond -->
+                                <!-- Loss Qty Diamond -->
                                 <td class="px-3 py-2 text-red-500">{{ totalDeptGrossLossDiamond }}</td>
                                 <!-- Diamond Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
-                                <!-- Gold Recovery Weight -->
+                                <!-- Actual Production Diamond -->
+                                <td class="px-3 py-2">{{ totalDeptActualProductionDiamond }}</td>
+                                <!-- Gold Recovery Weight (empty) -->
                                 <td class="px-3 py-2"></td>
-                                <!-- Net Loss Gold -->
+                                <!-- Net Loss Gold (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
-                                <!-- Diamond Recovery Weight -->
+                                <!-- Diamond Recovery Weight (empty) -->
                                 <td class="px-3 py-2"></td>
-                                <!-- Net Loss Diamond -->
+                                <!-- Net Loss Diamond (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
                             </tr>
                         </tbody>
@@ -667,99 +577,43 @@
                                             <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
                                             
                                             <!-- Starting Qty Gold -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                            
-                                            <!-- Actual Production Gold -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                            <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryStartingQtyGold(emp, category) }}</td>
                                             
                                             <!-- Loss Qty Gold -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
-                                            
-                                            <!-- Gold Loss % -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
-                                            
-                                            <!-- Starting Qty Diamond -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getEmployeeCategoryLossQtyGold(emp, category) }}</td>
 
-                                            <!-- Actual Production Diamond -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                            <!-- Gold Loss % -->
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(getEmployeeCategoryIssuedQtyGoldRaw(emp, category), getEmployeeCategoryLossQtyGoldRaw(emp, category))) }}%</td>
+                                            
+                                            <!-- Actual Production Gold -->
+                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmployeeCategoryStartingQtyGoldRaw(emp, category) + getEmployeeCategoryIssuedQtyGoldRaw(emp, category) - getEmployeeCategoryLossQtyGoldRaw(emp, category) - getEmployeeCategoryScrapQtyGoldRaw(emp, category) - getEmployeeCategoryBalanceQtyGoldRaw(emp, category)) }}</td>
+
+                                            <!-- Starting Qty Diamond -->
+                                            <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryStartingQtyDiamond(emp, category) }}</td>
                                             
                                             <!-- Loss Qty Diamond -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getEmployeeCategoryLossQtyDiamond(emp, category) }}</td>
                                             
                                             <!-- Diamond Loss % -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getEmployeeCategoryIssuedQtyDiamondRaw(emp, category), getEmployeeCategoryLossQtyDiamondRaw(emp, category))) }}%</td>
+
+                                            <!-- Actual Production Diamond -->
+                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmployeeCategoryStartingQtyDiamondRaw(emp, category) + getEmployeeCategoryIssuedQtyDiamondRaw(emp, category) - getEmployeeCategoryLossQtyDiamondRaw(emp, category) - getEmployeeCategoryScrapQtyDiamondRaw(emp, category) - getEmployeeCategoryBalanceQtyDiamondRaw(emp, category)) }}</td>
                                             
-                                            <!-- Gold Recovery Weight (rowspan for first category row) -->
+                                            <!-- Gold Recovery Weight -->
                                             <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                             
-                                            <!-- Net Loss Gold (rowspan for first category row) -->
+                                            <!-- Net Loss Gold -->
                                             <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
                                             
-                                            <!-- Diamond Recovery Weight (empty, rowspan for first category row) -->
+                                            <!-- Diamond Recovery Weight -->
                                             <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                             
-                                            <!-- Net Loss Diamond (empty, rowspan for first category row) -->
+                                            <!-- Net Loss Diamond -->
                                             <td class="px-3 py-2 group-hover:shadow-md">-</td>
                                         </tr>
                                     </template>
                                 </template>
-                                <!-- Employee row without categories -->
-                                <tr v-else class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
-                                    <!-- SL No -->
-                                    <td class="px-3 py-2 group-hover:!bg-white">{{ empIndex + 1 }}</td>
-                                    
-                                    <!-- Employee Name -->
-                                    <td class="px-3 py-2 group-hover:!bg-white">{{ emp.name }}</td>
-                                    
-                                    <!-- No. of Bags -->
-                                    <td class="px-3 py-2 font-semibold text-center bg-blue-50">{{ emp.bag_count || 0 }}</td>
-                                    
-                                    <!-- Item Category -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">N/A</td>
-                                    
-                                    <!-- Starting Qty Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.starting_quantity_gold || 0) }}</td>
-                                    
-                                    <!-- Issued Qty Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.issued_quantity_gold || 0) }}</td>
-                                    
-                                    <!-- Actual Production Gold -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo((emp.starting_quantity_gold || 0) + (emp.issued_quantity_gold || 0) - (emp.loss_quantity_gold || 0) - (emp.scrap_quantity_gold || 0) - (emp.balance_quantity_gold || 0)) }}</td>
-                                    
-                                    <!-- Loss Qty Gold -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.loss_quantity_gold || 0) }}</td>
-                                    
-                                    <!-- Gold Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">%</td>
-                                    
-                                    <!-- Starting Qty Diamond -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.starting_quantity_diamond || 0) }}</td>
-                                    
-                                    <!-- Issued Qty Diamond -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.issued_quantity_diamond || 0) }}</td>
-
-                                    <!-- Actual Production Diamond -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo((emp.starting_quantity_diamond || 0) + (emp.issued_quantity_diamond || 0) - (emp.loss_quantity_diamond || 0) - (emp.scrap_quantity_diamond || 0) - (emp.balance_quantity_diamond || 0)) }}</td>
-                                    
-                                    <!-- Loss Qty Diamond -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.loss_quantity_diamond || 0) }}</td>
-                                    
-                                    <!-- Diamond Loss % -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">%</td>
-                                    
-                                    <!-- Gold Recovery Weight -->
-                                    <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(emp.tmGrossLossWeight || 0) }}</td>
-                                    
-                                    <!-- Net Loss Gold -->
-                                    <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(emp.netLoss || 0) }}</td>
-                                    
-                                    <!-- Diamond Recovery Weight (empty) -->
-                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
-                                    
-                                    <!-- Net Loss Diamond (empty) -->
-                                    <td class="px-3 py-2 group-hover:shadow-md"></td>
-                                </tr>
                             </template>
 
                             <!-- No data found row when selectedEmployees is empty -->
@@ -776,29 +630,27 @@
                                 <td class="px-3 py-2 font-semibold"></td>
                                 <!-- Starting Qty Gold -->
                                 <td class="px-3 py-2">{{ totalEmpStartingQuantityGold }}</td>
-                                <!-- Actual Production Gold -->
-                                <td class="px-3 py-2">{{ totalEmpActualProductionGoldCalculated }}</td>
                                 <!-- Loss Qty Gold -->
                                 <td class="px-3 py-2 text-red-500">{{ totalEmpLossQuantityGold }}</td>
                                 <!-- Gold Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
+                                <!-- Actual Production Gold -->
+                                <td class="px-3 py-2">{{ totalEmpActualProductionGoldCalculated }}</td>
                                 <!-- Starting Qty Diamond -->
                                 <td class="px-3 py-2">{{ totalEmpStartingQuantityDiamond }}</td>
-                                <!-- Issued Qty Diamond -->
-                                <td class="px-3 py-2">{{ totalEmpIssuedQuantityDiamond }}</td>
-                                <!-- Actual Production Diamond -->
-                                <td class="px-3 py-2">{{ totalEmpActualProductionDiamondCalculated }}</td>
                                 <!-- Loss Qty Diamond -->
                                 <td class="px-3 py-2 text-red-500">{{ totalEmpLossQuantityDiamond }}</td>
                                 <!-- Diamond Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
-                                <!-- Gold Recovery Weight -->
+                                <!-- Actual Production Diamond -->
+                                <td class="px-3 py-2">{{ totalEmpActualProductionDiamondCalculated }}</td>
+                                <!-- Gold Recovery Weight (empty) -->
                                 <td class="px-3 py-2"></td>
-                                <!-- Net Loss Gold -->
+                                <!-- Net Loss Gold (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
-                                <!-- Diamond Recovery Weight -->
+                                <!-- Diamond Recovery Weight (empty) -->
                                 <td class="px-3 py-2"></td>
-                                <!-- Net Loss Diamond -->
+                                <!-- Net Loss Diamond (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
                             </tr>
                         </tbody>
@@ -919,7 +771,13 @@ export default {
         const totalDeptStartingQuantityGold = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                sum += parseFloat(dept.starting_quantity_gold || 0);
+                if (dept.category_qty_map && typeof dept.category_qty_map === 'object') {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.starting_quantity_gold || 0);
+                    });
+                } else {
+                    sum += parseFloat(dept.starting_quantity_gold || 0);
+                }
             });
             return roundToTwo(sum);
         });
@@ -927,7 +785,13 @@ export default {
         const totalDeptStartingQuantityDiamond = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                sum += parseFloat(dept.starting_quantity_diamond || 0);
+                if (dept.category_qty_map && typeof dept.category_qty_map === 'object') {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.starting_quantity_diamond || 0);
+                    });
+                } else {
+                    sum += parseFloat(dept.starting_quantity_diamond || 0);
+                }
             });
             return roundToTwo(sum);
         });
@@ -935,8 +799,15 @@ export default {
         const totalDeptActualProductionGold = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                const actualProduction = (parseFloat(dept.starting_quantity_gold || 0) + parseFloat(dept.issued_quantity_gold || 0) - parseFloat(dept.loss_quantity_gold || 0) - parseFloat(dept.scrap_quantity_gold || 0) - parseFloat(dept.balance_quantity_gold || 0) + parseFloat(dept.expense_jewellery_net_weight || 0));
-                sum += actualProduction;
+                if (dept.category_qty_map && typeof dept.category_qty_map === 'object') {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        const actualProduction = (parseFloat(catData.starting_quantity_gold || 0) + parseFloat(catData.issued_quantity_gold || 0) - parseFloat(catData.loss_quantity_gold || 0) - parseFloat(catData.scrap_quantity_gold || 0) - parseFloat(catData.balance_quantity_gold || 0));
+                        sum += actualProduction;
+                    });
+                } else {
+                    const actualProduction = (parseFloat(dept.starting_quantity_gold || 0) + parseFloat(dept.issued_quantity_gold || 0) - parseFloat(dept.loss_quantity_gold || 0) - parseFloat(dept.scrap_quantity_gold || 0) - parseFloat(dept.balance_quantity_gold || 0) + parseFloat(dept.expense_jewellery_net_weight || 0));
+                    sum += actualProduction;
+                }
             });
             return roundToTwo(sum);
         });
@@ -944,7 +815,13 @@ export default {
         const totalDeptGrossLossGold = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                sum += parseFloat(dept.loss || 0);
+                if (dept.category_qty_map && typeof dept.category_qty_map === 'object') {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.loss_quantity_gold || 0);
+                    });
+                } else {
+                    sum += parseFloat(dept.loss || 0);
+                }
             });
             return roundToTwo(sum);
         });
@@ -952,8 +829,15 @@ export default {
         const totalDeptActualProductionDiamond = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                const actualProduction = (parseFloat(dept.starting_quantity_diamond || 0) + parseFloat(dept.issued_quantity_diamond || 0) - parseFloat(dept.loss_quantity_diamond || 0) - parseFloat(dept.scrap_quantity_diamond || 0) - parseFloat(dept.balance_quantity_diamond || 0));
-                sum += actualProduction;
+                if (dept.category_qty_map && typeof dept.category_qty_map === 'object') {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        const actualProduction = (parseFloat(catData.starting_quantity_diamond || 0) + parseFloat(catData.issued_quantity_diamond || 0) - parseFloat(catData.loss_quantity_diamond || 0) - parseFloat(catData.scrap_quantity_diamond || 0) - parseFloat(catData.balance_quantity_diamond || 0));
+                        sum += actualProduction;
+                    });
+                } else {
+                    const actualProduction = (parseFloat(dept.starting_quantity_diamond || 0) + parseFloat(dept.issued_quantity_diamond || 0) - parseFloat(dept.loss_quantity_diamond || 0) - parseFloat(dept.scrap_quantity_diamond || 0) - parseFloat(dept.balance_quantity_diamond || 0));
+                    sum += actualProduction;
+                }
             });
             return roundToTwo(sum);
         });
@@ -961,7 +845,13 @@ export default {
         const totalDeptGrossLossDiamond = computed(() => {
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                sum += parseFloat(dept.loss_diamond || 0);
+                if (dept.category_qty_map && typeof dept.category_qty_map === 'object') {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.loss_quantity_diamond || 0);
+                    });
+                } else {
+                    sum += parseFloat(dept.loss_diamond || 0);
+                }
             });
             return roundToTwo(sum);
         });
@@ -1136,7 +1026,11 @@ export default {
         const totalEmpStartingQuantityGold = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
+                if (emp.category_qty_map && typeof emp.category_qty_map === 'object') {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.starting_quantity_gold || 0);
+                    });
+                } else if (emp.categories && emp.categories.length > 0) {
                     emp.categories.forEach(cat => {
                         sum += parseFloat(cat.starting_quantity_gold || 0);
                     });
@@ -1150,7 +1044,11 @@ export default {
         const totalEmpIssuedQuantityGold = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
+                if (emp.category_qty_map && typeof emp.category_qty_map === 'object') {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.issued_quantity_gold || 0);
+                    });
+                } else if (emp.categories && emp.categories.length > 0) {
                     emp.categories.forEach(cat => {
                         sum += parseFloat(cat.issued_quantity_gold || 0);
                     });
@@ -1164,7 +1062,11 @@ export default {
         const totalEmpLossQuantityGold = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
+                if (emp.category_qty_map && typeof emp.category_qty_map === 'object') {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.loss_quantity_gold || 0);
+                    });
+                } else if (emp.categories && emp.categories.length > 0) {
                     emp.categories.forEach(cat => {
                         sum += parseFloat(cat.loss_quantity_gold || 0);
                     });
@@ -1178,7 +1080,11 @@ export default {
         const totalEmpStartingQuantityDiamond = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
+                if (emp.category_qty_map && typeof emp.category_qty_map === 'object') {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.starting_quantity_diamond || 0);
+                    });
+                } else if (emp.categories && emp.categories.length > 0) {
                     emp.categories.forEach(cat => {
                         sum += parseFloat(cat.starting_quantity_diamond || 0);
                     });
@@ -1192,7 +1098,11 @@ export default {
         const totalEmpIssuedQuantityDiamond = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
+                if (emp.category_qty_map && typeof emp.category_qty_map === 'object') {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.issued_quantity_diamond || 0);
+                    });
+                } else if (emp.categories && emp.categories.length > 0) {
                     emp.categories.forEach(cat => {
                         sum += parseFloat(cat.issued_quantity_diamond || 0);
                     });
@@ -1206,7 +1116,11 @@ export default {
         const totalEmpLossQuantityDiamond = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
+                if (emp.category_qty_map && typeof emp.category_qty_map === 'object') {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.loss_quantity_diamond || 0);
+                    });
+                } else if (emp.categories && emp.categories.length > 0) {
                     emp.categories.forEach(cat => {
                         sum += parseFloat(cat.loss_quantity_diamond || 0);
                     });
@@ -1220,7 +1134,12 @@ export default {
         const totalEmpActualProductionGoldCalculated = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
+                if (emp.category_qty_map && typeof emp.category_qty_map === 'object') {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        const actualProd = (parseFloat(catData.starting_quantity_gold || 0) + parseFloat(catData.issued_quantity_gold || 0) - parseFloat(catData.loss_quantity_gold || 0) - parseFloat(catData.scrap_quantity_gold || 0) - parseFloat(catData.balance_quantity_gold || 0));
+                        sum += actualProd;
+                    });
+                } else if (emp.categories && emp.categories.length > 0) {
                     emp.categories.forEach(cat => {
                         sum += parseFloat(cat.actual_production_gold || 0);
                     });
@@ -1235,7 +1154,12 @@ export default {
         const totalEmpActualProductionDiamondCalculated = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
+                if (emp.category_qty_map && typeof emp.category_qty_map === 'object') {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        const actualProd = (parseFloat(catData.starting_quantity_diamond || 0) + parseFloat(catData.issued_quantity_diamond || 0) - parseFloat(catData.loss_quantity_diamond || 0) - parseFloat(catData.scrap_quantity_diamond || 0) - parseFloat(catData.balance_quantity_diamond || 0));
+                        sum += actualProd;
+                    });
+                } else if (emp.categories && emp.categories.length > 0) {
                     emp.categories.forEach(cat => {
                         sum += parseFloat(cat.actual_production_diamond || 0);
                     });
@@ -1247,6 +1171,151 @@ export default {
             return roundToTwo(sum);
         });
 
+        // ===== EMPLOYEE CATEGORY TOTALS (from category_qty_map) =====
+        const totalEmpIssuedQtyGoldFromCategories = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.category_qty_map) {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.issued_qty_gold || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpScrapQtyGoldFromCategories = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.category_qty_map) {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.scrap_qty_gold || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpBalanceQtyGoldFromCategories = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.category_qty_map) {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.balance_qty_gold || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpIssuedQtyDiamondFromCategories = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.category_qty_map) {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.issued_qty_diamond || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpScrapQtyDiamondFromCategories = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.category_qty_map) {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.scrap_qty_diamond || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpBalanceQtyDiamondFromCategories = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                if (emp.category_qty_map) {
+                    Object.values(emp.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.balance_qty_diamond || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        // ===== DEPARTMENT CATEGORY TOTALS (from category_qty_map) =====
+        const totalDeptIssuedQtyGoldFromCategories = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                if (dept.category_qty_map) {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.issued_qty_gold || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptScrapQtyGoldFromCategories = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                if (dept.category_qty_map) {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.scrap_qty_gold || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptBalanceQtyGoldFromCategories = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                if (dept.category_qty_map) {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.balance_qty_gold || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptIssuedQtyDiamondFromCategories = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                if (dept.category_qty_map) {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.issued_qty_diamond || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptScrapQtyDiamondFromCategories = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                if (dept.category_qty_map) {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.scrap_qty_diamond || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptBalanceQtyDiamondFromCategories = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                if (dept.category_qty_map) {
+                    Object.values(dept.category_qty_map).forEach(catData => {
+                        sum += parseFloat(catData.balance_qty_diamond || 0);
+                    });
+                }
+            });
+            return roundToTwo(sum);
+        });
 
 
 
@@ -1258,18 +1327,44 @@ export default {
                 .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalizes the first letter of each word
         };
 
-        // Helper function to calculate gold loss percentage
-        const calculateGoldLossPercentage = (productionGold, lossGold) => {
-            const total = (productionGold || 0) + (lossGold || 0);
+        // Helper function to calculate gold loss percentage using issued qty and loss qty
+        const calculateGoldLossPercentage = (issuedGold, lossGold) => {
+            const issued = issuedGold || 0;
+            const loss = lossGold || 0;
+            
+            // If no issued quantity but there is loss, calculate negative percentage
+            if (issued === 0) {
+                return loss > 0 ? -loss : 0;
+            }
+            
+            const total = issued + loss;
             if (total === 0) return 0;
-            return ((lossGold || 0) / total) * 100;
+            
+            // If loss > issued, return negative percentage
+            if (loss > issued) {
+                return -((loss - issued) / issued) * 100;
+            }
+            return (loss / total) * 100;
         };
 
-        // Helper function to calculate diamond loss percentage
-        const calculateDiamondLossPercentage = (productionDiamond, lossDiamond) => {
-            const total = (productionDiamond || 0) + (lossDiamond || 0);
+        // Helper function to calculate diamond loss percentage using issued qty and loss qty
+        const calculateDiamondLossPercentage = (issuedDiamond, lossDiamond) => {
+            const issued = issuedDiamond || 0;
+            const loss = lossDiamond || 0;
+            
+            // If no issued quantity but there is loss, calculate negative percentage
+            if (issued === 0) {
+                return loss > 0 ? -loss : 0;
+            }
+            
+            const total = issued + loss;
             if (total === 0) return 0;
-            return ((lossDiamond || 0) / total) * 100;
+            
+            // If loss > issued, return negative percentage
+            if (loss > issued) {
+                return -((loss - issued) / issued) * 100;
+            }
+            return (loss / total) * 100;
         };
 
         // Set default date range on mount
@@ -1587,6 +1682,386 @@ export default {
         // **Helper Function to Round Values to 2 Decimal Places**
         const roundToTwo = (value) => {
             return value ? parseFloat(value).toFixed(2) : "0.00";
+        };
+
+        // Helper function to get raw numeric category-level starting quantity for Gold (for calculations)
+        const getCategoryStartingQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.starting_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level starting quantity for Diamond (for calculations)
+        const getCategoryStartingQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.starting_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level issued quantity for Gold (for calculations)
+        const getCategoryIssuedQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.issued_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level issued quantity for Diamond (for calculations)
+        const getCategoryIssuedQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.issued_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level loss quantity for Gold (for calculations)
+        const getCategoryLossQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.loss_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level loss quantity for Diamond (for calculations)
+        const getCategoryLossQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.loss_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level scrap quantity for Gold (for calculations)
+        const getCategoryScrapQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.scrap_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level scrap quantity for Diamond (for calculations)
+        const getCategoryScrapQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.scrap_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level balance quantity for Gold (for calculations)
+        const getCategoryBalanceQtyGoldRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.balance_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric category-level balance quantity for Diamond (for calculations)
+        const getCategoryBalanceQtyDiamondRaw = (dept, category) => {
+            if (!dept.category_qty_map) return 0;
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? parseFloat(data.balance_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get category-level starting quantity for Gold
+        const getCategoryStartingQtyGold = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.starting_qty_gold) : '-';
+        };
+
+        // Helper function to get category-level starting quantity for Diamond
+        const getCategoryStartingQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.starting_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for starting quantity (defaults to Gold)
+        const getCategoryStartingQty = (dept, category) => {
+            return getCategoryStartingQtyGold(dept, category);
+        };
+
+        // Helper function to get category-level issued quantity for Gold
+        const getCategoryIssuedQtyGold = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.issued_qty_gold) : '-';
+        };
+
+        // Helper function to get category-level issued quantity for Diamond
+        const getCategoryIssuedQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.issued_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for issued quantity (defaults to Gold)
+        const getCategoryIssuedQty = (dept, category) => {
+            return getCategoryIssuedQtyGold(dept, category);
+        };
+
+        // Helper function to get category-level loss quantity for Gold
+        const getCategoryLossQtyGold = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.loss_qty_gold) : '-';
+        };
+
+        // Helper function to get category-level loss quantity for Diamond
+        const getCategoryLossQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.loss_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for loss quantity (defaults to Gold)
+        const getCategoryLossQty = (dept, category) => {
+            return getCategoryLossQtyGold(dept, category);
+        };
+
+        // Helper function to get category-level scrap quantity for Gold
+        const getCategoryScrapQtyGold = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.scrap_qty_gold) : '-';
+        };
+
+        // Helper function to get category-level scrap quantity for Diamond
+        const getCategoryScrapQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.scrap_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for scrap quantity (defaults to Gold)
+        const getCategoryScrapQty = (dept, category) => {
+            return getCategoryScrapQtyGold(dept, category);
+        };
+
+        // Helper function to get category-level balance quantity for Gold
+        const getCategoryBalanceQtyGold = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.balance_qty_gold) : '-';
+        };
+
+        // Helper function to get category-level balance quantity for Diamond
+        const getCategoryBalanceQtyDiamond = (dept, category) => {
+            if (!dept.category_qty_map) return '-';
+            const key = `${dept.id}_${category}`;
+            const data = dept.category_qty_map[key];
+            return data ? roundToTwo(data.balance_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for balance quantity (defaults to Gold)
+        const getCategoryBalanceQty = (dept, category) => {
+            return getCategoryBalanceQtyGold(dept, category);
+        };
+
+        // ===== EMPLOYEE CATEGORY-LEVEL GETTER FUNCTIONS =====
+
+        // Helper function to get raw numeric employee category-level starting quantity for Gold (for calculations)
+        const getEmployeeCategoryStartingQtyGoldRaw = (emp, category) => {
+            if (!emp.category_qty_map) {
+                console.log(`[getEmployeeCategoryStartingQtyGoldRaw] No category_qty_map for employee:`, emp);
+                return 0;
+            }
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            console.log(`[getEmployeeCategoryStartingQtyGoldRaw] Employee ID: ${emp.id}, Category: ${category}, Key: ${key}, Data:`, data);
+            return data ? parseFloat(data.starting_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric employee category-level starting quantity for Diamond (for calculations)
+        const getEmployeeCategoryStartingQtyDiamondRaw = (emp, category) => {
+            if (!emp.category_qty_map) return 0;
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? parseFloat(data.starting_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric employee category-level issued quantity for Gold (for calculations)
+        const getEmployeeCategoryIssuedQtyGoldRaw = (emp, category) => {
+            if (!emp.category_qty_map) return 0;
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? parseFloat(data.issued_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric employee category-level issued quantity for Diamond (for calculations)
+        const getEmployeeCategoryIssuedQtyDiamondRaw = (emp, category) => {
+            if (!emp.category_qty_map) return 0;
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? parseFloat(data.issued_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric employee category-level loss quantity for Gold (for calculations)
+        const getEmployeeCategoryLossQtyGoldRaw = (emp, category) => {
+            if (!emp.category_qty_map) return 0;
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? parseFloat(data.loss_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric employee category-level loss quantity for Diamond (for calculations)
+        const getEmployeeCategoryLossQtyDiamondRaw = (emp, category) => {
+            if (!emp.category_qty_map) return 0;
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? parseFloat(data.loss_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric employee category-level scrap quantity for Gold (for calculations)
+        const getEmployeeCategoryScrapQtyGoldRaw = (emp, category) => {
+            if (!emp.category_qty_map) return 0;
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? parseFloat(data.scrap_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric employee category-level scrap quantity for Diamond (for calculations)
+        const getEmployeeCategoryScrapQtyDiamondRaw = (emp, category) => {
+            if (!emp.category_qty_map) return 0;
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? parseFloat(data.scrap_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get raw numeric employee category-level balance quantity for Gold (for calculations)
+        const getEmployeeCategoryBalanceQtyGoldRaw = (emp, category) => {
+            if (!emp.category_qty_map) return 0;
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? parseFloat(data.balance_qty_gold || 0) : 0;
+        };
+
+        // Helper function to get raw numeric employee category-level balance quantity for Diamond (for calculations)
+        const getEmployeeCategoryBalanceQtyDiamondRaw = (emp, category) => {
+            if (!emp.category_qty_map) return 0;
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? parseFloat(data.balance_qty_diamond || 0) : 0;
+        };
+
+        // Helper function to get employee category-level starting quantity for Gold
+        const getEmployeeCategoryStartingQtyGold = (emp, category) => {
+            if (!emp.category_qty_map) {
+                console.log(`[getEmployeeCategoryStartingQtyGold] No category_qty_map for employee:`, emp);
+                return '-';
+            }
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            console.log(`[getEmployeeCategoryStartingQtyGold] Employee ID: ${emp.id}, Category: ${category}, Key: ${key}, Data:`, data);
+            return data ? roundToTwo(data.starting_qty_gold) : '-';
+        };
+
+        // Helper function to get employee category-level starting quantity for Diamond
+        const getEmployeeCategoryStartingQtyDiamond = (emp, category) => {
+            if (!emp.category_qty_map) return '-';
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? roundToTwo(data.starting_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for employee category starting quantity (defaults to Gold)
+        const getEmployeeCategoryStartingQty = (emp, category) => {
+            return getEmployeeCategoryStartingQtyGold(emp, category);
+        };
+
+        // Helper function to get employee category-level issued quantity for Gold
+        const getEmployeeCategoryIssuedQtyGold = (emp, category) => {
+            if (!emp.category_qty_map) return '-';
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? roundToTwo(data.issued_qty_gold) : '-';
+        };
+
+        // Helper function to get employee category-level issued quantity for Diamond
+        const getEmployeeCategoryIssuedQtyDiamond = (emp, category) => {
+            if (!emp.category_qty_map) return '-';
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? roundToTwo(data.issued_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for employee category issued quantity (defaults to Gold)
+        const getEmployeeCategoryIssuedQty = (emp, category) => {
+            return getEmployeeCategoryIssuedQtyGold(emp, category);
+        };
+
+        // Helper function to get employee category-level loss quantity for Gold
+        const getEmployeeCategoryLossQtyGold = (emp, category) => {
+            if (!emp.category_qty_map) return '-';
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? roundToTwo(data.loss_qty_gold) : '-';
+        };
+
+        // Helper function to get employee category-level loss quantity for Diamond
+        const getEmployeeCategoryLossQtyDiamond = (emp, category) => {
+            if (!emp.category_qty_map) return '-';
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? roundToTwo(data.loss_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for employee category loss quantity (defaults to Gold)
+        const getEmployeeCategoryLossQty = (emp, category) => {
+            return getEmployeeCategoryLossQtyGold(emp, category);
+        };
+
+        // Helper function to get employee category-level scrap quantity for Gold
+        const getEmployeeCategoryScrapQtyGold = (emp, category) => {
+            if (!emp.category_qty_map) return '-';
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? roundToTwo(data.scrap_qty_gold) : '-';
+        };
+
+        // Helper function to get employee category-level scrap quantity for Diamond
+        const getEmployeeCategoryScrapQtyDiamond = (emp, category) => {
+            if (!emp.category_qty_map) return '-';
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? roundToTwo(data.scrap_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for employee category scrap quantity (defaults to Gold)
+        const getEmployeeCategoryScrapQty = (emp, category) => {
+            return getEmployeeCategoryScrapQtyGold(emp, category);
+        };
+
+        // Helper function to get employee category-level balance quantity for Gold
+        const getEmployeeCategoryBalanceQtyGold = (emp, category) => {
+            if (!emp.category_qty_map) return '-';
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? roundToTwo(data.balance_qty_gold) : '-';
+        };
+
+        // Helper function to get employee category-level balance quantity for Diamond
+        const getEmployeeCategoryBalanceQtyDiamond = (emp, category) => {
+            if (!emp.category_qty_map) return '-';
+            const key = `${emp.id}_${category}`;
+            const data = emp.category_qty_map[key];
+            return data ? roundToTwo(data.balance_qty_diamond) : '-';
+        };
+
+        // Generic wrapper for employee category balance quantity (defaults to Gold)
+        const getEmployeeCategoryBalanceQty = (emp, category) => {
+            return getEmployeeCategoryBalanceQtyGold(emp, category);
         };
 
 
@@ -1910,6 +2385,19 @@ export default {
                 // Fetch Efficiency Analysis Data (Overall - All Operations)
                 const isRepairOnly = props.type === 'repair' ? true : false;
                 await fetchListEfficiencyAnalysis(locationId, formattedStartDate, formattedEndDate, isRepairOnly);
+                
+                // ✅ COMPREHENSIVE CONSOLE LOGS FOR FETCHED DATA
+                console.log("\n" + "=".repeat(60));
+                console.log("🔵 EFFICIENCY ANALYSIS DATA FETCH - FRONTEND CONSOLE");
+                console.log("=".repeat(60));
+                console.log("📅 Date Range:", formattedStartDate, "to", formattedEndDate);
+                console.log("📍 Location ID:", locationId || "All Locations");
+                console.log("=".repeat(60));
+                
+                // Raw API Response
+                console.log("\n📊 RAW API RESPONSE (listEfficiencyData):");
+                console.log(JSON.stringify(listEfficiencyData.value, null, 2));
+                
                 if (listEfficiencyData.value && Object.keys(listEfficiencyData.value).length > 0) {
 
                     if (!locationId) {
@@ -1925,35 +2413,106 @@ export default {
                                     unique_bags_array: dept.unique_bags_array || [],
                                     category_count: dept.category_count || 0,
                                     unique_categories_array: dept.unique_categories_array || [],
-                                    employees: (dept.employees_array || []).map(emp => ({
-                                        id: emp.employee_id,
-                                        name: emp.name,
-                                        bag_count: emp.bag_count || 0,
-                                        unique_bags_array: emp.unique_bags_array || [],
-                                        category_count: emp.category_count || 0,
-                                        unique_categories_array: emp.unique_categories_array || []
-                                    }))
+                                    starting_qty: dept.starting_qty || 0,
+                                    loss_qty: dept.loss_qty || 0,
+                                    category_qty_map: dept.category_qty_map || {},
+                                    employees: (dept.employees_array || []).map(emp => {
+                                        // Build category_qty_map from categories array
+                                        const categoryQtyMap = {};
+                                        if (emp.categories && Array.isArray(emp.categories)) {
+                                            emp.categories.forEach(cat => {
+                                                const key = `${emp.employee_id}_${cat.category_name}`;
+                                                categoryQtyMap[key] = {
+                                                    starting_qty_gold: cat.starting_qty_gold || 0,
+                                                    starting_qty_diamond: cat.starting_qty_diamond || 0,
+                                                    issued_qty_gold: cat.issued_qty_gold || 0,
+                                                    issued_qty_diamond: cat.issued_qty_diamond || 0,
+                                                    loss_qty_gold: cat.loss_qty_gold || 0,
+                                                    loss_qty_diamond: cat.loss_qty_diamond || 0,
+                                                    scrap_qty_gold: cat.scrap_qty_gold || 0,
+                                                    scrap_qty_diamond: cat.scrap_qty_diamond || 0,
+                                                    balance_qty_gold: cat.balance_qty_gold || 0,
+                                                    balance_qty_diamond: cat.balance_qty_diamond || 0
+                                                };
+                                            });
+                                        }
+                                        
+                                        const empObj = {
+                                            id: emp.employee_id,
+                                            name: emp.name,
+                                            bag_count: emp.bag_count || 0,
+                                            unique_bags_array: emp.unique_bags_array || [],
+                                            category_count: emp.category_count || 0,
+                                            unique_categories_array: emp.unique_categories_array || [],
+                                            starting_qty: emp.starting_qty || 0,
+                                            loss_qty: emp.loss_qty || 0,
+                                            categories: emp.categories || [],
+                                            category_qty_map: categoryQtyMap
+                                        };
+                                        return empObj;
+                                    })
                                 };
                             })
                         }));
 
-                        // Log processed locations with employee bag counts
-                        let processedLog = '\n=== PROCESSED LOCATIONS (UI DATA) ===\n';
-                        locations.value.forEach(loc => {
-                            processedLog += `Location: ${loc.name.value}\n`;
-                            loc.departments.forEach(dept => {
-                                processedLog += `  Dept: ${dept.name} | Bag Count: ${dept.bag_count} | Category Count: ${dept.category_count} | Employees: ${dept.employees.length}\n`;
-                                dept.employees.forEach(emp => {
-                                    processedLog += `    - Employee: ${emp.name} | Bag Count: ${emp.bag_count} | Category Count: ${emp.category_count} | Bags: [${emp.unique_bags_array.join(', ')}] | Categories: [${emp.unique_categories_array.join(', ')}]\n`;
+                        // ✅ DETAILED CONSOLE LOGS - STRUCTURED DATA
+                        console.log("\n📍 PROCESSED LOCATIONS DATA:");
+                        console.log("─".repeat(60));
+                        locations.value.forEach((loc, locIdx) => {
+                            console.log(`\n[Location ${locIdx + 1}] ${loc.name.value}`);
+                            console.log(`Located ID: ${loc.internalid.value}`);
+                            
+                            loc.departments.forEach((dept, deptIdx) => {
+                                console.log(`\n  [Department ${deptIdx + 1}] ${dept.name} (ID: ${dept.id})`);
+                                console.log(`    Total Bags: ${dept.bag_count}`);
+                                console.log(`    Unique Bags: [${dept.unique_bags_array.join(', ')}]`);
+                                console.log(`    Total Categories: ${dept.category_count}`);
+                                console.log(`    Unique Categories: [${dept.unique_categories_array.join(', ')}]`);
+                                console.log(`    Department Starting Qty: ${dept.starting_qty}`);
+                                console.log(`    Department Loss Qty: ${dept.loss_qty}`);
+                                console.log(`    Category Qty Map:`, dept.category_qty_map);
+                                console.log(`    Total Employees: ${dept.employees.length}`);
+                                
+                                dept.employees.forEach((emp, empIdx) => {
+                                    console.log(`\n    [Employee ${empIdx + 1}] ${emp.name} (ID: ${emp.id})`);
+                                    console.log(`      Bag Count: ${emp.bag_count}`);
+                                    console.log(`      Unique Bags: [${emp.unique_bags_array.join(', ')}]`);
+                                    console.log(`      Category Count: ${emp.category_count}`);
+                                    console.log(`      Unique Categories: [${emp.unique_categories_array.join(', ')}]`);
+                                    console.log(`      Starting Qty: ${emp.starting_qty}`);
+                                    console.log(`      Loss Qty: ${emp.loss_qty}`);
+                                    console.log(`      Categories Detail:`, emp.categories);
+                                    console.log(`      Category Qty Map:`, emp.category_qty_map);
                                 });
                             });
                         });
-                        processedLog += '=====================================';
-                        console.log(processedLog);
+                        console.log("\n" + "─".repeat(60));
+                        
+                        // ✅ SUMMARY STATISTICS
+                        console.log("\n📈 FETCH SUMMARY:");
+                        console.log("─".repeat(60));
+                        let totalDepts = 0, totalEmps = 0, totalBags = 0, totalCategories = 0;
+                        locations.value.forEach(loc => {
+                            loc.departments.forEach(dept => {
+                                totalDepts++;
+                                totalBags += dept.bag_count;
+                                totalCategories += dept.category_count;
+                                totalEmps += dept.employees.length;
+                            });
+                        });
+                        console.log(`✅ Total Locations: ${locations.value.length}`);
+                        console.log(`✅ Total Departments: ${totalDepts}`);
+                        console.log(`✅ Total Employees: ${totalEmps}`);
+                        console.log(`✅ Total Bags: ${totalBags}`);
+                        console.log(`✅ Total Unique Categories: ${totalCategories}`);
+                        console.log("─".repeat(60));
+                        console.log("🟢 DATA FETCH COMPLETE - Ready for UI display");
+                        console.log("=".repeat(60) + "\n");
                     }
 
                     isInitialLoading.value = false;
                 } else {
+                    console.warn("❌ NO DATA FOUND for the selected date range");
                     showNoDataPopup.value = true;
                     isInitialLoading.value = false;
                 }
@@ -2070,6 +2629,11 @@ export default {
 
                 // Get employees from the already-populated selectedDepartments
                 const selectedDept = selectedDepartments.value.find(dept => dept.name === deptName);
+                
+                console.log(`\n🔵 TOGGLE DEPARTMENT VIEW - ${deptName}`);
+                console.log(`Selected Department:`, selectedDept);
+                console.log(`Employees Array:`, selectedDept?.employees);
+                
                 // Add department ID to each employee
                 selectedEmployees.value = (selectedDept?.employees || []).map(emp => {
                     return {
@@ -2078,7 +2642,9 @@ export default {
                     };
                 });
                 
-                console.log(`Department: ${deptName} (ID: ${selectedDept?.id}) - Employees with Bag Counts:`, selectedEmployees.value);
+                console.log(`✅ selectedEmployees populated with ${selectedEmployees.value.length} employees`);
+                console.log(`📋 Employee Details:`, selectedEmployees.value);
+                console.log(`Department: ${deptName} (ID: ${selectedDept?.id}) - Employees:`, selectedEmployees.value);
             }
             updateCharts();
         };
@@ -2483,6 +3049,31 @@ export default {
             downloadData,
             formatName,
             roundToTwo,
+            getCategoryStartingQty,
+            getCategoryStartingQtyGold,
+            getCategoryStartingQtyGoldRaw,
+            getCategoryStartingQtyDiamond,
+            getCategoryStartingQtyDiamondRaw,
+            getCategoryIssuedQty,
+            getCategoryIssuedQtyGold,
+            getCategoryIssuedQtyGoldRaw,
+            getCategoryIssuedQtyDiamond,
+            getCategoryIssuedQtyDiamondRaw,
+            getCategoryLossQty,
+            getCategoryLossQtyGold,
+            getCategoryLossQtyGoldRaw,
+            getCategoryLossQtyDiamond,
+            getCategoryLossQtyDiamondRaw,
+            getCategoryScrapQty,
+            getCategoryScrapQtyGold,
+            getCategoryScrapQtyGoldRaw,
+            getCategoryScrapQtyDiamond,
+            getCategoryScrapQtyDiamondRaw,
+            getCategoryBalanceQty,
+            getCategoryBalanceQtyGold,
+            getCategoryBalanceQtyGoldRaw,
+            getCategoryBalanceQtyDiamond,
+            getCategoryBalanceQtyDiamondRaw,
             totalDeptActualProductionGold,
             totalDeptGrossLossGold,
             totalDeptActualProductionDiamond,
@@ -2498,27 +3089,61 @@ export default {
             totalDeptLossQtyGold,
             totalDeptIssuedQtyDiamond,
             totalDeptLossQtyDiamond,
+            totalDeptIssuedQtyGoldFromCategories,
+            totalDeptScrapQtyGoldFromCategories,
+            totalDeptBalanceQtyGoldFromCategories,
+            totalDeptIssuedQtyDiamondFromCategories,
+            totalDeptScrapQtyDiamondFromCategories,
+            totalDeptBalanceQtyDiamondFromCategories,
             totalEmpActualProductionGold,
             totalEmpGrossLossGold,
             totalEmpActualProductionDiamond,
             totalEmpGrossLossDiamond,
             totalEmpGoldRecoveryWeight,
             totalEmpNetLossGold,
-            totalEmpTmProductionGold,
-            totalEmpTmProductionDiamond,
-            totalEmpBagCount,
             totalEmpStartingQuantityGold,
             totalEmpIssuedQuantityGold,
             totalEmpLossQuantityGold,
             totalEmpStartingQuantityDiamond,
             totalEmpIssuedQuantityDiamond,
             totalEmpLossQuantityDiamond,
+            totalEmpIssuedQtyGoldFromCategories,
+            totalEmpScrapQtyGoldFromCategories,
+            totalEmpBalanceQtyGoldFromCategories,
+            totalEmpIssuedQtyDiamondFromCategories,
+            totalEmpScrapQtyDiamondFromCategories,
+            totalEmpBalanceQtyDiamondFromCategories,
             totalEmpActualProductionGoldCalculated,
             totalEmpActualProductionDiamondCalculated,
             showNoDataMessage,
             fetchEfficiencyAnalysisData,
             calculateGoldLossPercentage,
-            calculateDiamondLossPercentage
+            calculateDiamondLossPercentage,
+            getEmployeeCategoryStartingQty,
+            getEmployeeCategoryStartingQtyGold,
+            getEmployeeCategoryStartingQtyGoldRaw,
+            getEmployeeCategoryStartingQtyDiamond,
+            getEmployeeCategoryStartingQtyDiamondRaw,
+            getEmployeeCategoryIssuedQty,
+            getEmployeeCategoryIssuedQtyGold,
+            getEmployeeCategoryIssuedQtyGoldRaw,
+            getEmployeeCategoryIssuedQtyDiamond,
+            getEmployeeCategoryIssuedQtyDiamondRaw,
+            getEmployeeCategoryLossQty,
+            getEmployeeCategoryLossQtyGold,
+            getEmployeeCategoryLossQtyGoldRaw,
+            getEmployeeCategoryLossQtyDiamond,
+            getEmployeeCategoryLossQtyDiamondRaw,
+            getEmployeeCategoryScrapQty,
+            getEmployeeCategoryScrapQtyGold,
+            getEmployeeCategoryScrapQtyGoldRaw,
+            getEmployeeCategoryScrapQtyDiamond,
+            getEmployeeCategoryScrapQtyDiamondRaw,
+            getEmployeeCategoryBalanceQty,
+            getEmployeeCategoryBalanceQtyGold,
+            getEmployeeCategoryBalanceQtyGoldRaw,
+            getEmployeeCategoryBalanceQtyDiamond,
+            getEmployeeCategoryBalanceQtyDiamondRaw
 
 
         };
