@@ -123,7 +123,7 @@
             <div v-if="loading" class="flex justify-center items-center">
                 <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-gray-500"></div>
             </div>
-            <div class="grid grid-cols-5 gap-2 mb-2">
+            <div class="main-card-grid grid grid-cols-5 gap-2">
 
                 <!-- Locations Section -->
                 <div v-if="!loading && !showDepartments && !showEmployees" v-for="(location, index) in locations"
@@ -165,7 +165,7 @@
                             </div>
 
                             <!-- Diamond Section -->
-                            <div class="flex flex-col">
+                            <div class="flex flex-col">  
                                 <div class="flex items-center space-x-0.5">
                                     <i class="fas fa-gem text-gray-500 text-[11px]"></i>
                                     <span class="font-semibold text-gray-600 text-[11px]">Diamond</span>
@@ -225,6 +225,7 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Departments Section -->
                 <div v-if="!loading && showDepartments && !showEmployees" v-for="(dept, index) in selectedDepartments"
                     :key="index" @click="toggleDepartmentView(dept.name)"
@@ -455,7 +456,7 @@
                                 <th class="px-3 py-2 text-left font-semibold">No. of Bags</th>
                                 <th class="px-3 py-2 text-left font-semibold">Item category</th>
 
-                                <th class="px-3 py-2 text-left font-semibold">Starting Qty Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">TM Production Gold</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Issued Qty Gold</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">Actual Production Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Loss Qty Gold</th>
@@ -463,14 +464,13 @@
                                 <th class="px-3 py-2 text-left font-semibold">Balance Qty Gold</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">Gold Loss %</th>
 
-                                <th class="px-3 py-2 text-left font-semibold">Starting Qty Diamond</th>
+                                <th class="px-3 py-2 text-left font-semibold">TM Production Diamond</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Issued Qty Diamond</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">Actual Production Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Loss Qty Diamond</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Scrap Qty Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Balance Qty Diamond</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">Diamond Loss %</th>
-
 
                                 <th class="px-3 py-2 text-left font-semibold">Gold Recovery Weight (gm)</th>
                                 <th class="px-3 py-2 text-left font-semibold">Net Loss Gold</th>
@@ -3477,6 +3477,7 @@ export default {
 
 
 <style scoped>
+
 /* ✅ Date Picker Container */
 :deep(.dp__menu) {
     border-radius: 12px;
@@ -3628,5 +3629,28 @@ th {
 
 tr:hover {
     background-color: #F9FAFB;
+}
+</style>
+
+<style>
+@media (max-width: 1296px) {
+    .main-card-grid {
+        grid-template-columns: repeat(4, minmax(100px, 1fr)) !important;
+    }
+}
+@media (max-width: 1080px) {
+    .main-card-grid {
+        grid-template-columns: repeat(3, minmax(100px, 1fr)) !important;
+    }
+}
+@media (max-width: 930px) {
+    .main-card-grid {
+        grid-template-columns: repeat(2, minmax(100px, 1fr)) !important;
+    }
+}
+@media (max-width: 727px) {
+    .main-card-grid {
+        grid-template-columns: repeat(1, minmax(100px, 1fr)) !important;
+    }
 }
 </style>
