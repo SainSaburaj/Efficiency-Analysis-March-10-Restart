@@ -210,9 +210,6 @@
                         <div class="bg-green-50 p-1 rounded mb-2 text-center">
                             <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ dept.bag_count || 0 }}</span></p>
                         </div>
-                        <div class="bg-green-50 p-1 rounded mb-2 text-center">
-                            <p class="text-[10px] font-semibold text-gray-700">Issued Pieces: <span class="text-blue-600">{{ (getDepartmentTotalIssuedPiecesDiamond(dept) || 0).toFixed(2) }}</span></p>
-                        </div>
 
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
 
@@ -250,7 +247,7 @@
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">0.00</p>
+                                            <p class="text-red-500 text-[11px]">{{ (getDepartmentTotalLossQtyDiamond(dept) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
 
@@ -331,11 +328,11 @@
                                 <span class="text-[11px] text-gray-700 mt-1">grams</span>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalIssuedQtyAllCategories(emp) || 0).toFixed(2) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalIssuedQtyGold(emp) || 0).toFixed(2) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ (getEmployeeTotalLossQtyAllCategories(emp) || 0).toFixed(2) }}</p>
+                                    <p class="text-red-500 text-[11px]">{{ (getEmployeeTotalLossQtyGold(emp) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
@@ -351,11 +348,11 @@
                                         <span class="text-[11px] text-gray-700">carat</span>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.issued_quantity_diamond || 0) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalIssuedQtyDiamond(emp) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.loss_quantity_diamond || 0) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ (getEmployeeTotalLossQtyDiamond(emp) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
 
@@ -364,11 +361,11 @@
                                         <span class="text-[11px] text-gray-700">pieces</span>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(emp.issued_pieces_diamond || 0) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalIssuedPiecesDiamond(emp) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.loss_pieces_diamond || 0) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ (getEmployeeTotalLossPiecesDiamond(emp) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -377,7 +374,7 @@
 
                         <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1 mt-1">Actual Production and Loss</div>
 
-                        <!-- Actual Production and Loss Section -->
+                        <!-- Actual Production Section -->
                         <div class="grid grid-cols-2 gap-y-1">
                             <!-- Actual Gold Section -->
                             <div class="flex flex-col text-left">
@@ -387,11 +384,7 @@
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo((emp.starting_quantity_gold || 0) + (emp.issued_quantity_gold || 0) - (emp.loss_quantity_gold || 0) - (emp.scrap_quantity_gold || 0) - (emp.balance_quantity_gold || 0)) }}</p>
-                                </div>
-                                <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLoss || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalActualProductionGold(emp) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
@@ -403,11 +396,7 @@
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo((emp.starting_quantity_diamond || 0) + (emp.issued_quantity_diamond || 0) - (emp.loss_quantity_diamond || 0) - (emp.scrap_quantity_diamond || 0) - (emp.balance_quantity_diamond || 0)) }}</p>
-                                </div>
-                                <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(emp.grossLossDiamond || 0) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalActualProductionDiamond(emp) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -810,8 +799,6 @@
                                 <td class="px-3 py-2">{{ totalEmpStartingQuantityGold }}</td>
                                 <!-- Issued Qty Gold -->
                                 <td class="px-3 py-2">{{ totalEmpIssuedQuantityGold }}</td>
-                                <!-- Actual Production Gold -->
-                                <td class="px-3 py-2">{{ totalEmpActualProductionGoldCalculated }}</td>
                                 <!-- Loss Qty Gold -->
                                 <td class="px-3 py-2 text-red-500">{{ totalEmpLossQuantityGold }}</td>
                                 <!-- Gold Loss % (empty) -->
@@ -820,12 +807,14 @@
                                 <td class="px-3 py-2">{{ totalEmpStartingQuantityDiamond }}</td>
                                 <!-- Issued Qty Diamond -->
                                 <td class="px-3 py-2">{{ totalEmpIssuedQuantityDiamond }}</td>
-                                <!-- Actual Production Diamond -->
-                                <td class="px-3 py-2">{{ totalEmpActualProductionDiamondCalculated }}</td>
                                 <!-- Loss Qty Diamond -->
                                 <td class="px-3 py-2 text-red-500">{{ totalEmpLossQuantityDiamond }}</td>
                                 <!-- Diamond Loss % (empty) -->
                                 <td class="px-3 py-2 text-red-500"></td>
+                                <!-- Actual Production Diamond -->
+                                <td class="px-3 py-2">{{ totalEmpActualProductionDiamondCalculated }}</td>
+                                <!-- Actual Production Gold -->
+                                <td class="px-3 py-2">{{ totalEmpActualProductionGoldCalculated }}</td>
                                 <!-- Gold Recovery Weight -->
                                 <td class="px-3 py-2">{{ totalEmpGoldRecoveryWeight }}</td>
                                 <!-- Net Loss Gold -->
@@ -1649,20 +1638,6 @@ export default {
             return value ? parseFloat(value).toFixed(2) : "0.00";
         };
 
-        // Helper function to get total issued quantity for a department (sum of all categories for that department)
-        const getDepartmentTotalIssuedQty = (dept) => {
-            if (!dept.category_qty_map) return 0;
-            let sum = 0;
-            Object.keys(dept.category_qty_map).forEach(key => {
-                // Only sum if the key starts with this department's ID
-                if (key.startsWith(`${dept.id}_`)) {
-                    const catData = dept.category_qty_map[key];
-                    sum += parseFloat(catData.issued_qty_gold || 0) + parseFloat(catData.issued_qty_diamond || 0);
-                }
-            });
-            return sum;
-        };
-
         // Helper function to get total issued quantity gold for a department
         const getDepartmentTotalIssuedQtyGold = (dept) => {
             if (!dept.category_qty_map) return 0;
@@ -1691,6 +1666,30 @@ export default {
             return sum;
         };
 
+        // Helper function to get total issued quantity gold for an employee
+        const getEmployeeTotalIssuedQtyGold = (emp) => {
+            if (emp.categories && emp.categories.length > 0) {
+                let sum = 0;
+                emp.categories.forEach(cat => {
+                    sum += parseFloat(cat.issued_qty_gold || 0);
+                });
+                return sum;
+            }
+            return parseFloat(emp.issued_quantity_gold || 0);
+        };
+
+        // Helper function to get total issued quantity diamond for an employee
+        const getEmployeeTotalIssuedQtyDiamond = (emp) => {
+            if (emp.categories && emp.categories.length > 0) {
+                let sum = 0;
+                emp.categories.forEach(cat => {
+                    sum += parseFloat(cat.issued_qty_diamond || 0);
+                });
+                return sum;
+            }
+            return parseFloat(emp.issued_quantity_diamond || 0);
+        };
+        
         // Helper function to get total loss quantity gold for a department
         const getDepartmentTotalLossQtyGold = (dept) => {
             if (!dept.category_qty_map) return 0;
@@ -1705,9 +1704,40 @@ export default {
             return sum;
         };
 
-        // Helper function to get total issued quantity for an employee (gold + diamond)
-        const getEmployeeTotalIssuedQty = (emp) => {
-            return parseFloat(emp.issued_quantity_gold || 0) + parseFloat(emp.issued_quantity_diamond || 0);
+        // Helper function to get total loss quantity diamond for a department
+        const getDepartmentTotalLossQtyDiamond = (dept) => {
+            if (!dept.category_qty_map) return 0;
+            let sum = 0;
+            Object.keys(dept.category_qty_map).forEach(key => {
+                // Only sum if the key starts with this department's ID
+                if (key.startsWith(`${dept.id}_`)) {
+                    const catData = dept.category_qty_map[key];
+                    sum += parseFloat(catData.loss_qty_diamond || 0);
+                }
+            });
+            return sum;
+        };
+
+        // Helper function to get total loss quantity gold for an employee
+        const getEmployeeTotalLossQtyGold = (emp) => {
+            if (!emp.categories || emp.categories.length === 0) return 0;
+            let sum = 0;
+            emp.categories.forEach(cat => {
+                sum += parseFloat(cat.loss_qty_gold || 0);
+            });
+            return sum;
+        };
+        
+        // Helper function to get total loss quantity diamond for an employee
+        const getEmployeeTotalLossQtyDiamond = (emp) => {
+            if (emp.categories && emp.categories.length > 0) {
+                let sum = 0;
+                emp.categories.forEach(cat => {
+                    sum += parseFloat(cat.loss_qty_diamond || 0);
+                });
+                return sum;
+            }
+            return parseFloat(emp.loss_quantity_diamond || 0);
         };
 
         // Helper function to get total actual production gold for a department
@@ -1750,6 +1780,41 @@ export default {
             return sum;
         };
 
+        // Helper function to get total actual production gold for an employee
+        const getEmployeeTotalActualProductionGold = (emp) => {
+            if (!emp.categories || emp.categories.length === 0) return 0;
+            let sum = 0;
+            emp.categories.forEach(cat => {
+                const actualProd = (
+                    parseFloat(cat.starting_qty_gold || 0) +
+                    parseFloat(cat.issued_qty_gold || 0) -
+                    parseFloat(cat.loss_qty_gold || 0) -
+                    parseFloat(cat.scrap_qty_gold || 0) -
+                    parseFloat(cat.balance_qty_gold || 0)
+                );
+                sum += actualProd;
+            });
+            return sum;
+        };
+
+        // Helper function to get total actual production diamond for an employee
+        const getEmployeeTotalActualProductionDiamond = (emp) => {
+            if (!emp.categories || emp.categories.length === 0) return 0;
+            let sum = 0;
+            emp.categories.forEach(cat => {
+                const actualProd = (
+                    parseFloat(cat.starting_qty_diamond || 0) +
+                    parseFloat(cat.issued_qty_diamond || 0) -
+                    parseFloat(cat.loss_qty_diamond || 0) -
+                    parseFloat(cat.scrap_qty_diamond || 0) -
+                    parseFloat(cat.balance_qty_diamond || 0)
+                );
+                sum += actualProd;
+            });
+            return sum;
+        };
+
+
         // Helper function to get total issued pieces diamond for a department
         const getDepartmentTotalIssuedPiecesDiamond = (dept) => {
             if (!dept.category_qty_map) return 0;
@@ -1775,6 +1840,28 @@ export default {
             });
             return sum;
         };
+
+        // Helper function to get total issued pieces diamond for an employee
+        const getEmployeeTotalIssuedPiecesDiamond = (emp) => {
+            if (!emp.categories || emp.categories.length === 0) return 0;
+            let sum = 0;
+            emp.categories.forEach(cat => {
+                sum += parseFloat(cat.issued_pieces_diamond || 0);
+            });
+            return sum;
+        };
+
+        // Helper function to get total loss pieces diamond for an employee
+        const getEmployeeTotalLossPiecesDiamond = (emp) => {
+            if (!emp.categories || emp.categories.length === 0) return 0;
+            let sum = 0;
+            emp.categories.forEach(cat => {
+                sum += parseFloat(cat.loss_pieces_diamond || 0);
+            });
+            return sum;
+        };
+
+        
 
         // Helper function to get raw numeric category-level starting quantity for Gold (for calculations)
         const getCategoryStartingQtyGoldRaw = (dept, category) => {
@@ -3180,11 +3267,16 @@ export default {
             downloadData,
             formatName,
             roundToTwo,
-            getDepartmentTotalIssuedQty,
             getDepartmentTotalIssuedQtyGold,
             getDepartmentTotalIssuedQtyDiamond,
             getDepartmentTotalLossQtyGold,
-            getEmployeeTotalIssuedQty,
+            getDepartmentTotalLossQtyDiamond,
+            getEmployeeTotalIssuedQtyGold,
+            getEmployeeTotalIssuedQtyDiamond,
+            getEmployeeTotalLossQtyGold,
+            getEmployeeTotalLossQtyDiamond,
+            getEmployeeTotalActualProductionGold,
+            getEmployeeTotalActualProductionDiamond,
             getEmployeeTotalStartingQtyAllCategories,
             getEmployeeTotalIssuedQtyAllCategories,
             getEmployeeTotalLossQtyAllCategories,
@@ -3192,6 +3284,8 @@ export default {
             getDepartmentTotalActualProductionDiamond,
             getDepartmentTotalIssuedPiecesDiamond,
             getDepartmentTotalLossPiecesDiamond,
+            getEmployeeTotalIssuedPiecesDiamond,
+            getEmployeeTotalLossPiecesDiamond,
             getCategoryStartingQty,
             getCategoryStartingQtyGold,
             getCategoryStartingQtyGoldRaw,
