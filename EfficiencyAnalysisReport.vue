@@ -139,6 +139,13 @@
                     <div class="flex-1 pl-2 pr-2 py-2 bg-white rounded-r-lg border-2 border-white shadow-md">
                         <p class="text-xs font-semibold text-gray-700">{{ location.name.value }}</p>
 
+                        <!-- Bag Count -->
+                        <div class="bg-green-50 p-1 rounded mb-2 text-center">
+                            <p class="text-[10px] font-semibold text-gray-700">No. of Bags: <span class="text-blue-600">{{ getLocationTotalBagCount(location) || 0 }}</span></p>
+                        </div>
+
+                        <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1">Issued & Loss Quantity</div>
+
                         <div class="grid grid-cols-2 gap-y-0.5">
                             <!-- Gold Section -->
                             <div class="flex flex-col text-left">
@@ -149,11 +156,11 @@
                                 <span class="text-gray-700 text-[11px]">grams</span>
                                 <div class="flex items-center space-x-0.5">
                                     <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ roundToTwo(location.tmproduction_gold) }}</p>
+                                    <p class="text-green-500 text-[11px]">{{ (getLocationTotalIssuedQtyGold(location) || 0).toFixed(2) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-0.5">
                                     <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ roundToTwo(location.loss_gold) }}</p>
+                                    <p class="text-red-500 text-[11px]">{{ (getLocationTotalLossQtyGold(location) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
@@ -168,25 +175,51 @@
                                         <span class="text-gray-700 text-[11px]">carat</span>
                                         <div class="flex items-center space-x-0.5">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(location.tmproduction_diamond) }}</p>
+                                            <p class="text-green-500 text-[11px]">{{ (getLocationTotalIssuedQtyDiamond(location) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-0.5">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(location.loss_diamond) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ (getLocationTotalLossQtyDiamond(location) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
                                     <div class="flex flex-col items-right">
                                         <span class="text-gray-700 text-[11px]">pieces</span>
                                         <div class="flex items-center space-x-0.5">
                                             <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ roundToTwo(location.tmproduction_diamond_pieces) }}
-                                            </p>
+                                            <p class="text-green-500 text-[11px]">{{ (getLocationTotalIssuedPiecesDiamond(location) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-0.5">
                                             <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ roundToTwo(location.loss_diamond_pieces) }}</p>
+                                            <p class="text-red-500 text-[11px]">{{ (getLocationTotalLossPiecesDiamond(location) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] font-semibold w-full text-center bg-gray-100 rounded p-1 mb-1 mt-1">Actual Production and Loss</div>
+                        <!-- Actual Production and Loss Section -->
+                        <div class="grid grid-cols-2 gap-y-1">
+                            <!-- Actual Gold Section -->
+                            <div class="flex flex-col text-left">
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-ring text-gray-500 text-[11px]"></i>
+                                    <span class="text-[11px] font-semibold text-gray-600">Gold</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
+                                    <p class="text-green-500 text-[11px]">{{ (getLocationTotalActualProductionGold(location) || 0).toFixed(2) }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Actual Diamond Section -->
+                            <div class="flex flex-col">
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-gem text-gray-500 text-[11px]"></i>
+                                    <span class="text-[11px] font-semibold text-gray-600">Diamond</span>
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
+                                    <p class="text-green-500 text-[11px]">{{ (getLocationTotalActualProductionDiamond(location) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -1636,6 +1669,106 @@ export default {
         // **Helper Function to Round Values to 2 Decimal Places**
         const roundToTwo = (value) => {
             return value ? parseFloat(value).toFixed(2) : "0.00";
+        };
+
+        // Helper function to get total actual production gold for a location
+        const getLocationTotalActualProductionGold = (location) => {
+            if (!location.departments || location.departments.length === 0) return 0;
+            let sum = 0;
+            location.departments.forEach(dept => {
+                sum += getDepartmentTotalActualProductionGold(dept);
+            });
+            return sum;
+        };
+
+        // Helper function to get total actual production diamond for a location
+        const getLocationTotalActualProductionDiamond = (location) => {
+            if (!location.departments || location.departments.length === 0) return 0;
+            let sum = 0;
+            location.departments.forEach(dept => {
+                sum += getDepartmentTotalActualProductionDiamond(dept);
+            });
+            return sum;
+        };
+
+        // Helper function to get total unique bags for a location
+        const getLocationTotalBagCount = (location) => {
+            if (!location.departments || location.departments.length === 0) return 0;
+            const uniqueBags = new Set();
+            location.departments.forEach(dept => {
+                if (dept.unique_bags_array && Array.isArray(dept.unique_bags_array)) {
+                    dept.unique_bags_array.forEach(bag => uniqueBags.add(bag));
+                }
+            });
+            // If no unique_bags_array, fallback to summing bag_count
+            if (uniqueBags.size === 0) {
+                let sum = 0;
+                location.departments.forEach(dept => {
+                    sum += parseInt(dept.bag_count || 0);
+                });
+                return sum;
+            }
+            return uniqueBags.size;
+        };
+
+        // Helper function to get total issued quantity gold for a location
+        const getLocationTotalIssuedQtyGold = (location) => {
+            if (!location.departments || location.departments.length === 0) return 0;
+            let sum = 0;
+            location.departments.forEach(dept => {
+                sum += getDepartmentTotalIssuedQtyGold(dept);
+            });
+            return sum;
+        };
+
+        // Helper function to get total issued quantity diamond for a location
+        const getLocationTotalIssuedQtyDiamond = (location) => {
+            if (!location.departments || location.departments.length === 0) return 0;
+            let sum = 0;
+            location.departments.forEach(dept => {
+                sum += getDepartmentTotalIssuedQtyDiamond(dept);
+            });
+            return sum;
+        };
+
+        // Helper function to get total loss quantity gold for a location
+        const getLocationTotalLossQtyGold = (location) => {
+            if (!location.departments || location.departments.length === 0) return 0;
+            let sum = 0;
+            location.departments.forEach(dept => {
+                sum += getDepartmentTotalLossQtyGold(dept);
+            });
+            return sum;
+        };
+
+        // Helper function to get total loss quantity diamond for a location
+        const getLocationTotalLossQtyDiamond = (location) => {
+            if (!location.departments || location.departments.length === 0) return 0;
+            let sum = 0;
+            location.departments.forEach(dept => {
+                sum += getDepartmentTotalLossQtyDiamond(dept);
+            });
+            return sum;
+        };
+
+        // Helper function to get total issued pieces diamond for a location
+        const getLocationTotalIssuedPiecesDiamond = (location) => {
+            if (!location.departments || location.departments.length === 0) return 0;
+            let sum = 0;
+            location.departments.forEach(dept => {
+                sum += getDepartmentTotalIssuedPiecesDiamond(dept);
+            });
+            return sum;
+        };
+
+        // Helper function to get total loss pieces diamond for a location
+        const getLocationTotalLossPiecesDiamond = (location) => {
+            if (!location.departments || location.departments.length === 0) return 0;
+            let sum = 0;
+            location.departments.forEach(dept => {
+                sum += getDepartmentTotalLossPiecesDiamond(dept);
+            });
+            return sum;
         };
 
         // Helper function to get total issued quantity gold for a department
@@ -3267,6 +3400,15 @@ export default {
             downloadData,
             formatName,
             roundToTwo,
+            getLocationTotalBagCount,
+            getLocationTotalActualProductionGold,
+            getLocationTotalActualProductionDiamond,
+            getLocationTotalIssuedQtyGold,
+            getLocationTotalIssuedQtyDiamond,
+            getLocationTotalLossQtyGold,
+            getLocationTotalLossQtyDiamond,
+            getLocationTotalIssuedPiecesDiamond,
+            getLocationTotalLossPiecesDiamond,
             getDepartmentTotalIssuedQtyGold,
             getDepartmentTotalIssuedQtyDiamond,
             getDepartmentTotalLossQtyGold,
