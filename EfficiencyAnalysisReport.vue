@@ -16,7 +16,7 @@
                 <p class="text-gray-500 mt-2">Sorry, we couldn't find any data matching your criteria.</p>
                 <button @click="closeNoDataPopup"
                     class="mt-6 px-6 py-3 bg-gray-500 text-white rounded-lg shadow-md hover:bg-gray-600 transition duration-200 transform hover:scale-105">
-                    OK
+                    Close
                 </button>
             </div>
         </div>
@@ -101,6 +101,7 @@
                         </div>
                     </div>
 
+
                     <!-- Standardized Date Filter -->
                     <div>
                         <VueDatePicker v-model="selectedDateRange" range :enable-time-picker="false"
@@ -150,47 +151,47 @@
                             <!-- Gold Section -->
                             <div class="flex flex-col text-left">
                                 <div class="flex items-center space-x-0.5">
-                                    <i class="fas fa-ring text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-ring text-gray-500 text-[9px]"></i>
                                     <span class="font-semibold text-gray-600 text-[11px]">Gold</span>
                                 </div>
                                 <span class="text-gray-700 text-[11px]">grams</span>
                                 <div class="flex items-center space-x-0.5">
-                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getLocationTotalIssuedQtyGold(location) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                    <p class="text-green-500 text-[10px]">{{ (getLocationTotalIssuedQtyGold(location) || 0).toFixed(2) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-0.5">
-                                    <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ (getLocationTotalLossQtyGold(location) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
+                                    <p class="text-red-500 text-[10px]">{{ (getLocationTotalLossQtyGold(location) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
                             <!-- Diamond Section -->
                             <div class="flex flex-col">  
                                 <div class="flex items-center space-x-0.5">
-                                    <i class="fas fa-gem text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-gem text-gray-500 text-[9px]"></i>
                                     <span class="font-semibold text-gray-600 text-[11px]">Diamond</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-x-1">
                                     <div class="flex flex-col items-center">
                                         <span class="text-gray-700 text-[11px]">carat</span>
                                         <div class="flex items-center space-x-0.5">
-                                            <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ (getLocationTotalIssuedQtyDiamond(location) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                            <p class="text-green-500 text-[10px]">{{ (getLocationTotalIssuedQtyDiamond(location) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-0.5">
-                                            <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ (getLocationTotalLossQtyDiamond(location) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
+                                            <p class="text-red-500 text-[10px]">{{ (getLocationTotalLossQtyDiamond(location) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
                                     <div class="flex flex-col items-right">
                                         <span class="text-gray-700 text-[11px]">pieces</span>
                                         <div class="flex items-center space-x-0.5">
-                                            <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ (getLocationTotalIssuedPiecesDiamond(location) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                            <p class="text-green-500 text-[10px]">{{ (getLocationTotalIssuedPiecesDiamond(location) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-0.5">
-                                            <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ (getLocationTotalLossPiecesDiamond(location) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
+                                            <p class="text-red-500 text-[10px]">{{ (getLocationTotalLossPiecesDiamond(location) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -202,24 +203,24 @@
                             <!-- Actual Gold Section -->
                             <div class="flex flex-col text-left">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-ring text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-ring text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Gold</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getLocationTotalActualProductionGold(location) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                    <p class="text-green-500 text-[10px]">{{ (getLocationTotalActualProductionGold(location) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
                             <!-- Actual Diamond Section -->
                             <div class="flex flex-col">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-gem text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-gem text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Diamond</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getLocationTotalActualProductionDiamond(location) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                    <p class="text-green-500 text-[10px]">{{ (getLocationTotalActualProductionDiamond(location) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -251,24 +252,24 @@
                             <!-- Gold Section -->
                             <div class="flex flex-col text-left">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-ring text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-ring text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Gold</span>
                                 </div>
                                 <span class="text-[11px] text-gray-700 mt-1">grams</span>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getDepartmentTotalIssuedQtyGold(dept) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                    <p class="text-green-500 text-[10px]">{{ (getDepartmentTotalIssuedQtyGold(dept) || 0).toFixed(2) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ (getDepartmentTotalLossQtyGold(dept) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
+                                    <p class="text-red-500 text-[10px]">{{ (getDepartmentTotalLossQtyGold(dept) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
                             <!-- Diamond Section -->
                             <div class="flex flex-col">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-gem text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-gem text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Diamond</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-x-2 mt-1">
@@ -276,12 +277,12 @@
                                     <div class="flex flex-col items-center">
                                         <span class="text-[11px] text-gray-700">carat</span>
                                         <div class="flex items-center space-x-1">
-                                            <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ (getDepartmentTotalIssuedQtyDiamond(dept) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                            <p class="text-green-500 text-[10px]">{{ (getDepartmentTotalIssuedQtyDiamond(dept) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
-                                            <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ (getDepartmentTotalLossQtyDiamond(dept) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
+                                            <p class="text-red-500 text-[10px]">{{ (getDepartmentTotalLossQtyDiamond(dept) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
 
@@ -289,12 +290,12 @@
                                     <div class="flex flex-col items-right">
                                         <span class="text-[11px] text-gray-700">pieces</span>
                                         <div class="flex items-center space-x-1">
-                                            <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ (getDepartmentTotalIssuedPiecesDiamond(dept) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                            <p class="text-green-500 text-[10px]">{{ (getDepartmentTotalIssuedPiecesDiamond(dept) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
-                                            <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ (getDepartmentTotalLossPiecesDiamond(dept) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
+                                            <p class="text-red-500 text-[10px]">{{ (getDepartmentTotalLossPiecesDiamond(dept) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -308,24 +309,24 @@
                             <!-- Actual Gold Section -->
                             <div class="flex flex-col text-left">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-ring text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-ring text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Gold</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getDepartmentTotalActualProductionGold(dept) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                    <p class="text-green-500 text-[10px]">{{ (getDepartmentTotalActualProductionGold(dept) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
                             <!-- Actual Diamond Section -->
                             <div class="flex flex-col">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-gem text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-gem text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Diamond</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getDepartmentTotalActualProductionDiamond(dept) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                    <p class="text-green-500 text-[10px]">{{ (getDepartmentTotalActualProductionDiamond(dept) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -356,24 +357,24 @@
                             <!-- Gold Section -->
                             <div class="flex flex-col text-left">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-ring text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-ring text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Gold</span>
                                 </div>
                                 <span class="text-[11px] text-gray-700 mt-1">grams</span>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalIssuedQtyGold(emp) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                    <p class="text-green-500 text-[10px]">{{ (getEmployeeTotalIssuedQtyGold(emp) || 0).toFixed(2) }}</p>
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                    <p class="text-red-500 text-[11px]">{{ (getEmployeeTotalLossQtyGold(emp) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
+                                    <p class="text-red-500 text-[10px]">{{ (getEmployeeTotalLossQtyGold(emp) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
                             <!-- Diamond Section -->
                             <div class="flex flex-col">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-gem text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-gem text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Diamond</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-x-2 mt-1">
@@ -381,12 +382,12 @@
                                     <div class="flex flex-col items-center">
                                         <span class="text-[11px] text-gray-700">carat</span>
                                         <div class="flex items-center space-x-1">
-                                            <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalIssuedQtyDiamond(emp) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                            <p class="text-green-500 text-[10px]">{{ (getEmployeeTotalIssuedQtyDiamond(emp) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
-                                            <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ (getEmployeeTotalLossQtyDiamond(emp) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
+                                            <p class="text-red-500 text-[10px]">{{ (getEmployeeTotalLossQtyDiamond(emp) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
 
@@ -394,12 +395,12 @@
                                     <div class="flex flex-col items-right">
                                         <span class="text-[11px] text-gray-700">pieces</span>
                                         <div class="flex items-center space-x-1">
-                                            <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                            <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalIssuedPiecesDiamond(emp) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                            <p class="text-green-500 text-[10px]">{{ (getEmployeeTotalIssuedPiecesDiamond(emp) || 0).toFixed(2) }}</p>
                                         </div>
                                         <div class="flex items-center space-x-1">
-                                            <i class="fas fa-arrow-down text-red-500 text-[11px]"></i>
-                                            <p class="text-red-500 text-[11px]">{{ (getEmployeeTotalLossPiecesDiamond(emp) || 0).toFixed(2) }}</p>
+                                            <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
+                                            <p class="text-red-500 text-[10px]">{{ (getEmployeeTotalLossPiecesDiamond(emp) || 0).toFixed(2) }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -413,24 +414,24 @@
                             <!-- Actual Gold Section -->
                             <div class="flex flex-col text-left">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-ring text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-ring text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Gold</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalActualProductionGold(emp) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                    <p class="text-green-500 text-[10px]">{{ (getEmployeeTotalActualProductionGold(emp) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
                             <!-- Actual Diamond Section -->
                             <div class="flex flex-col">
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-gem text-gray-500 text-[11px]"></i>
+                                    <i class="fas fa-gem text-gray-500 text-[9px]"></i>
                                     <span class="text-[11px] font-semibold text-gray-600">Diamond</span>
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <i class="fas fa-arrow-up text-green-500 text-[11px]"></i>
-                                    <p class="text-green-500 text-[11px]">{{ (getEmployeeTotalActualProductionDiamond(emp) || 0).toFixed(2) }}</p>
+                                    <i class="fas fa-arrow-up text-green-500 text-[9px]"></i>
+                                    <p class="text-green-500 text-[10px]">{{ (getEmployeeTotalActualProductionDiamond(emp) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -455,6 +456,8 @@
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Dates</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">No. of Bags</th>
                                 <th class="px-3 py-2 text-left font-semibold">Item category</th>
+                                <th class="px-3 py-2 text-left font-semibold">Style Number</th>
+                                <th class="px-3 py-2 text-left font-semibold">Bag Count</th>
 
                                 <th class="px-3 py-2 text-left font-semibold">TM Production Gold</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Issued Qty Gold</th> -->
@@ -497,6 +500,12 @@
                                         
                                         <!-- Item Category -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
+
+                                        <!-- Print Design (Assembly Item) -->
+                                        <td class="px-3 py-2 group-hover:shadow-md">{{ dept.category_print_design_map?.[category] || '-' }}</td>
+
+                                        <!-- Bags (per category) -->
+                                        <td class="px-3 py-2 group-hover:shadow-md text-center bg-blue-50">{{ dept.category_bag_count_map?.[category] || 0 }}</td>
 
                                         <!-- Starting Qty Gold -->
                                         <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryStartingQty(dept, category) }}</td>
@@ -565,6 +574,12 @@
                                 <!-- Item Category (empty) -->
                                 <td class="px-3 py-2 font-semibold"></td>
 
+                                <!-- Print Design (empty) -->
+                                <td class="px-3 py-2 font-semibold"></td>
+
+                                <!-- Bags (empty) -->
+                                <td class="px-3 py-2 font-semibold"></td>
+
                                 <!-- Starting Qty Gold -->
                                 <td class="px-3 py-2">{{ totalDeptStartingQuantityGold }}</td>
 
@@ -629,6 +644,12 @@
                                             
                                             <!-- Item Category -->
                                             <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
+                                            
+                                            <!-- Print Design (Assembly Item) -->
+                                            <td class="px-3 py-2 group-hover:shadow-md">{{ emp.category_print_design_map?.[category] || '-' }}</td>
+                                            
+                                            <!-- Bags (per category) -->
+                                            <td class="px-3 py-2 group-hover:shadow-md text-center bg-blue-50">{{ emp.category_bag_count_map?.[category] || 0 }}</td>
                                             
                                             <!-- Starting Qty Gold -->
                                             <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryStartingQtyGold(emp, category) }}</td>
@@ -703,6 +724,12 @@
                                 <!-- Item Category (empty) -->
                                 <td class="px-3 py-2"></td>
 
+                                <!-- Print Design (empty) -->
+                                <td class="px-3 py-2"></td>
+
+                                <!-- Bags (empty) -->
+                                <td class="px-3 py-2"></td>
+
                                 <!-- Starting Qty Gold -->
                                 <td class="px-3 py-2">{{ totalEmpStartingQuantityGold }}</td>
 
@@ -756,25 +783,20 @@
             </div>
             <!-- Chart & Production Section -->
             <div class="grid grid-cols-2 gap-4 mt-4">
-                <!-- Production Chart -->
-                <div class="p-4 rounded-lg shadow w-full h-72 flex flex-col justify-center 
-                transition-all duration-300 hover:shadow-xl hover:scale-100 cursor-pointer">
-                    <h2 class="text-md font-bold mb-2 text-center">Production</h2>
-                    <div class="flex justify-center items-center w-full h-full">
+                <!-- Doughnut: Gold vs Diamond production split -->
+                <div class="p-4 rounded-lg shadow w-full h-80 flex flex-col bg-transparent/2">
+                    <h2 class="text-sm font-bold mb-2 text-center text-gray-700">Production</h2>
+                    <div class="relative flex-1">
                         <canvas id="productionChart"></canvas>
                     </div>
                 </div>
-                <div class="p-4 rounded-lg shadow w-full h-72 flex flex-col justify-center 
-                         transition-all duration-300 hover:shadow-xl hover:scale-100 cursor-pointer">
-
-                    <h2 class="text-md font-bold mb-2 text-center">
-                        {{ dashboardTitle }}
-                    </h2>
-                    <div class="flex justify-center items-center w-full h-full">
+                <!-- Bar/Line: Production & Loss per entity -->
+                <div class="p-4 rounded-lg shadow w-full h-80 flex flex-col bg-transparent/2">
+                    <h2 class="text-sm font-bold mb-2 text-center text-gray-700">{{ dashboardTitle }} — Gold & Diamond</h2>
+                    <div class="relative flex-1">
                         <canvas id="cryptoChart"></canvas>
                     </div>
                 </div>
-
             </div>
         </main>
     </div>
@@ -786,6 +808,9 @@ import Chart from 'chart.js/auto';
 import { useAllEfficiencyAnalysisApi } from "@/composables/reports-api/efficiency-analysis-api/FetchEfficiencyAnalysisApi";
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { ENV_VAR } from "@/shared/constants";
 
 export default {
     components: {
@@ -804,7 +829,8 @@ export default {
         const showDepartments = ref(false);
         const showEmployees = ref(false);
         const selectedDateRange = ref(null); // Holds selected date range
-        const dashboardTitle = ref(props.type === 'repair' ? "Repair Efficiency Analysis" : "Location Efficiency Analysis");
+        const baseTitle = props.type === 'repair' ? "Repair Efficiency Analysis" : "Overall Efficiency Analysis";
+        const dashboardTitle = ref(baseTitle);
         const selectedDepartments = ref([]);
         const selectedEmployees = ref([]);
         const showTable = ref(false);
@@ -832,6 +858,10 @@ export default {
         const isInitialLoading = ref(true);
         const showNoDataPopup = ref(false); // ✅ Define showNoDataPopup as a reactive variable
 
+        const CASTING = Number(ENV_VAR.CONSTANTS.DEPARTMENT_CASTING);
+        const TREE_CUTTING_CLEANING = Number(ENV_VAR.CONSTANTS.DEPARTMENT_TREE_CUTTING_CLEANING);
+        const GRINDING = Number(ENV_VAR.CONSTANTS.DEPARTMENT_GRINDING);
+
         // Function to get the start of the current month and today’s date
         // const getDefaultDateRange = () => {
         //     const today = new Date();
@@ -842,8 +872,10 @@ export default {
             const today = new Date();
             const yesterday = new Date(today);
             yesterday.setDate(today.getDate() - 1);
-            return [yesterday, yesterday]; // Returns range: [yesterday, yesterday]
+            // return [yesterday, yesterday]; // Returns range: [yesterday, yesterday]
+            return [today, today]; // Returns range: [today, today]
         };
+        selectedDateRange.value = getDefaultDateRange(); // Initialize with today's date range
         const getDefaultDateRangeLast = () => {
             const today = new Date();
 
@@ -1458,13 +1490,12 @@ export default {
         // };
 
         // download data function
-        const downloadData = () => {
-            if (!listEfficiencyData.value || Object.keys(listEfficiencyData.value).length === 0) {
+        const downloadData = async () => {
+            if (!locations.value || locations.value.length === 0) {
                 alert("No data available for download.");
                 return;
             }
 
-            // ✅ Format the selected date range correctly
             const formatDate = (date) => {
                 const offset = date.getTimezoneOffset();
                 date = new Date(date.getTime() - (offset * 60 * 1000));
@@ -1474,147 +1505,189 @@ export default {
             const startDate = selectedDateRange.value[0] ? formatDate(selectedDateRange.value[0]) : "N/A";
             const endDate = selectedDateRange.value[1] ? formatDate(selectedDateRange.value[1]) : "N/A";
 
-            // ✅ Retrieve Inventory Adjustments (Finding Recovery Weight Like `fetchEfficiencyAnalysisData`)
-            let inventoryAdjustments = listInventoryAdjustments.value || [];
-            let employeeQuantities = {}; // ✅ Store Department-Employee Key
+            const workbook = new ExcelJS.Workbook();
+            const ws = workbook.addWorksheet('Efficiency Report');
 
-            // **Process inventory adjustments to aggregate quantities by department & employee**
-            inventoryAdjustments.forEach(item => {
-                const departmentId = item.custbody_jj_recovery_department;
-                const employeeId = item.custbody_jj_recovered_employee;
-                const key = `${departmentId}_${employeeId}`; // ✅ Department-Specific Employee Key
-                const quantity = parseFloat(item.quantity || 0);
-
-                // Aggregate by department-employee key
-                if (!employeeQuantities[key]) {
-                    employeeQuantities[key] = 0;
-                }
-                employeeQuantities[key] += quantity;
-            });
-
-            // ✅ CSV Header
-            let csvContent = `Efficiency Report\nDate Range: ${startDate} to ${endDate}\n\n`;
-            csvContent += "Location, Department, Employee, TM Production Gold (g), Gross Loss Gold (g), TM Production Diamond (carat), Gross Loss Diamond (carat), TM Production Diamond (pieces), Gross Loss Diamond (pieces), Gold Recovery Weight (gm), Net Loss Gold, Diamond Recovery Weight (ct), Net Loss Diamond\n";
-
-            let grandTotal = {
-                productionGold: 0,
-                lossGold: 0,
-                productionDiamond: 0,
-                lossDiamond: 0,
-                productionDiamondPieces: 0,
-                lossDiamondPieces: 0,
-                recoveryGoldWeight: 0,
-                netLossGold: 0,
-                recoveryDiamondWeight: 0,
-                netLossDiamond: 0
+            // colour palette matching UI
+            const C = {
+                headerBg:   '1F2937', headerFg: 'FFFFFF',
+                blueBg:     'DBEAFE', blueFg:   '1D4ED8',
+                redFg:      'EF4444',
+                subtotalBg: 'EFF6FF',   // very light blue — whole subtotal row
+                grandBg:    'F0FDF4',   // very light green — whole grand total row
+                rowBg:      'FFFFFF',   // white for all data rows
+                borderColor:'D1D5DB',
             };
+            const headerFont   = { bold: true, color: { argb: 'FF' + C.headerFg }, size: 10 };
+            const boldFont     = { bold: true, size: 10 };
+            const normalFont   = { size: 10 };
+            const redFont      = { size: 10, color: { argb: 'FF' + C.redFg } };
+            const blueBoldFont = { bold: true, size: 10, color: { argb: 'FF' + C.blueFg } };
+            const thinBorder   = {
+                top:   { style:'thin', color:{ argb:'FF'+C.borderColor } },
+                left:  { style:'thin', color:{ argb:'FF'+C.borderColor } },
+                bottom:{ style:'thin', color:{ argb:'FF'+C.borderColor } },
+                right: { style:'thin', color:{ argb:'FF'+C.borderColor } },
+            };
+            const fillSolid = (hex) => ({ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+hex } });
+            const styleRow  = (row, bg, font, colCount) => {
+                for (let c = 1; c <= colCount; c++) {
+                    const cell = row.getCell(c);
+                    cell.fill      = fillSolid(bg);
+                    cell.font      = { ...font };
+                    cell.border    = thinBorder;
+                    cell.alignment = { vertical:'middle', wrapText:true };
+                }
+            };
+            const redCols = (row, cols) => cols.forEach(c => { row.getCell(c).font = { ...redFont }; });
 
-            Object.entries(listEfficiencyData.value).forEach(([locationId, location]) => {
-                Object.entries(location.departments || {}).forEach(([deptId, department]) => {
-                    let departmentTotal = {
-                        productionGold: 0,
-                        lossGold: 0,
-                        productionDiamond: 0,
-                        lossDiamond: 0,
-                        productionDiamondPieces: 0,
-                        lossDiamondPieces: 0,
-                        recoveryGoldWeight: 0,
-                        netLossGold: 0,
-                        recoveryDiamondWeight: 0,
-                        netLossDiamond: 0
-                    };
+            // Title
+            ws.addRow([`Efficiency Report`]);
+            ws.getRow(ws.rowCount).font = { bold:true, size:13 };
+            ws.addRow([`Date Range: ${startDate} to ${endDate}`]);
+            ws.getRow(ws.rowCount).font = { size:10, italic:true };
+            ws.addRow([]);
 
-                    Object.entries(department.employees || {}).forEach(([empId, employee]) => {
-                        // ✅ Find `tmGrossLossWeight` (Gold Recovery Weight) Using Department-Specific Key
-                        const key = `${deptId}_${empId}`;
-                        const goldRecoveryWeight = employeeQuantities[key] || 0;
-                        const netLossGold = (parseFloat(employee.grossLoss || 0) - goldRecoveryWeight).toFixed(2);
+            if (showEmployeesTable.value) {
+                // ── EMPLOYEE TABLE ──────────────────────────────────────
+                const EMP_HEADERS = [
+                    'Location','Department','Employee','No. of Bags','Item Category','Print Design (Assembly Item)','Bags',
+                    'TM Production Gold','Actual Production Gold','Loss Qty Gold','Gold Loss %',
+                    'TM Production Diamond','Actual Production Diamond','Loss Qty Diamond','Diamond Loss %',
+                    'Gold Recovery Weight (gm)','Net Loss Gold','Diamond Recovery Weight (ct)','Net Loss Diamond'
+                ];
+                const ECOL = EMP_HEADERS.length;
+                const EMP_LOSS_COLS = [10,11,14,15,17,19];
+                const ehRow = ws.addRow(EMP_HEADERS);
+                styleRow(ehRow, C.headerBg, headerFont, ECOL);
+                ehRow.height = 30;
+                EMP_HEADERS.forEach((h, i) => { ws.getColumn(i+1).width = i===0?14:i<=4?16:18; });
 
-                        csvContent += [
-                            `"${location.location_name}"`,
-                            `"${department.department_name}"`,
-                            `"${employee.name}"`,
-                            roundToTwo(employee.tmProduction || 0),
-                            roundToTwo(employee.grossLoss || 0),
-                            roundToTwo(employee.tmProductionDiamond || 0),
-                            roundToTwo(employee.grossLossDiamond || 0),
-                            roundToTwo(employee.tmProductionDiamondPieces || 0),
-                            roundToTwo(employee.grossLossDiamondPieces || 0),
-                            roundToTwo(goldRecoveryWeight),  // ✅ Department-Specific Gold Recovery Weight
-                            roundToTwo(netLossGold),
-                            roundToTwo(0),
-                            roundToTwo(0)
-                        ].join(",") + "\n";
+                let gt = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
 
-                        // **🔹 Accumulate Department Totals**
-                        departmentTotal.productionGold += parseFloat(employee.tmProduction || 0);
-                        departmentTotal.lossGold += parseFloat(employee.grossLoss || 0);
-                        departmentTotal.productionDiamond += parseFloat(employee.tmProductionDiamond || 0);
-                        departmentTotal.lossDiamond += parseFloat(employee.grossLossDiamond || 0);
-                        departmentTotal.productionDiamondPieces += parseFloat(employee.tmProductionDiamondPieces || 0);
-                        departmentTotal.lossDiamondPieces += parseFloat(employee.grossLossDiamondPieces || 0);
-                        departmentTotal.recoveryGoldWeight += goldRecoveryWeight;
-                        departmentTotal.netLossGold += parseFloat(netLossGold);
+                locations.value.forEach(loc => {
+                    const locName = loc.name?.value || "";
+                    let locShown = false;
+                    (loc.departments || []).forEach(dept => {
+                        const deptName = dept.name || "";
+                        (dept.employees || []).forEach(emp => {
+                            const empName  = emp.name || "";
+                            const bagCount = emp.bag_count || 0;
+                            const cats     = emp.unique_categories_array || [];
+                            let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
+
+                            cats.forEach((cat, ci) => {
+                                const d   = (emp.category_qty_map||{})[`${emp.id}_${cat}`]||{};
+                                const sG=parseFloat(d.starting_qty_gold||0), iG=parseFloat(d.issued_qty_gold||0), lG=parseFloat(d.loss_qty_gold||0), scG=parseFloat(d.scrap_qty_gold||0), bG=parseFloat(d.balance_qty_gold||0);
+                                const sD=parseFloat(d.starting_qty_diamond||0), iD=parseFloat(d.issued_qty_diamond||0), lD=parseFloat(d.loss_qty_diamond||0), scD=parseFloat(d.scrap_qty_diamond||0), bD=parseFloat(d.balance_qty_diamond||0);
+                                const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
+                                const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
+                                sub.sG+=sG;sub.iG+=iG;sub.lG+=lG;sub.scG+=scG;sub.bG+=bG;
+                                sub.sD+=sD;sub.iD+=iD;sub.lD+=lD;sub.scD+=scD;sub.bD+=bD;
+                                gt.sG+=sG;gt.iG+=iG;gt.lG+=lG;gt.scG+=scG;gt.bG+=bG;
+                                gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
+
+                                const isFirst = ci===0;
+                                const showLoc = isFirst && !locShown;
+                                const printDesign = (emp.category_print_design_map||{})[cat] || '-';
+                                const catBagCount = (emp.category_bag_count_map||{})[cat] || 0;
+                                const dr = ws.addRow([
+                                    showLoc?locName:'', isFirst?deptName:'', isFirst?empName:'',
+                                    isFirst?bagCount:'', cat, printDesign, catBagCount,
+                                    +roundToTwo(sG), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
+                                    +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
+                                    '-','-','-','-'
+                                ]);
+                                styleRow(dr, C.rowBg, normalFont, ECOL);
+                                redCols(dr, EMP_LOSS_COLS);
+                                if (showLoc) locShown = true;
+                            });
+
+                            if (cats.length > 0) {
+                                const aG=sub.sG+sub.iG-sub.lG-sub.scG-sub.bG, aD=sub.sD+sub.iD-sub.lD-sub.scD-sub.bD;
+                                const sr = ws.addRow(['','',`Total (${empName})`,bagCount,'','','',+roundToTwo(sub.sG),+roundToTwo(aG),+roundToTwo(sub.lG),'',+roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'','','','','']);
+                                styleRow(sr, C.subtotalBg, boldFont, ECOL);
+                                redCols(sr, [10,14]);
+                            }
+                        });
                     });
-
-                    // **🔸 Add Department Total Row**
-                    csvContent += [
-                        `""`, // Separator Line
-                        `"${department.department_name} (TOTAL)"`,
-                        `""`, // Empty Employee column
-                        roundToTwo(departmentTotal.productionGold),
-                        roundToTwo(departmentTotal.lossGold),
-                        roundToTwo(departmentTotal.productionDiamond),
-                        roundToTwo(departmentTotal.lossDiamond),
-                        roundToTwo(departmentTotal.productionDiamondPieces),
-                        roundToTwo(departmentTotal.lossDiamondPieces),
-                        roundToTwo(departmentTotal.recoveryGoldWeight),
-                        roundToTwo(departmentTotal.netLossGold),
-                        roundToTwo(department.totalWeightDiamond || 0),
-                        roundToTwo(department.netLossDiamond || 0)
-                    ].join(",") + "\n";
-
-                    // **🔹 Accumulate Grand Totals**
-                    grandTotal.productionGold += departmentTotal.productionGold;
-                    grandTotal.lossGold += departmentTotal.lossGold;
-                    grandTotal.productionDiamond += departmentTotal.productionDiamond;
-                    grandTotal.lossDiamond += departmentTotal.lossDiamond;
-                    grandTotal.productionDiamondPieces += departmentTotal.productionDiamondPieces;
-                    grandTotal.lossDiamondPieces += departmentTotal.lossDiamondPieces;
-                    grandTotal.recoveryGoldWeight += departmentTotal.recoveryGoldWeight;
-                    grandTotal.netLossGold += departmentTotal.netLossGold;
                 });
-            });
 
-            // **🌟 Grand Total Row**
-            csvContent += [
-                `""`, // Empty column
-                `"GRAND TOTAL"`, // Grand Total Label
-                `""`, // Empty Employee column
-                roundToTwo(grandTotal.productionGold),
-                roundToTwo(grandTotal.lossGold),
-                roundToTwo(grandTotal.productionDiamond),
-                roundToTwo(grandTotal.lossDiamond),
-                roundToTwo(grandTotal.productionDiamondPieces),
-                roundToTwo(grandTotal.lossDiamondPieces),
-                roundToTwo(grandTotal.recoveryGoldWeight),
-                roundToTwo(grandTotal.netLossGold),
-                roundToTwo(grandTotal.recoveryDiamondWeight),
-                roundToTwo(grandTotal.netLossDiamond)
-            ].join(",") + "\n";
+            } else {
+                // ── DEPARTMENT TABLE ────────────────────────────────────
+                const DEPT_HEADERS = [
+                    'Location','Department','No. of Bags','Item Category','Print Design (Assembly Item)','Bags',
+                    'TM Production Gold','Actual Production Gold','Loss Qty Gold','Gold Loss %',
+                    'TM Production Diamond','Actual Production Diamond','Loss Qty Diamond','Diamond Loss %',
+                    'Gold Recovery Weight (gm)','Net Loss Gold','Diamond Recovery Weight (ct)','Net Loss Diamond'
+                ];
+                const DCOL = DEPT_HEADERS.length;
+                const DEPT_LOSS_COLS = [9,10,13,14,16,18];
+                const dhRow = ws.addRow(DEPT_HEADERS);
+                styleRow(dhRow, C.headerBg, headerFont, DCOL);
+                dhRow.height = 30;
+                DEPT_HEADERS.forEach((h, i) => { ws.getColumn(i+1).width = i===0?14:i<=3?16:18; });
 
-            // ✅ Generate and Download CSV File
+                let gt = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
+
+                locations.value.forEach(loc => {
+                    const locName = loc.name?.value || "";
+                    let locShown = false;
+                    (loc.departments || []).forEach(dept => {
+                        const deptName = dept.name || "";
+                        const bagCount = dept.bag_count || 0;
+                        const cats     = dept.unique_categories_array || [];
+                        let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
+
+                        cats.forEach((cat, ci) => {
+                            const d   = (dept.category_qty_map||{})[`${dept.id}_${cat}`]||{};
+                            const sG=parseFloat(d.starting_qty_gold||0), iG=parseFloat(d.issued_qty_gold||0), lG=parseFloat(d.loss_qty_gold||0), scG=parseFloat(d.scrap_qty_gold||0), bG=parseFloat(d.balance_qty_gold||0);
+                            const sD=parseFloat(d.starting_qty_diamond||0), iD=parseFloat(d.issued_qty_diamond||0), lD=parseFloat(d.loss_qty_diamond||0), scD=parseFloat(d.scrap_qty_diamond||0), bD=parseFloat(d.balance_qty_diamond||0);
+                            const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
+                            const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
+                            sub.sG+=sG;sub.iG+=iG;sub.lG+=lG;sub.scG+=scG;sub.bG+=bG;
+                            sub.sD+=sD;sub.iD+=iD;sub.lD+=lD;sub.scD+=scD;sub.bD+=bD;
+                            gt.sG+=sG;gt.iG+=iG;gt.lG+=lG;gt.scG+=scG;gt.bG+=bG;
+                            gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
+
+                            const isFirst = ci===0;
+                            const showLoc = isFirst && !locShown;
+                            const printDesign = (dept.category_print_design_map||{})[cat] || '-';
+                            const catBagCount = (dept.category_bag_count_map||{})[cat] || 0;
+                            const dr = ws.addRow([
+                                showLoc?locName:'', isFirst?deptName:'',
+                                isFirst?bagCount:'', cat, printDesign, catBagCount,
+                                +roundToTwo(sG), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
+                                +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
+                                '-','-','-','-'
+                            ]);
+                            styleRow(dr, C.rowBg, normalFont, DCOL);
+                            redCols(dr, DEPT_LOSS_COLS);
+                            if (showLoc) locShown = true;
+                        });
+
+                        if (cats.length > 0) {
+                            const aG=sub.sG+sub.iG-sub.lG-sub.scG-sub.bG, aD=sub.sD+sub.iD-sub.lD-sub.scD-sub.bD;
+                            const sr = ws.addRow(['',`Total (${deptName})`,bagCount,'','','',+roundToTwo(sub.sG),+roundToTwo(aG),+roundToTwo(sub.lG),'',+roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'','','','','']);
+                            styleRow(sr, C.subtotalBg, boldFont, DCOL);
+                            redCols(sr, [9,13]);
+                        }
+                    });
+                });
+
+                const aG=gt.sG+gt.iG-gt.lG-gt.scG-gt.bG, aD=gt.sD+gt.iD-gt.lD-gt.scD-gt.bD;
+                const allDeptBags = new Set();
+                locations.value.forEach(loc => (loc.departments||[]).forEach(dept => (dept.unique_bags_array||[]).forEach(b => allDeptBags.add(b))));
+                const grandDeptBagCount = allDeptBags.size || locations.value.reduce((s,loc)=>(loc.departments||[]).reduce((s2,dept)=>s2+parseInt(dept.bag_count||0),s),0);
+                const dgr = ws.addRow(['','GRAND TOTAL',grandDeptBagCount,'','','',+roundToTwo(gt.sG),+roundToTwo(aG),+roundToTwo(gt.lG),'',+roundToTwo(gt.sD),+roundToTwo(aD),+roundToTwo(gt.lD),'','','','','']);
+                styleRow(dgr, C.grandBg, boldFont, DCOL);
+                redCols(dgr, [9,13]);
+            }
+
+            // Download as .xlsx
             const timestamp = new Date().toISOString().replace(/[-T:]/g, "_").split(".")[0];
-            const filename = `Efficiency_Report_${timestamp}.csv`;
-
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const buffer = await workbook.xlsx.writeBuffer();
+            saveAs(new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `Efficiency_Report_${timestamp}.xlsx`);
         };
 
 
@@ -1828,6 +1901,12 @@ export default {
 
         // Helper function to get total actual production gold for a department
         const getDepartmentTotalActualProductionGold = (dept) => {
+            // For special departments, return Wax Tree actual production gold directly
+            if ([CASTING, TREE_CUTTING_CLEANING, GRINDING].includes(parseInt(dept.id))) {
+                const waxValue = parseFloat(dept.wax_tree_actual_production_gold || 0);
+                console.log(`[Wax Tree] Dept ${dept.id} (${dept.name}) actual_production_gold:`, waxValue);
+                return waxValue;
+            }
             if (!dept.category_qty_map) return 0;
             let sum = 0;
             Object.keys(dept.category_qty_map).forEach(key => {
@@ -2720,6 +2799,9 @@ export default {
                                     starting_qty: dept.starting_qty || 0,
                                     loss_qty: dept.loss_qty || 0,
                                     category_qty_map: dept.category_qty_map || {},
+                                    category_print_design_map: dept.category_print_design_map || {},
+                                    category_bag_count_map: dept.category_bag_count_map || {},
+                                    wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
                                     employees: (dept.employees_array || []).map(emp => {
                                         // Build category_qty_map from categories array
                                         const categoryQtyMap = {};
@@ -2751,7 +2833,9 @@ export default {
                                             starting_qty: emp.starting_qty || 0,
                                             loss_qty: emp.loss_qty || 0,
                                             categories: emp.categories || [],
-                                            category_qty_map: categoryQtyMap
+                                            category_qty_map: categoryQtyMap,
+                                            category_print_design_map: emp.category_print_design_map || {},
+                                            category_bag_count_map: emp.category_bag_count_map || {}
                                         };
                                         return empObj;
                                     })
@@ -2775,6 +2859,7 @@ export default {
                                 console.log(`    Department Starting Qty: ${dept.starting_qty}`);
                                 console.log(`    Department Loss Qty: ${dept.loss_qty}`);
                                 console.log(`    Category Qty Map:`, dept.category_qty_map);
+                                console.log(`    Category Print Design Map:`, dept.category_print_design_map);
                                 console.log(`    Total Employees: ${dept.employees.length}`);
                                 
                                 dept.employees.forEach((emp, empIdx) => {
@@ -2812,6 +2897,66 @@ export default {
                         console.log("─".repeat(60));
                         console.log("🟢 DATA FETCH COMPLETE - Ready for UI display");
                         console.log("=".repeat(60) + "\n");
+                    } else {
+                        // ✅ locationId provided — update only that specific location's departments
+                        const locData = listEfficiencyData.value[locationId];
+                        if (locData) {
+                            const targetLoc = locations.value.find(loc => loc.internalid.value == locationId);
+                            if (targetLoc) {
+                                targetLoc.departments = Object.entries(locData.departments || {}).map(([deptId, dept]) => {
+                                    const categoryQtyMapByEmp = {};
+                                    const employees = (dept.employees_array || []).map(emp => {
+                                        const empCategoryQtyMap = {};
+                                        if (emp.categories && Array.isArray(emp.categories)) {
+                                            emp.categories.forEach(cat => {
+                                                const key = `${emp.employee_id}_${cat.category_name}`;
+                                                empCategoryQtyMap[key] = {
+                                                    starting_qty_gold: cat.starting_qty_gold || 0,
+                                                    starting_qty_diamond: cat.starting_qty_diamond || 0,
+                                                    issued_qty_gold: cat.issued_qty_gold || 0,
+                                                    issued_qty_diamond: cat.issued_qty_diamond || 0,
+                                                    loss_qty_gold: cat.loss_qty_gold || 0,
+                                                    loss_qty_diamond: cat.loss_qty_diamond || 0,
+                                                    scrap_qty_gold: cat.scrap_qty_gold || 0,
+                                                    scrap_qty_diamond: cat.scrap_qty_diamond || 0,
+                                                    balance_qty_gold: cat.balance_qty_gold || 0,
+                                                    balance_qty_diamond: cat.balance_qty_diamond || 0
+                                                };
+                                            });
+                                        }
+                                        return {
+                                            id: emp.employee_id,
+                                            name: emp.name,
+                                            bag_count: emp.bag_count || 0,
+                                            unique_bags_array: emp.unique_bags_array || [],
+                                            category_count: emp.category_count || 0,
+                                            unique_categories_array: emp.unique_categories_array || [],
+                                            starting_qty: emp.starting_qty || 0,
+                                            loss_qty: emp.loss_qty || 0,
+                                            categories: emp.categories || [],
+                                            category_qty_map: empCategoryQtyMap,
+                                            category_print_design_map: emp.category_print_design_map || {},
+                                            category_bag_count_map: emp.category_bag_count_map || {}
+                                        };
+                                    });
+                                    return {
+                                        id: deptId,
+                                        name: dept.department_name,
+                                        bag_count: dept.bag_count || 0,
+                                        unique_bags_array: dept.unique_bags_array || [],
+                                        category_count: dept.category_count || 0,
+                                        unique_categories_array: dept.unique_categories_array || [],
+                                        starting_qty: dept.starting_qty || 0,
+                                        loss_qty: dept.loss_qty || 0,
+                                        category_qty_map: dept.category_qty_map || {},
+                                        category_print_design_map: dept.category_print_design_map || {},
+                                        category_bag_count_map: dept.category_bag_count_map || {},
+                                        wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
+                                        employees
+                                    };
+                                });
+                            }
+                        }
                     }
 
                     isInitialLoading.value = false;
@@ -2834,7 +2979,8 @@ export default {
         const closeNoDataPopup = () => {
             console.log("Closing No Data Popup");
             showNoDataPopup.value = false;
-            selectedDateRange.value = getDefaultDateRange(); // Reset date filter value
+            // Reset departments so cards show with all 0 values, keeping date picker usable
+            locations.value = locations.value.map(loc => ({ ...loc, departments: [] }));
         };
 
         const formatDate = (date) => {
@@ -2883,7 +3029,7 @@ export default {
                 showDepartments.value = false;
                 showEmployees.value = false;
                 showTable.value = false;
-                dashboardTitle.value = "Location Efficiency Analysis";
+                dashboardTitle.value = baseTitle;
                 updateCharts();
             } else {
                 expandedLocation.value = locationId;
@@ -3147,175 +3293,149 @@ export default {
 
         const updateCharts = () => {
             setTimeout(() => {
-                let labels, datasets;
-                let productionLabels = [];
-                let productionValues = [];
-                let chartType = "line"; // Default is Line Chart
+                // ── helpers to sum category_qty_map for a dept or employee ──────────
+                const sumCatMap = (entity, field) => {
+                    if (!entity.category_qty_map || !entity.unique_categories_array) return 0;
+                    return entity.unique_categories_array.reduce((s, cat) => {
+                        const d = entity.category_qty_map[`${entity.id}_${cat}`] || {};
+                        return s + parseFloat(d[field] || 0);
+                    }, 0);
+                };
+                const actualProdGold    = (e) => sumCatMap(e, 'starting_qty_gold')    + sumCatMap(e, 'issued_qty_gold')    - sumCatMap(e, 'loss_qty_gold')    - sumCatMap(e, 'scrap_qty_gold')    - sumCatMap(e, 'balance_qty_gold');
+                const actualProdDiamond = (e) => sumCatMap(e, 'starting_qty_diamond') + sumCatMap(e, 'issued_qty_diamond') - sumCatMap(e, 'loss_qty_diamond') - sumCatMap(e, 'scrap_qty_diamond') - sumCatMap(e, 'balance_qty_diamond');
+                const lossGold          = (e) => sumCatMap(e, 'loss_qty_gold');
+                const lossDiamond       = (e) => sumCatMap(e, 'loss_qty_diamond');
+
+                let labels = [];
+                let barDatasets = [];
+                let doughnutLabels = [];
+                let doughnutValues = [];
 
                 if (!showDepartments.value && !showEmployees.value) {
-                    // ✅ Use Bar Chart for Locations
-                    chartType = "bar";
-                    labels = locations.value.map(loc => loc.name.value);
-                    let goldProductionData = locations.value.map(loc => parseInt(loc.tmproduction_gold || 0));
-                    let goldLossData = locations.value.map(loc => parseInt(loc.loss_gold || 0));
-                    let diamondProductionData = locations.value.map(loc => parseInt(loc.tmproduction_diamond || 0));
-                    let diamondLossData = locations.value.map(loc => parseInt(loc.loss_diamond || 0));
-                    let diamondProductionPiecesData = locations.value.map(loc => parseInt(loc.tmproduction_diamond_pieces || 0));
-                    let diamondLossPiecesData = locations.value.map(loc => parseInt(loc.loss_diamond_pieces || 0));
+                    // Location level — one bar per location, aggregated across all its departments
+                    labels = locations.value.map(l => l.name.value);
 
-                    datasets = [
-                        {
-                            label: "Gold Production (g)",
-                            data: goldProductionData,
-                            backgroundColor: "#B59E5F",
-                        },
-                        {
-                            label: "Gold Loss (g)",
-                            data: goldLossData,
-                            backgroundColor: "#D9A066",
-                        },
-                        {
-                            label: "Diamond Production (cts)",
-                            data: diamondProductionData,
-                            backgroundColor: "#7092BE",
-                        },
-                        {
-                            label: "Diamond Loss (cts)",
-                            data: diamondLossData,
-                            backgroundColor: "#A0B9D9",
-                        },
-                        {
-                            label: "Diamond Production (pieces)",
-                            data: diamondProductionPiecesData,
-                            backgroundColor: "#5B7C99",
-                        },
-                        {
-                            label: "Diamond Loss (pieces)",
-                            data: diamondLossPiecesData,
-                            backgroundColor: "#7F9FB9",
-                        }
+                    const prodGoldData    = locations.value.map(loc =>
+                        parseFloat(roundToTwo(loc.departments.reduce((s, d) => s + actualProdGold(d), 0))));
+                    const lossGoldData    = locations.value.map(loc =>
+                        parseFloat(roundToTwo(loc.departments.reduce((s, d) => s + lossGold(d), 0))));
+                    const prodDiamondData = locations.value.map(loc =>
+                        parseFloat(roundToTwo(loc.departments.reduce((s, d) => s + actualProdDiamond(d), 0))));
+                    const lossDiamondData = locations.value.map(loc =>
+                        parseFloat(roundToTwo(loc.departments.reduce((s, d) => s + lossDiamond(d), 0))));
+
+                    barDatasets = [
+                        { label: 'Actual Production Gold (g)',    data: prodGoldData,    backgroundColor: '#e5c000', borderColor: '#e5c000', borderWidth: 1 },
+                        { label: 'Loss Gold (g)',                  data: lossGoldData,    backgroundColor: '#ff4034', borderColor: '#ff4034', borderWidth: 1 },
+                        { label: 'Actual Production Diamond (ct)', data: prodDiamondData, backgroundColor: '#4993f7', borderColor: '#4993f7', borderWidth: 1 },
+                        { label: 'Loss Diamond (ct)',              data: lossDiamondData, backgroundColor: 'rgba(220,38,38,0.5)', borderColor: '#DC2626', borderWidth: 1 },
                     ];
 
-                    // ✅ Doughnut Chart for Overall Production
-                    productionLabels = ["Gold Production", "Diamond Production (cts)", "Diamond Production (pieces)"];
-                    productionValues = [
-                        locations.value.reduce((sum, loc) => sum + parseInt(loc.tmproduction_gold || 0), 0),
-                        locations.value.reduce((sum, loc) => sum + parseInt(loc.tmproduction_diamond || 0), 0),
-                        locations.value.reduce((sum, loc) => sum + parseInt(loc.tmproduction_diamond_pieces || 0), 0)
-                    ];
+                    const totalProdGold    = prodGoldData.reduce((s, v) => s + v, 0);
+                    const totalProdDiamond = prodDiamondData.reduce((s, v) => s + v, 0);
+                    const totalLossGold    = lossGoldData.reduce((s, v) => s + v, 0);
+                    const totalLossDiamond = lossDiamondData.reduce((s, v) => s + v, 0);
+                    doughnutLabels = ['Production Gold', 'Production Diamond', 'Loss Gold', 'Loss Diamond'];
+                    doughnutValues = [totalProdGold, totalProdDiamond, totalLossGold, totalLossDiamond];
                 } else if (showDepartments.value && !showEmployees.value) {
-                    // ✅ Department-specific Line Chart
-                    labels = selectedDepartments.value.map(dept => dept.name);
-                    let productionData = selectedDepartments.value.map(dept => parseInt(dept.production || 0));
-                    let lossData = selectedDepartments.value.map(dept => parseInt(dept.loss || 0));
+                    // Department level — mirror the department table
+                    const depts = selectedDepartmentData.value;
+                    labels = depts.map(d => d.name);
 
-                    datasets = [
-                        {
-                            label: "Production",
-                            data: productionData,
-                            borderColor: "#10B981",
-                            backgroundColor: "rgba(16,185,129,0.2)",
-                            fill: true,
-                            tension: 0.4,
-                        },
-                        {
-                            label: "Loss",
-                            data: lossData,
-                            borderColor: "#DC2626",
-                            backgroundColor: "rgba(220,38,38,0.2)",
-                            fill: true,
-                            tension: 0.4,
-                        }
+                    const prodGoldData    = depts.map(d => parseFloat(roundToTwo(actualProdGold(d))));
+                    const lossGoldData    = depts.map(d => parseFloat(roundToTwo(lossGold(d))));
+                    const prodDiamondData = depts.map(d => parseFloat(roundToTwo(actualProdDiamond(d))));
+                    const lossDiamondData = depts.map(d => parseFloat(roundToTwo(lossDiamond(d))));
+
+                    barDatasets = [
+                        { label: 'Actual Production Gold (g)',    data: prodGoldData,    backgroundColor: '#e5c000',  borderColor: '#e5c000', borderWidth: 1 },
+                        { label: 'Loss Gold (g)',                  data: lossGoldData,    backgroundColor: '#ff4034',   borderColor: '#ff4034', borderWidth: 1 },
+                        { label: 'Actual Production Diamond (ct)', data: prodDiamondData, backgroundColor: '#4993f7', borderColor: '#4993f7', borderWidth: 1 },
+                        { label: 'Loss Diamond (ct)',              data: lossDiamondData, backgroundColor: 'rgba(220,38,38,0.5)',   borderColor: '#DC2626', borderWidth: 1 },
                     ];
 
-                    // ✅ Doughnut Chart Uses Department Data
-                    productionLabels = selectedDepartments.value.map(dept => dept.name);
-                    productionValues = selectedDepartments.value.map(dept => parseInt(dept.production || 0));
+                    const totalProdGold    = prodGoldData.reduce((s, v) => s + v, 0);
+                    const totalProdDiamond = prodDiamondData.reduce((s, v) => s + v, 0);
+                    const totalLossGold    = lossGoldData.reduce((s, v) => s + v, 0);
+                    const totalLossDiamond = lossDiamondData.reduce((s, v) => s + v, 0);
+                    doughnutLabels = ['Production Gold', 'Production Diamond', 'Loss Gold', 'Loss Diamond'];
+                    doughnutValues = [totalProdGold, totalProdDiamond, totalLossGold, totalLossDiamond];
                 } else {
-                    // ✅ Employee-specific Line Chart
-                    labels = selectedEmployees.value.map(emp => emp.name);
-                    let productionData = selectedEmployees.value.map(emp => parseFloat(emp.tmProduction || 0));
-                    let lossData = selectedEmployees.value.map(emp => parseFloat(emp.loss || 0));
+                    // Employee level — mirror the employee table
+                    const emps = selectedEmployees.value;
+                    labels = emps.map(e => e.name);
 
-                    datasets = [
-                        {
-                            label: "Production",
-                            data: productionData,
-                            borderColor: "#10B981",
-                            backgroundColor: "rgba(16,185,129,0.2)",
-                            fill: true,
-                            tension: 0.4,
-                        },
-                        {
-                            label: "Loss",
-                            data: lossData,
-                            borderColor: "#DC2626",
-                            backgroundColor: "rgba(220,38,38,0.2)",
-                            fill: true,
-                            tension: 0.4,
-                        }
+                    const prodGoldData    = emps.map(e => parseFloat(roundToTwo(actualProdGold(e))));
+                    const lossGoldData    = emps.map(e => parseFloat(roundToTwo(lossGold(e))));
+                    const prodDiamondData = emps.map(e => parseFloat(roundToTwo(actualProdDiamond(e))));
+                    const lossDiamondData = emps.map(e => parseFloat(roundToTwo(lossDiamond(e))));
+
+                    barDatasets = [
+                        { label: 'Actual Production Gold (g)',    data: prodGoldData,    backgroundColor: '#e5c000',  borderColor: '#e5c000', borderWidth: 1 },
+                        { label: 'Loss Gold (g)',                  data: lossGoldData,    backgroundColor: '#ff4034',   borderColor: '#ff4034', borderWidth: 1 },
+                        { label: 'Actual Production Diamond (ct)', data: prodDiamondData, backgroundColor: '#4993f7', borderColor: '#4993f7', borderWidth: 1 },
+                        { label: 'Loss Diamond (ct)',              data: lossDiamondData, backgroundColor: 'rgba(220,38,38,0.5)',   borderColor: '#DC2626', borderWidth: 1 },
                     ];
 
-                    // ✅ Doughnut Chart Uses Employee Data
-                    productionLabels = selectedEmployees.value.map(emp => emp.name);
-                    productionValues = selectedEmployees.value.map(emp => parseInt(emp.tmProduction || 0));
+                    const totalProdGold    = prodGoldData.reduce((s, v) => s + v, 0);
+                    const totalProdDiamond = prodDiamondData.reduce((s, v) => s + v, 0);
+                    const totalLossGold    = lossGoldData.reduce((s, v) => s + v, 0);
+                    const totalLossDiamond = lossDiamondData.reduce((s, v) => s + v, 0);
+                    doughnutLabels = ['Production Gold', 'Production Diamond', 'Loss Gold', 'Loss Diamond'];
+                    doughnutValues = [totalProdGold, totalProdDiamond, totalLossGold, totalLossDiamond];
                 }
 
-                // ✅ Dynamic Chart Type for `cryptoChart`
+                // ── Bar chart (cryptoChart) ───────────────────────────────────────
                 const ctx1 = document.getElementById('cryptoChart')?.getContext('2d');
                 if (ctx1) {
                     if (cryptoChart) cryptoChart.destroy();
                     cryptoChart = new Chart(ctx1, {
-                        type: chartType,  // <-- Dynamically switch between "bar" and "line"
-                        data: {
-                            labels: labels,
-                            datasets: datasets
-                        },
+                        type: 'bar',
+                        data: { labels, datasets: barDatasets },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: { display: true, position: 'top' },
+                                legend: { display: true, position: 'top', labels: { font: { size: 10 } } },
                                 tooltip: { enabled: true }
                             },
                             scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    grid: { color: "#D1D5DB" }
-                                },
-                                x: {
-                                    grid: { color: "#D1D5DB" }
-                                }
+                                y: { beginAtZero: true, grid: { color: '#E5E7EB' }, ticks: { font: { size: 10 } } },
+                                x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 30 } }
                             }
                         }
                     });
                 }
 
-                // ✅ Doughnut Chart for `productionChart`
+                // ── Doughnut chart (productionChart) ─────────────────────────────
                 const ctx2 = document.getElementById('productionChart')?.getContext('2d');
                 if (ctx2) {
                     if (productionChart) productionChart.destroy();
                     productionChart = new Chart(ctx2, {
-                        type: "doughnut",
+                        type: 'doughnut',
                         data: {
-                            labels: productionLabels,
+                            labels: doughnutLabels,
                             datasets: [{
-                                data: productionValues,
-                                backgroundColor: ["#3B82F6", "#F59E0B", "#8B5CF6", "#14B8A6", "#EF4444"], // New Colors
-                                hoverOffset: 10
+                                data: doughnutValues,
+                                backgroundColor: ['#e5c000', '#4993f7', '#ff4034', '#DC2626'],
+                                hoverOffset: 8
                             }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: { display: true, position: 'right' },
-                                tooltip: { enabled: true }
+                                legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (ctx) => ` ${ctx.label}: ${ctx.parsed.toFixed(2)}`
+                                    }
+                                }
                             }
                         }
                     });
                 }
-            }, 500);
+            }, 300);
         };
 
 
@@ -3633,22 +3753,22 @@ tr:hover {
 </style>
 
 <style>
-@media (max-width: 1296px) {
+@media (max-width: 1508px) {
     .main-card-grid {
         grid-template-columns: repeat(4, minmax(100px, 1fr)) !important;
     }
 }
-@media (max-width: 1080px) {
+@media (max-width: 1271px) {
     .main-card-grid {
         grid-template-columns: repeat(3, minmax(100px, 1fr)) !important;
     }
 }
-@media (max-width: 930px) {
+@media (max-width: 1046px) {
     .main-card-grid {
         grid-template-columns: repeat(2, minmax(100px, 1fr)) !important;
     }
 }
-@media (max-width: 727px) {
+@media (max-width: 802px) {
     .main-card-grid {
         grid-template-columns: repeat(1, minmax(100px, 1fr)) !important;
     }

@@ -39,7 +39,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const CACHE_KEY = 'item_list'; // Cache key
         const CACHE_NAME = 'item_cache'; // Cache name
         const DIAMOND_ID = 6;
-        const EXPENSE_JEWELLERY_ID = 10; // Expense: Jewellery class for repair department
         // const METAL_ARRAY_GOLD = [4609, 8410, 8411, 25093]; // [G18, G22, G994, G14] // SB
         const METAL_ARRAY_GOLD = [22327, 22328, 22329, 28612]; // [G18, G22, G994, G14] // PD
         const BARCODING_AND_FG_DEPT_ID = 24;
@@ -53,18 +52,25 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const MATERIAL_TYPE_ID_COLOR_STONE = 3;
         const MATERIAL_TYPE_ID_ALLOY = 6;
         const STOCK_ORDER_ID = 2;
+        const REPAIR_ORDER_TYPE_ID = '3';
 
         const FIRST_DEPARTMENT_ID = 1;
         const CASTING_DEPT_ID = 9;
+        const CASTING = 9;
+        const TREE_CUTTING_CLEANING = 10;
+        const GRINDING = 12;
         // const PURE_GOLD_ARRAY = [2523];
         const PURE_GOLD_ARRAY = [9119]; // G999
         const GOOD_STATUS_ID = 1;
         const PARTY_DIAMOND_QUALITY = 3;
         const GOLD_CLASS_IDS = [5, 22, 23, 24, 25]; // [Gold, Gold Bullion, Gold Findings, Gold Mountings, Gold Back Chain]
         const GOLD_SCRAP_ITEM_LOT_NAME = "Scrap_Gold";
-        const GOLD_SCRAP_ITEM_ID = 9321; // Internal id of the item "Scrap"
-        const SCRAP_ITEM_PARENT_ID = 37469; // Parent internal id for scrap items (PD)
+        const JEWELRY_CLASS_ID = 10;
+        const GOLD_AND_JEWELRY_CLASS_IDS = [...GOLD_CLASS_IDS, JEWELRY_CLASS_ID]; // Combined for SQL queries
+        // const GOLD_SCRAP_ITEM_ID = [9321, 25090, 25091]; // Internal id of the item "Scrap" (SB)
         // const SCRAP_ITEM_PARENT_ID = 25092; // Parent internal id for scrap items (SB)
+        const GOLD_SCRAP_ITEM_ID = [9321, 37471, 37470]; // Internal id of the item "Scrap" (PD)
+        const SCRAP_ITEM_PARENT_ID = 37469; // Parent internal id for scrap items (PD)
         const CURRENCY_INR_ID = 1;
         const JEWELRY_TYPE_ID = 8;
         const CARATS_TO_GRAMS_CONST = 0.2;
@@ -78,6 +84,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const ALLOY_ITEMS = [3206, 3207, 3208]; // [Alloy Pink (P), Alloy White (W), Alloy Yellow (Y)]
 
         // const GOLD_TYPE_ID = 1;
+
+        // const LABOUR_OVERHEADS_CHARGE_ITEM_ID = 25718; // Labour Overheads Charge item record id (SB)
+        // const NET_LOSS_CHARGE_ITEM_ID = 25719; // Net Loss Charge item record id (SB)
+        const LABOUR_OVERHEADS_CHARGE_ITEM_ID = 41074; // Labour Overheads Charge item record id (PD)
+        const NET_LOSS_CHARGE_ITEM_ID = 41075; // Net Loss Charge item record id (PD)
 
         /**
          * @description searchResults
@@ -95,7 +106,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
              */
             getBagsReadyToMove(bags, department, bagSearchKey, pageIndex, params, manufacturer, pageSize, operationId) {
                 try {
-                    log.debug('getBagsReadyToMove', { bags: bags, department: department, bagSearchKey: bagSearchKey, pageIndex: pageIndex, params: params, manufacturer: manufacturer, operationId: operationId });
+                    // log.debug('getBagsReadyToMove', { bags: bags, department: department, bagSearchKey: bagSearchKey, pageIndex: pageIndex, params: params, manufacturer: manufacturer, operationId: operationId });
                     let filters = [
                         ["isinactive", "is", "F"],
                         "AND", ["custrecord_jj_oprtns_department.isinactive", "is", "F"],
@@ -114,10 +125,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         );
                     }
 
-                    if (manufacturer) { // for bag movement in bag management processes
-                        // log.debug("getBagsReadyToMove if manufacturer");
-                        filters.push("AND", ["custrecord_jj_oprtns_department.custrecord_jj_mandept_hod", "anyof", manufacturer]);
-                    }
+                    // if (manufacturer) { // for bag movement in bag management processes
+                    //     // log.debug("getBagsReadyToMove if manufacturer");
+                    //     filters.push("AND", ["custrecord_jj_oprtns_department.custrecord_jj_mandept_hod", "anyof", manufacturer]);
+                    // }
 
                     if (bags && bags.length > 0 && department) {
                         // log.debug("getBagsReadyToMove if bags && bags.length > 0 && department");
@@ -236,7 +247,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custrecord_jj_mandept_accounting_inward", join: "CUSTRECORD_JJ_OPRTNS_DEPARTMENT", label: "is_accounting_inward" }),
                             search.createColumn({ name: "custrecord_jj_oprtns_vendor", label: "vendor_id" }),
                             search.createColumn({ name: "custrecord_jj_bagcore_customer_name", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "customer_name" }),
-                            search.createColumn({ name: "custrecord_jj_bagmov_to_dept", join: "CUSTRECORD_JJ_RELATED_BAG_MOVEMENT", label: "to_department" })
+                            search.createColumn({ name: "custrecord_jj_bagmov_to_dept", join: "CUSTRECORD_JJ_RELATED_BAG_MOVEMENT", label: "to_department" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "order_type" }),
+                            search.createColumn({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "serial_repair" })
                         ]
                     });
                     if (!pageIndex) {
@@ -349,7 +362,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
             getAllManufacturingDepartments(departmentIds, params, allDepartments, userId, locations) {
                 try {
-                    log.debug("getAllManufacturingDepartments", { departmentIds, params, allDepartments, userId, locations });
+                    // log.debug("getAllManufacturingDepartments", { departmentIds, params, allDepartments, userId, locations });
                     let filters = [["isinactive", "is", "F"], "AND", ["custrecord_jj_mandept_hod.isinactive", "is", "F"]];
                     let columns = [
                         search.createColumn({ name: "internalid", sort: search.Sort.ASC, label: "internal_id" }),
@@ -364,18 +377,18 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         columns.push("custrecord_jj_mandept_employees");
                     }
 
-                    if (!allDepartments &&
-                        userId &&
-                        (
-                            params == "user_specific" ||
-                            // params == "location_transfer" ||
-                            params == "loss_recovery" ||
-                            params == "user_specific_dept_hod" ||
-                            params == "intial_bulk"
-                        )
-                    ) {
-                        filters.push("AND", ["custrecord_jj_mandept_hod", "anyof", userId]);
-                    }
+                    // if (!allDepartments &&
+                    //     userId &&
+                    //     (
+                    //         params == "user_specific" ||
+                    //         // params == "location_transfer" ||
+                    //         params == "loss_recovery" ||
+                    //         params == "user_specific_dept_hod" ||
+                    //         params == "intial_bulk"
+                    //     )
+                    // ) {
+                    //     filters.push("AND", ["custrecord_jj_mandept_hod", "anyof", userId]);
+                    // }
 
                     if (params && params == "Casting") {
                         filters.push("AND", ["internalid", "anyof", departmentIds]);
@@ -424,7 +437,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             "custrecord_jj_mandept_loss_status",
                             "custrecord_jj_mandept_loss_record_bin",
                             "custrecord_jj_mandept_wip_status",
-                            "custrecord_jj_mandept_wt_status"
+                            "custrecord_jj_mandept_wt_status",
+                            "custrecord_jj_mandept_repair_stock"
                         );
                     }
 
@@ -515,6 +529,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 lossRecordBin: result.getValue("custrecord_jj_mandept_loss_record_bin"),
                                 wipStatus: result.getValue("custrecord_jj_mandept_wip_status"),
                                 waxTreeStatus: result.getValue("custrecord_jj_mandept_wt_status"),
+                                repairStockStatus: result.getValue("custrecord_jj_mandept_repair_stock")
                             };
                             return true;
                         });
@@ -808,7 +823,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
             // also used for summary
             getActiveBags(deptId, bagIds, pageIndex, allDept, customerId, bagSearchKey, params, pageSize) {
                 try {
-                    log.debug('getActiveBags { deptId, bagIds, pageIndex, allDept, customerId, bagSearchKey, params, pageSize }', { deptId, bagIds, pageIndex, allDept, customerId, bagSearchKey, params, pageSize });
+                    // log.debug('getActiveBags { deptId, bagIds, pageIndex, allDept, customerId, bagSearchKey, params, pageSize }', { deptId, bagIds, pageIndex, allDept, customerId, bagSearchKey, params, pageSize });
                     let filters = [
                         ["isinactive", "is", "F"],
                         "AND", ["custrecord_jj_baggen_merge", "is", "F"],
@@ -878,6 +893,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custrecord_jj_bagcore_style", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "item_image" }),
                             search.createColumn({ name: "custrecord_jj_bagcore_design", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "design" }),
                             search.createColumn({ name: "custrecord_jj_bagcore_duedate", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "duedate" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "order_type" }),
+                            search.createColumn({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "serial_repair" }),
                         )
                     }
 
@@ -956,7 +973,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         ["type", "anyof", "WorkOrd"],
                         "AND",
                         ["mainline", "is", "T"],
-                        "AND", ["status", "noneof", "WorkOrd:G"],
+                        "AND", ["status", "noneof", "WorkOrd:H", "WorkOrd:G"],
                         // "AND",
                         // ["custbody_jj_from_so", "noneof", "@NONE@"],
                         // "AND",
@@ -1386,7 +1403,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 // scrap_pieces: result.scrap_pieces,
                                 scrap_pieces_info: result.scrap_pieces_info,
 
-                                isOthCharge: result.type?.value == 'OthCharge',
+                                isOthCharge: result.type?.value == 'OthCharge' || result.type?.value == 'Service',
+                                isServiceItem: result.type?.value == 'Service',
                                 purchasePrice: Number(result.cost?.value || 0),
 
                                 metalColor: result.metal_color,
@@ -1728,7 +1746,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             // "AND",
                             // ["quantity", "greaterthan", "0"],
                             "AND",
-                            ["item.type", "noneof", "@NONE@", "OthCharge"]
+                            ["item.type", "noneof", "@NONE@", "OthCharge", "Service"]
 
                         ],
                         columns: [
@@ -1945,7 +1963,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         columns: [
                             search.createColumn({ name: "internalid", label: "Internal ID" }),
                             search.createColumn({ name: "itemid", label: "Name" }),
-                            search.createColumn({ name: "parent", label: "Parent" })
+                            search.createColumn({ name: "parent", label: "Parent" }),
+                            search.createColumn({ name: "custitem_jj_metal_quality", label: "Scrap Quality" })
                         ]
                     });
                     assemblyitemSearchObj.run().each(function (result) {
@@ -1955,7 +1974,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         log.debug("itemName, parent, finalItemName", { itemName, parent, split: parent + " : ", formattedName });
                         metalList.push({
                             value: result.getValue('internalid'),
-                            name: formattedName || itemName
+                            name: formattedName || itemName,
+                            scrapQuality: result.getValue('custitem_jj_metal_quality')
                         });
                         return true;
                     });
@@ -2817,7 +2837,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             item -- Join the item table
                             ON CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_item = item.ID
                         WHERE 
-                            CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_bag_name = ?;`
+                            CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_bag_name = ?
+                            AND CUSTOMRECORD_JJ_BAGCORE_MATERIALS.isinactive = 'F';`
                     log.debug("END: getDirectIssueComponents", { bagId, operationId });
 
 
@@ -2887,12 +2908,12 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             qualityid: result.stonequalityid || result.metalqualityid || '',
 
                             isOthCharge: result.itemtype === 'OthCharge',
+                            isServiceItem: result.itemtype === 'Service',
                             purchasePrice: parseFloat(result.purchaseprice) || 0, // Ensure it is a number
                         });
                         // }
 
                     });
-                    log.debug("componentsArray", componentsArray);
                     return { status: 'SUCCESS', reason: 'Direct Issue Components Listed', data: componentsArray };
                 } catch (e) {
                     log.error('error @ getDirectIssueComponents', e.message);
@@ -3849,6 +3870,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             'custitemnumber_jj_cost_alloy', // added for alloy qty calculation
                             'custitemnumber_jj_serial_num_alloy_weight', // added for alloy qty calculation
 
+                            'custitemnumber_jj_total_labour_overhead_char',
+                            'custitemnumber_jj_total_net_loss_charge',
+
                             // ---- FG Stone / Metal attributes ----
                             'custitemnumber_jj_fg_stone_color',
                             'custitemnumber_jj_fg_stone_quality',
@@ -4206,6 +4230,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custrecord_jj_newly_issue_pieces", join: "CUSTRECORD_JJ_BAG_CORE_MATERIAL", label: "new_pieces" }),
                             search.createColumn({ name: "type", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "type" }),
                             search.createColumn({ name: "cost", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "cost" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE", label: "order_type" }),
+                            search.createColumn({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE", label: "serial_repair" }),
+                            search.createColumn({ name: "custitem_jj_metal_quality", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "metal_quality" }),
                         ]
                     });
 
@@ -4233,6 +4260,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             groupedResults[internalId] = {
                                 bagCoreMaterialId: internalId,
                                 bagNo: result.getValue({ name: "custrecord_jj_bagcoremat_bag_name" }),
+                                bagName: result.getText({ name: "custrecord_jj_bagcoremat_bag_name" }),
                                 department: result.getValue({ name: "custrecord_jj_baggen_present_dept", join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME" }),
                                 itemId: result.getValue({ name: "custrecord_jj_bagcoremat_item" }),
                                 actualQuantity: result.getValue({ name: "custrecord_jj_bagcoremat_qty" }),
@@ -4249,6 +4277,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 work_order_id: result.getValue({ name: "custrecord_jj_bagcoremat_wo" }),
                                 isSerialized: result.getValue({ name: "isserialitem", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM" }),
                                 item_class: result.getValue({ name: "class", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM" }),
+                                metal_quality: result.getValue({ name: "custitem_jj_metal_quality", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM" }),
 
                                 actualPiecesInfo: result.getValue({ name: "custrecord_jj_actual_pieces_info" }),
                                 toBeIssuedPiecesInfo: result.getValue({ name: "custrecord_jj_to_be_issued_pieces_info" }),
@@ -4261,7 +4290,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 totalScrapPiecesInfo: result.getValue({ name: "custrecord_jj_scrap_pieces_info" }),
 
                                 isOthCharge: result.getValue({ name: "type" }) === 'OthCharge',
+                                isServiceItem: result.getValue({ name: "type" }) === 'Service',
                                 purchasePrice: result.getValue({ name: "cost", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM" }),
+
+                                isRepair: result.getValue({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" }) == REPAIR_ORDER_TYPE_ID,
+                                serialRepair: result.getValue({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" }),
 
                                 materialLotDetails: []
                             };
@@ -4274,9 +4307,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                     // Convert grouped results to an array
                     aggregatedResult = Object.values(groupedResults);
-                    log.debug("aggregatedResult", aggregatedResult);
-
-
+                    // log.debug("aggregatedResult", aggregatedResult);
 
                     // const grouped = {};
                     // aggregatedResult.forEach((item) => {
@@ -4379,6 +4410,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custrecord_jj_casting_loss", label: "custrecord_jj_casting_loss" }),
                             search.createColumn({ name: "custrecord_jj_metal_moved_to_next_dept", label: "custrecord_jj_metal_moved_to_next_dept" }),
                             search.createColumn({ name: "custrecord_jj_casting_loss_transfer", label: "custrecord_jj_casting_loss_transfer" }),
+                            search.createColumn({ name: "custrecord_jj_comp_moved_to_cutting", label: "custrecord_jj_comp_moved_to_cutting" }),
 
                             // cutting to grinding
                             search.createColumn({ name: "custrecord_jj_moved_to_grinding", label: "custrecord_jj_moved_to_grinding" }),
@@ -4389,12 +4421,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custrecord_jj_cutting_loss_transfer", label: "custrecord_jj_cutting_loss_transfer" }),
                             search.createColumn({ name: "custrecord_jj_wax_weight_transferred", label: "custrecord_jj_wax_weight_transferred" }),
                             search.createColumn({ name: "custrecord_jj_is_loss_confirmed", label: "custrecord_jj_is_loss_confirmed" }),
+                            search.createColumn({ name: "custrecord_jj_comp_moved_to_grinding", label: "custrecord_jj_comp_moved_to_grinding" }),
 
                             // grinding to bagging
                             search.createColumn({ name: "custrecord_jj_received_weight", label: "custrecord_jj_received_weight" }),
                             search.createColumn({ name: "custrecord_jj_loss_weight", label: "custrecord_jj_loss_weight" }),
                             search.createColumn({ name: "custrecord_jj_metal_moved_to_bagging", label: "custrecord_jj_metal_moved_to_bagging" }),
                             search.createColumn({ name: "custrecord_jj_loss_transferred", label: "custrecord_jj_loss_transferred" }),
+                            search.createColumn({ name: "custrecord_jj_comp_moved_to_bagging", label: "custrecord_jj_comp_moved_to_bagging" }),
                         ]
                     });
 
@@ -4418,7 +4452,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
              */
             getUserAccessDetails(currentUserId, userRole) {
                 try {
-                    log.debug("currentUserId, userRole", { currentUserId, userRole });
+                    // log.debug("currentUserId, userRole", { currentUserId, userRole });
                     // Get user access details
                     let bagMovementConfigSearch = search.create({
                         type: "customrecord_jj_bag_movement_config",
@@ -5063,7 +5097,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         BUILTIN_RESULT.TYPE_INTEGER(InventoryBalance.inventorystatus) AS inventoryStatus,
                         BUILTIN_RESULT.TYPE_DATETIME(InventoryBalance.createddate) AS createddate,
                         BUILTIN_RESULT.TYPE_STRING(item_SUB.itemid) AS itemName,
-                        BUILTIN_RESULT.TYPE_STRING(item_SUB.name_0) AS name
+                        BUILTIN_RESULT.TYPE_STRING(item_SUB.name_0) AS name,
+                        BUILTIN_RESULT.TYPE_STRING(item_SUB.itemQuality) AS itemQuality
                         FROM 
                         InventoryBalance, 
                         bin, 
@@ -5078,7 +5113,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 item.CLASS AS class_crit, 
                                 ACCOUNT.cseg_jj_raw_type AS cseg_jj_raw_type_crit, 
                                 item.isinactive AS isinactive_crit,
-                                item.isserialitem AS isserialitem_crit
+                                item.isserialitem AS isserialitem_crit,
+                                item.custitem_jj_metal_quality AS itemQuality
                             FROM 
                                 item, 
                                 ACCOUNT,
@@ -5166,6 +5202,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             let itemId = rowData[0];
                             // let itemName = rowData[1];
                             let itemName = rowData[7];
+                            let itemQuality = rowData[9]; // Added itemQuality
                             let inventoryNumber = rowData[2];
                             let inventoryName = rowData[3];
                             let quantityAvailable = parseFloat(rowData[4]) || 0;
@@ -5179,6 +5216,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 groupedData[itemId] = {
                                     itemId: itemId,
                                     itemName: itemName,
+                                    itemQuality: itemQuality, // Initialize itemQuality
                                     purity: purity,
                                     goodQty: 0,
                                     wipBagQty: 0,
@@ -7267,7 +7305,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_WAX_TREE.custrecord_jj_scrap_write_off) AS custrecord_jj_scrap_write_off, 
                             BUILTIN_RESULT.TYPE_FLOAT(NVL(CUSTOMRECORD_JJ_WAX_TREE.custrecord_jj_casting_loss, 0) - (NVL(CUSTOMRECORD_JJ_WAX_TREE.custrecord_jj_scrap_recovered, 0) + NVL(CUSTOMRECORD_JJ_WAX_TREE.custrecord_jj_scrap_write_off, 0))) AS loss_remaining, 
                             BUILTIN_RESULT.TYPE_STRING(item_SUB.itemid) AS itemid, 
-                            BUILTIN_RESULT.TYPE_STRING(item_SUB.name_0) AS purity
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.name_0) AS purity,
+                            BUILTIN_RESULT.TYPE_INTEGER(item_SUB.metal_quality_id) AS metal_quality_id
                         FROM 
                             CUSTOMRECORD_JJ_WAX_TREE, 
                             (
@@ -7275,7 +7314,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 item.ID AS id_0, 
                                 item.ID AS id_join, 
                                 item.itemid AS itemid, 
-                                CUSTOMRECORD_JJ_DD_METAL_QUALITY_SUB.name AS name_0
+                                CUSTOMRECORD_JJ_DD_METAL_QUALITY_SUB.name AS name_0,
+                                item.custitem_jj_metal_quality AS metal_quality_id
                             FROM 
                                 item, 
                                 (
@@ -7330,7 +7370,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 writeOffQty: 0,                // to be filled in gold write off
                                 lossQty: Number(parseFloat(rowData[8] || 0).toFixed(4)), // Remaining Loss
                                 purity: Number((Number(rowData[10] || 0) / 100).toFixed(4)),             // purity
-                                pureWeight: Number((Number(rowData[8] || 0) * (Number(rowData[10] || 0) / 100)).toFixed(4)) // Pure Weight Calculation
+                                pureWeight: Number((Number(rowData[8] || 0) * (Number(rowData[10] || 0) / 100)).toFixed(4)), // Pure Weight Calculation
+                                metalQualityId: rowData[11]    // custitem_jj_metal_quality
                             };
 
                             waxTrees.push(waxTreeDetails);
@@ -7693,7 +7734,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             "AND", ["mainline", "any", ""],
                             "AND", ["cogs", "is", "F"],
                             "AND", ["taxline", "is", "F"],
-                            "AND", ["item.type", "noneof", "OthCharge"]
+                            "AND", ["item.type", "noneof", "OthCharge", "Service"]
                         ],
                         columns: [
                             search.createColumn({ name: "line", label: "line_id" }),
@@ -8163,7 +8204,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 AND BomRevisionComponent.bomrevision IN (${revisionId})
                                 AND (
                                     NOT (
-                                        item_SUB.itemtype_crit IN ('OthCharge')
+                                        item_SUB.itemtype_crit IN ('OthCharge', 'Service')
                                     ) OR item_SUB.itemtype_crit IS NULL
                                 )
                             )
@@ -8348,6 +8389,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     return { status: 'ERROR', reason: e.message, data: [] };
                 }
             },
+
             /**
              * Function to generate and execute the SQL query with dynamic filtering.
              *
@@ -8357,370 +8399,430 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
              * @param {string} department - The department filter (e.g., '8').
              * @returns {Array} - The results of the query execution.
              */
-            getEfficiencyData(location, startDate, endDate, isRepairOnly) {
-                log.debug("location", location);
-                log.debug("startDate", startDate);
-                log.debug("endDate", endDate);
-                log.debug("isRepairOnly", isRepairOnly);
-                // Parse startDate and endDate - frontend sends YYYY-MM-DD format
-                // Parse as DATE first, then format as string for SQL
-                const parsedStartDate = format.parse({ value: startDate, type: format.Type.DATE });
-                const parsedEndDate = format.parse({ value: endDate, type: format.Type.DATE });
+            getRepairEfficiencyData(location, startDate, endDate, isRepairOnly) {
+                try {
+                    // Validate that dates are provided
+                    if (!startDate || !endDate) {
+                        log.error("getRepairEfficiencyData", "Start date and end date are required");
+                        return {};
+                    }
 
-                // Format back to YYYY-MM-DD string for SQL query
-                const formattedStartDate = format.format({ value: parsedStartDate, type: format.Type.DATE });
-                const formattedEndDate = format.format({ value: parsedEndDate, type: format.Type.DATE });
+                    const sqlStartDate = startDate + ' 00:00:00';
+                    const sqlEndDate = endDate + ' 23:59:59';
 
-                log.debug("parsedStartDate", parsedStartDate);
-                log.debug("parsedEndDate", parsedEndDate);
-                log.debug("formattedStartDate", formattedStartDate);
-                log.debug("formattedEndDate", formattedEndDate);
+                    log.debug("getRepairEfficiencyData - Parameters", {
+                        location: location,
+                        startDate: sqlStartDate,
+                        endDate: sqlEndDate,
+                        isRepairOnly: isRepairOnly
+                    });
 
-
-                // Start constructing the base SQL query
-                let sqlQuery = `
-                    SELECT 
-                    BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_OPERATIONS.name) AS opearion_id, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.id_join) AS department_id, 
-                    BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.name) AS department_name, 
-                    BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info - CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_balance_pieces_info) AS TMProduction_Diamond, 
-                    BUILTIN_RESULT.TYPE_DATETIME(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_entry) AS custrecord_jj_oprtns_entry, 
-                    BUILTIN_RESULT.TYPE_DATETIME(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_exit) AS custrecord_jj_oprtns_exit, 
-                    BUILTIN_RESULT.TYPE_BOOLEAN(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_repair_order) AS custrecord_jj_repair_order, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.custrecord_jj_mandept_location) AS custrecord_jj_mandept_location, 
-                    BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_issued_quantity - CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_additional_quantity) AS TMProduction_Gold, 
-                    BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.name_0) AS location_name, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMLIST_JJ_OPERATION_STATUS.ID) AS status_id, 
-                    BUILTIN_RESULT.TYPE_STRING(CUSTOMLIST_JJ_OPERATION_STATUS.name) AS status_name, 
-                    BUILTIN_RESULT.TYPE_STRING(employee.firstname) AS firstname, 
-                    BUILTIN_RESULT.TYPE_STRING(employee.lastname) AS lastname, 
-                    BUILTIN_RESULT.TYPE_STRING(employee.entityid) AS entityid, 
-                    BUILTIN_RESULT.TYPE_INTEGER(employee.ID) AS employee_id, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION.ID) AS bag_generation_id, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_CORE_TRACKING.ID) AS bag_core_tracking_id, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_component) AS custrecord_jj_component, 
-                    BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_issued_quantity) AS custrecord_jj_issued_quantity, 
-                    BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_additional_quantity) AS custrecord_jj_additional_quantity, 
-                    BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_loss_quantity) AS custrecord_jj_dir_loss_quantity, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info) AS custrecord_jj_dir_issued_pieces_info, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_actual_pieces_info) AS custrecord_jj_dir_actual_pieces_info, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_loss_pieces_info) AS custrecord_jj_dir_loss_pieces_info, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_balance_pieces_info) AS custrecord_jj_dir_balance_pieces_info, 
-                    BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.cseg_jj_raw_type_0_0) AS cseg_jj_raw_type, 
-                    BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.name_0_0) AS cseg_jj_raw_type_name
-                    FROM 
-                    CUSTOMRECORD_JJ_OPERATIONS, 
-                    (SELECT 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_operations AS custrecord_jj_operations, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_operations AS custrecord_jj_operations_join, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_issued_pieces_info AS custrecord_jj_dir_issued_pieces_info, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_balance_pieces_info AS custrecord_jj_dir_balance_pieces_info, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_issued_quantity AS custrecord_jj_issued_quantity, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_additional_quantity AS custrecord_jj_additional_quantity, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_component AS custrecord_jj_component, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_loss_quantity AS custrecord_jj_dir_loss_quantity, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_actual_pieces_info AS custrecord_jj_dir_actual_pieces_info, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_loss_pieces_info AS custrecord_jj_dir_loss_pieces_info, 
-                        item_SUB.cseg_jj_raw_type_0 AS cseg_jj_raw_type_0_0, 
-                        item_SUB.name_0 AS name_0_0, 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.isinactive AS isinactive_crit, 
-                        item_SUB.isinactive_crit AS isinactive_crit_0
-                    FROM 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN, 
-                        (SELECT 
-                        item.ID AS id_0, 
-                        item.ID AS id_join, 
-                        Account_SUB.cseg_jj_raw_type AS cseg_jj_raw_type_0, 
-                        Account_SUB.name AS name_0, 
-                        item.isinactive AS isinactive_crit
-                        FROM 
-                        item, 
-                        (SELECT 
-                            ACCOUNT.ID AS ID, 
-                            ACCOUNT.ID AS id_join, 
-                            ACCOUNT.cseg_jj_raw_type AS cseg_jj_raw_type, 
-                            CUSTOMRECORD_CSEG_JJ_RAW_TYPE.name AS name
-                        FROM 
-                            ACCOUNT, 
-                            CUSTOMRECORD_CSEG_JJ_RAW_TYPE
-                        WHERE 
-                            ACCOUNT.cseg_jj_raw_type = CUSTOMRECORD_CSEG_JJ_RAW_TYPE.ID(+)
-                        ) Account_SUB
-                        WHERE 
-                        item.assetaccount = Account_SUB.ID(+)
-                        ) item_SUB
-                    WHERE 
-                        CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_component = item_SUB.id_0(+)
-                    ) CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB, 
-                    CUSTOMRECORD_JJ_BAG_CORE_TRACKING, 
-                    CUSTOMRECORD_JJ_BAG_GENERATION, 
-                    (SELECT 
-                        CUSTOMRECORD_JJ_MANUFACTURING_DEPT.ID AS ID, 
-                        CUSTOMRECORD_JJ_MANUFACTURING_DEPT.ID AS id_join, 
-                        CUSTOMRECORD_JJ_MANUFACTURING_DEPT.name AS name, 
-                        CUSTOMRECORD_JJ_MANUFACTURING_DEPT.custrecord_jj_mandept_location AS custrecord_jj_mandept_location, 
-                        LOCATION.name AS name_0, 
-                        CUSTOMRECORD_JJ_MANUFACTURING_DEPT.isinactive AS isinactive_crit, 
-                        CUSTOMRECORD_JJ_MANUFACTURING_DEPT.custrecord_jj_mandept_location AS custrecord_jj_mandept_location_crit, 
-                        LOCATION.isinactive AS isinactive_crit_0
-                    FROM 
-                        CUSTOMRECORD_JJ_MANUFACTURING_DEPT, 
-                        LOCATION   WHERE 
-                        CUSTOMRECORD_JJ_MANUFACTURING_DEPT.custrecord_jj_mandept_location = LOCATION.ID(+)
-                    ) CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB, 
-                    employee, 
-                    CUSTOMLIST_JJ_OPERATION_STATUS
-                    WHERE 
-                    ((((((CUSTOMRECORD_JJ_OPERATIONS.ID = CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_operations(+) AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagcore = CUSTOMRECORD_JJ_BAG_CORE_TRACKING.ID(+)) AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno = CUSTOMRECORD_JJ_BAG_GENERATION.ID(+)) AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_department = CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.ID(+)) AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_employee = employee.ID(+)) AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_status = CUSTOMLIST_JJ_OPERATION_STATUS.ID(+)))
-                    AND (( NVL(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.isinactive_crit, 'F') = 'F'  AND NVL(CUSTOMRECORD_JJ_OPERATIONS.isinactive, 'F') = 'F' AND NVL(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.isinactive_crit, 'F') = 'F' AND NVL(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.isinactive_crit_0, 'F') = 'F' AND NVL(employee.isinactive, 'F') = 'F' AND NVL(CUSTOMRECORD_JJ_BAG_CORE_TRACKING.isinactive, 'F') = 'F' AND NVL(CUSTOMRECORD_JJ_BAG_GENERATION.isinactive, 'F') = 'F' AND NVL(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.isinactive_crit_0, 'F') = 'F' ))
+                    let sqlQuery = `
+                        SELECT DISTINCT
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB."ID") AS department_id,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.name) AS department_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.custrecord_jj_mandept_location) AS location_id,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.name_0) AS location_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_employee) AS employee_id,
+                            BUILTIN_RESULT.TYPE_STRING(employee.firstname) AS firstname,
+                            BUILTIN_RESULT.TYPE_STRING(employee.lastname) AS lastname,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno) AS bag_id,
+                            BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_name) AS print_design_name,
+                            BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info) AS issued_pieces_diamond,
+                            BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_loss_pieces_info) AS loss_pieces_diamond
+                        FROM CUSTOMRECORD_JJ_OPERATIONS,
+                            (SELECT 
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_operations AS custrecord_jj_operations_join,
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_issued_quantity AS custrecord_jj_issued_quantity_crit,
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_starting_qty AS custrecord_jj_dir_starting_qty_crit,
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_issued_pieces_info,
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN.custrecord_jj_dir_loss_pieces_info
+                            FROM CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN
+                            ) CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB,
+                            (SELECT 
+                                CUSTOMRECORD_JJ_BAG_GENERATION."ID" AS id_1,
+                                CUSTOMRECORD_JJ_BAG_GENERATION."ID" AS id_join,
+                                CUSTOMRECORD_JJ_BAG_GENERATION.name AS bag_name_original,
+                                CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_name AS print_design_name
+                            FROM CUSTOMRECORD_JJ_BAG_GENERATION,
+                                (SELECT CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_0,
+                                        CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_join,
+                                        item_SUB.name AS name_0,
+                                        item_SUB.itemid AS print_design_name
+                                FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING,
+                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, item_0.itemid AS itemid
+                                    FROM item item_0, CUSTOMRECORD_JJ_CATEGORY
+                                    WHERE item_0.custitem_jj_category = CUSTOMRECORD_JJ_CATEGORY."ID"(+)) item_SUB
+                                WHERE CUSTOMRECORD_JJ_BAG_CORE_TRACKING.custrecord_jj_bagcore_kt_col = item_SUB."ID"(+)) CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB
+                            WHERE CUSTOMRECORD_JJ_BAG_GENERATION.custrecord_jj_baggen_bagcore = CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.id_0(+)
+                            ) CUSTOMRECORD_JJ_BAG_GENERATION_SUB,
+                            (SELECT 
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT."ID" AS "ID",
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT.name AS name,
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT.custrecord_jj_mandept_location AS custrecord_jj_mandept_location,
+                                LOCATION.name AS name_0,
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT.isinactive AS isinactive_crit,
+                                CUSTOMRECORD_JJ_MANUFACTURING_DEPT.custrecord_jj_mandept_location AS custrecord_jj_mandept_location_crit
+                            FROM CUSTOMRECORD_JJ_MANUFACTURING_DEPT, LOCATION
+                            WHERE CUSTOMRECORD_JJ_MANUFACTURING_DEPT.custrecord_jj_mandept_location = LOCATION."ID"(+)
+                            ) CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB,
+                            employee
+                        WHERE CUSTOMRECORD_JJ_OPERATIONS."ID" = CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_operations_join(+)
+                            AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno = CUSTOMRECORD_JJ_BAG_GENERATION_SUB.id_1(+)
+                            AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_department = CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB."ID"(+)
+                            AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_employee = employee."ID"(+)
+                            AND (CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original IS NOT NULL OR CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname IS NOT NULL)
+                            AND (
+                                CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_issued_quantity_crit > 0
+                                OR CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_starting_qty_crit > 0
+                            )
+                            AND NVL(CUSTOMRECORD_JJ_OPERATIONS.isinactive, 'F') = 'F'
+                            AND NVL(CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.isinactive_crit, 'F') = 'F'
+                            AND NVL(employee.isinactive, 'F') = 'F'
+                            AND BUILTIN.CAST_AS(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD HH24:MI:SS')
+                            AND BUILTIN.CAST_AS(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD HH24:MI:SS')
+                            AND NVL(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_repair_order, 'F') = 'T'
                     `;
 
+                    if (location) {
+                        sqlQuery += `
+                            AND CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.custrecord_jj_mandept_location_crit IN ('${location}')
+                        `;
+                    }
 
-
-                // **Filter by Date Range**
-                if (parsedStartDate && parsedEndDate) {
-                    log.debug("parsedStartDate", parsedStartDate);
-                    log.debug("parsedEndDate", parsedEndDate);
                     sqlQuery += `
-                    AND (
-                    BUILTIN.CAST_AS(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_entry, 'TIMESTAMP_TZ_TRUNCED') 
-                    BETWEEN TO_TIMESTAMP('${parsedStartDate} 00:00:00', 'YYYY-MM-DD HH24:MI:SS') 
-                    AND TO_TIMESTAMP('${parsedEndDate} 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
-                    )`;
-                }
+                        ORDER BY location_name, department_name, firstname, lastname
+                    `;
 
-                // **Filter by Location (if provided and isRepairOnly is true)**
-                // For Overall page (isRepairOnly = false), we want ALL departments, so NO location filter
-                // For Repair page (isRepairOnly = true), apply location filter if provided
-                if (isRepairOnly === true && location) {
-                    log.debug("location@@@@", location);
-                    sqlQuery += `
-                    AND CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.custrecord_jj_mandept_location_crit IN ('${location}')
-                `;
-                }
+                    log.debug("getRepairEfficiencyData - Executing Query", "Query length: " + sqlQuery.length);
 
-                // **Filter by Repair Order Status (if provided)**
-                // For Overall page (isRepairOnly = false), we want ALL operations regardless of repair status
-                // For Repair page (isRepairOnly = true), filter to only repair orders
-                if (isRepairOnly === true) {
-                    log.debug("isRepairOnly", isRepairOnly);
-                    sqlQuery += `
-                    AND CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_repair_order = 'T'
-                `;
-                }
-                // If isRepairOnly is false or null/undefined, NO filter is applied (shows ALL operations)
+                    let rawResults = query.runSuiteQL({ query: sqlQuery }).asMappedResults();
 
-                // The actual processing of the query result will involve the following:
-                // 1. Grouping data by location.
-                // 2. Grouping within locations by department.
-                // 3. Grouping by employee within each department.
-                // 4. Calculating sums for gold, diamond, and losses for each level.
-                // Run the query
-                const queryResults = query.runSuiteQL({
-                    query: sqlQuery,
-                });
+                    log.debug("getRepairEfficiencyData - Raw Results Count", rawResults.length);
 
+                    let rawLogMsg = "=== RAW QUERY RESULTS (First 10) ===\n";
+                    rawResults.slice(0, 10).forEach((record, idx) => {
+                        rawLogMsg += `Row ${idx + 1}: Dept=${record.department_name}, Bag=${record.bag_name}, Employee=${record.firstname} ${record.lastname}\n`;
+                    });
+                    rawLogMsg += "====================================";
+                    log.debug("getRepairEfficiencyData - Raw Results Sample", rawLogMsg);
 
-                // Parse the results
-                const rawResults = queryResults.asMappedResults();
-                log.debug("rawResults", rawResults);
+                    const groupedData = {};
+                    const deptPiecesMap = {};
 
-                const groupedData = rawResults.reduce((acc, record) => {
-                    const location = record.custrecord_jj_mandept_location;
-                    const department = record.department_id;
-                    const employee = record.employee_id;
+                    rawResults.forEach(record => {
+                        const locationId = record.location_id;
+                        const departmentId = record.department_id;
+                        const employeeId = record.employee_id;
+                        const bagName = record.bag_name;
+                        const categoryName = record.category_name;
+                        const printDesignName = record.print_design_name;
 
-                    // **Skip records where location, department, or employee is null**
-                    if (!location || !department || !employee) {
-                        return acc; // Skip this record
-                    }
+                        if (!locationId || !departmentId) return;
 
-                    // Initialize the location data if not already present
-                    if (!acc[location]) {
-                        acc[location] = {
-                            location_name: record.location_name,
-                            tmproduction_gold: 0,
-                            loss_gold: 0,
-                            tmproduction_diamond: 0,
-                            loss_diamond: 0,
-                            tmproduction_diamond_pieces: 0,
-                            loss_diamond_pieces: 0,
-                            departments: {}
-                        };
-                    }
+                        if (!deptPiecesMap[departmentId]) {
+                            deptPiecesMap[departmentId] = { issued_pieces_diamond: 0, loss_pieces_diamond: 0 };
+                        }
+                        deptPiecesMap[departmentId].issued_pieces_diamond += parseFloat(record.issued_pieces_diamond || 0);
+                        deptPiecesMap[departmentId].loss_pieces_diamond += parseFloat(record.loss_pieces_diamond || 0);
 
-                    // Helper function to safely add and round numbers to 2 decimal places
-                    const safeAdd = (a, b) => {
-                        return (parseFloat(a || 0) + parseFloat(b || 0)).toFixed(2);
-                    };
+                        if (!groupedData[locationId]) {
+                            groupedData[locationId] = { location_name: record.location_name, departments: {} };
+                        }
 
-                    // Summing production and loss based on raw type
-                    if (record.cseg_jj_raw_type == 1) {
-                        acc[location].tmproduction_gold = safeAdd(acc[location].tmproduction_gold, record.tmproduction_gold);
-                        acc[location].loss_gold = safeAdd(acc[location].loss_gold, record.custrecord_jj_dir_loss_quantity);
+                        if (!groupedData[locationId].departments[departmentId]) {
+                            groupedData[locationId].departments[departmentId] = {
+                                department_id: departmentId,
+                                department_name: record.department_name,
+                                employees: {},
+                                unique_bags: new Set(),
+                                unique_categories: new Set(),
+                                category_print_design_map: {},
+                                category_bags_map: {},
+                                issued_pieces_diamond: 0,
+                                loss_pieces_diamond: 0
+                            };
+                        }
 
-                    } else if (record.cseg_jj_raw_type == 2) {
-                        acc[location].tmproduction_diamond = safeAdd(acc[location].tmproduction_diamond, record.tmproduction_gold);
-                        acc[location].loss_diamond = safeAdd(acc[location].loss_diamond, record.custrecord_jj_dir_loss_quantity);
-                        acc[location].tmproduction_diamond_pieces = safeAdd(acc[location].tmproduction_diamond_pieces, record.tmproduction_diamond);
-                        acc[location].loss_diamond_pieces = safeAdd(acc[location].loss_diamond_pieces, record.custrecord_jj_dir_loss_pieces_info);
-                    }
-
-                    // Group by department
-                    if (!acc[location].departments[department]) {
-                        acc[location].departments[department] = {
-                            department_name: record.department_name,
-                            production: 0,
-                            loss: 0,
-                            production_diamond: 0,
-                            loss_diamond: 0,
-                            production_diamond_pieces: 0,
-                            loss_diamond_pieces: 0,
-                            date: record.custrecord_jj_oprtns_entry,
-                            employees: {}
-                        };
-                    }
-
-                    // Summing production and loss at department level
-                    if (record.cseg_jj_raw_type == 1) {
-                        acc[location].departments[department].production = safeAdd(
-                            acc[location].departments[department].production,
-                            record.tmproduction_gold
-                        );
-                        acc[location].departments[department].loss = safeAdd(
-                            acc[location].departments[department].loss,
-                            record.custrecord_jj_dir_loss_quantity
-                        );
-                    }
-                    else if (record.cseg_jj_raw_type == 2) {
-                        acc[location].departments[department].production_diamond = safeAdd(
-                            acc[location].departments[department].production_diamond,
-                            record.tmproduction_gold
-                        );
-                        acc[location].departments[department].loss_diamond = safeAdd(
-                            acc[location].departments[department].loss_diamond,
-                            record.custrecord_jj_dir_loss_quantity
-                        );
-                        acc[location].departments[department].production_diamond_pieces = safeAdd(
-                            acc[location].departments[department].production_diamond_pieces,
-                            record.tmproduction_diamond
-                        );
-                        acc[location].departments[department].loss_diamond_pieces = safeAdd(
-                            acc[location].departments[department].loss_diamond_pieces,
-                            record.custrecord_jj_dir_loss_pieces_info
-                        );
-                    }
-
-                    // Group by employee within the department
-                    if (!acc[location].departments[department].employees[employee]) {
-                        // Construct full name, excluding null or empty values
-                        let fullName = [record.firstname, record.lastname].filter(name => name && name.trim()).join(" ");
-
-                        acc[location].departments[department].employees[employee] = {
-                            name: fullName || "Unknown Employee",  // Fallback if both names are missing
-                            tmProduction: 0,
-                            grossLoss: 0,
-                            loss: 0,
-                            netLoss: 0,
-                            recovery: 0,
-                            tmProductionDiamond: 0,
-                            grossLossDiamond: 0,
-                            tmProductionDiamondPieces: 0,
-                            grossLossDiamondPieces: 0,
-                            date: record.custrecord_jj_oprtns_entry
-                        };
-                    }
-
-                    // ✅ Fix 1: Only sum `tmProduction` if `cseg_jj_raw_type == 1`
-                    if (record.cseg_jj_raw_type == 1) {
-                        acc[location].departments[department].employees[employee].tmProduction = safeAdd(
-                            acc[location].departments[department].employees[employee].tmProduction,
-                            record.tmproduction_gold
-                        );
-
-                        // ✅ Fix 2: Only sum `grossLoss` if `cseg_jj_raw_type == 1`
-                        acc[location].departments[department].employees[employee].grossLoss = safeAdd(
-                            acc[location].departments[department].employees[employee].grossLoss,
-                            record.custrecord_jj_dir_loss_quantity
-                        );
-                    }
-                    // ✅ Sum for Diamond (cseg_jj_raw_type == 2)
-                    if (record.cseg_jj_raw_type == 2) {
-                        acc[location].departments[department].employees[employee].tmProductionDiamond = safeAdd(
-                            acc[location].departments[department].employees[employee].tmProductionDiamond,
-                            record.tmproduction_gold
-                        );
-
-                        acc[location].departments[department].employees[employee].grossLossDiamond = safeAdd(
-                            acc[location].departments[department].employees[employee].grossLossDiamond,
-                            record.custrecord_jj_dir_loss_quantity
-                        );
-                        acc[location].departments[department].employees[employee].tmProductionDiamondPieces = safeAdd(
-                            acc[location].departments[department].employees[employee].tmProductionDiamondPieces,
-                            record.tmproduction_diamond
-                        );
-                        acc[location].departments[department].employees[employee].grossLossDiamondPieces = safeAdd(
-                            acc[location].departments[department].employees[employee].grossLossDiamondPieces,
-                            record.custrecord_jj_dir_loss_pieces_info
-                        );
-                    }
-
-
-                    return acc;
-                }, {});
-
-                // **Remove departments and employees where all production and loss values are zero**
-                const cleanedData = Object.entries(groupedData).reduce((acc, [location, locationData]) => {
-                    let validDepartments = {};
-
-                    Object.entries(locationData.departments).forEach(([department, departmentData]) => {
-                        let validEmployees = {};
-
-                        Object.entries(departmentData.employees).forEach(([employee, employeeData]) => {
-                            const isZeroEmployeeProductionAndLoss =
-                                parseFloat(employeeData.tmProduction) === 0 &&
-                                parseFloat(employeeData.grossLoss) === 0 &&
-                                parseFloat(employeeData.tmProductionDiamond) === 0 &&
-                                parseFloat(employeeData.grossLossDiamond) === 0 &&
-                                parseFloat(employeeData.tmProductionDiamondPieces) === 0 &&
-                                parseFloat(employeeData.grossLossDiamondPieces) === 0;
-
-                            if (!isZeroEmployeeProductionAndLoss) {
-                                validEmployees[employee] = employeeData; // ✅ Keep valid employee
+                        if (bagName) groupedData[locationId].departments[departmentId].unique_bags.add(bagName);
+                        if (categoryName) {
+                            groupedData[locationId].departments[departmentId].unique_categories.add(categoryName);
+                            if (printDesignName) {
+                                groupedData[locationId].departments[departmentId].category_print_design_map[categoryName] = printDesignName;
                             }
-                        });
+                            if (bagName) {
+                                if (!groupedData[locationId].departments[departmentId].category_bags_map[categoryName]) {
+                                    groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = new Set();
+                                }
+                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName].add(bagName);
+                            }
+                        }
 
-                        const isZeroDepartmentProductionAndLoss =
-                            Object.keys(validEmployees).length === 0 || // ✅ Remove department if all employees are removed
-                            (parseFloat(departmentData.production) === 0 &&
-                                parseFloat(departmentData.loss) === 0 &&
-                                parseFloat(departmentData.production_diamond) === 0 &&
-                                parseFloat(departmentData.loss_diamond) === 0 &&
-                                parseFloat(departmentData.production_diamond_pieces) === 0 &&
-                                parseFloat(departmentData.loss_diamond_pieces) === 0);
-
-                        if (!isZeroDepartmentProductionAndLoss) {
-                            validDepartments[department] = { ...departmentData, employees: validEmployees }; // ✅ Keep valid department
+                        if (employeeId) {
+                            if (!groupedData[locationId].departments[departmentId].employees[employeeId]) {
+                                const fullName = [record.firstname, record.lastname].filter(Boolean).join(" ");
+                                groupedData[locationId].departments[departmentId].employees[employeeId] = {
+                                    employee_id: employeeId,
+                                    name: fullName || "Unknown Employee",
+                                    unique_bags: new Set(),
+                                    unique_categories: new Set(),
+                                    category_print_design_map: {},
+                                    category_bags_map: {}
+                                };
+                            }
+                            if (bagName) groupedData[locationId].departments[departmentId].employees[employeeId].unique_bags.add(bagName);
+                            if (categoryName) {
+                                groupedData[locationId].departments[departmentId].employees[employeeId].unique_categories.add(categoryName);
+                                if (printDesignName) {
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_map[categoryName] = printDesignName;
+                                }
+                                if (bagName) {
+                                    if (!groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName]) {
+                                        groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = new Set();
+                                    }
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName].add(bagName);
+                                }
+                            }
                         }
                     });
 
-                    const isZeroLocationProductionAndLoss =
-                        Object.keys(validDepartments).length === 0 || // ✅ Remove location if all departments are removed
-                        (parseFloat(locationData.tmproduction_gold) === 0 &&
-                            parseFloat(locationData.loss_gold) === 0 &&
-                            parseFloat(locationData.tmproduction_diamond) === 0 &&
-                            parseFloat(locationData.loss_diamond) === 0 &&
-                            parseFloat(locationData.tmproduction_diamond_pieces) === 0 &&
-                            parseFloat(locationData.loss_diamond_pieces) === 0);
+                    Object.keys(groupedData).forEach(locationId => {
+                        Object.keys(groupedData[locationId].departments).forEach(departmentId => {
+                            const dept = groupedData[locationId].departments[departmentId];
+                            // Serialize category_bags_map Sets to counts
+                            const deptCategoryBagCountMap = {};
+                            Object.keys(dept.category_bags_map).forEach(cat => {
+                                deptCategoryBagCountMap[cat] = dept.category_bags_map[cat].size;
+                            });
+                            dept.employees_array = Object.values(dept.employees).map(emp => {
+                                const empCategoryBagCountMap = {};
+                                Object.keys(emp.category_bags_map).forEach(cat => {
+                                    empCategoryBagCountMap[cat] = emp.category_bags_map[cat].size;
+                                });
+                                return {
+                                    employee_id: emp.employee_id,
+                                    name: emp.name,
+                                    bag_count: emp.unique_bags.size,
+                                    unique_bags_array: Array.from(emp.unique_bags),
+                                    category_count: emp.unique_categories.size,
+                                    unique_categories_array: Array.from(emp.unique_categories),
+                                    category_print_design_map: emp.category_print_design_map,
+                                    category_bag_count_map: empCategoryBagCountMap,
+                                    starting_qty: 0,
+                                    loss_qty: 0,
+                                    categories: []
+                                };
+                            });
+                            dept.bag_count = dept.unique_bags.size;
+                            dept.unique_bags_array = Array.from(dept.unique_bags);
+                            dept.category_count = dept.unique_categories.size;
+                            dept.unique_categories_array = Array.from(dept.unique_categories);
+                            dept.category_bag_count_map = deptCategoryBagCountMap;
+                            delete dept.employees;
+                            delete dept.unique_bags;
+                            delete dept.unique_categories;
+                            delete dept.category_bags_map;
+                        });
+                    });
 
-                    if (!isZeroLocationProductionAndLoss) {
-                        acc[location] = { ...locationData, departments: validDepartments }; // ✅ Keep valid location
+                    Object.keys(groupedData).forEach(locationId => {
+                        Object.keys(groupedData[locationId].departments).forEach(departmentId => {
+                            groupedData[locationId].departments[departmentId].starting_qty = 0;
+                        });
+                    });
+
+                    try {
+                        const deptIds = [];
+                        Object.keys(groupedData).forEach(locationId => {
+                            Object.keys(groupedData[locationId].departments).forEach(departmentId => {
+                                deptIds.push(departmentId);
+                            });
+                        });
+
+                        log.debug("getRepairEfficiencyData - Starting Qty Fetch", "Department IDs: " + deptIds.join(','));
+
+                        if (deptIds.length > 0) {
+                            let startingQtyQuery = `
+                                SELECT 
+                                    BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_department) AS department_id,
+                                    BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_employee) AS employee_id,
+                                    BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(printdesign.custitem_jj_category)) AS category_name,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_dir_loss_quantity, 0) ELSE 0 END)) AS loss_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_quantity, 0) ELSE 0 END)) AS loss_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) ELSE 0 END)) AS issued_pieces_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond
+                                FROM CUSTOMRECORD_JJ_OPERATIONS op
+                                LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
+                                    ON dir.custrecord_jj_operations = op.ID
+                                LEFT JOIN item
+                                    ON dir.custrecord_jj_component = item.ID
+                                LEFT JOIN CUSTOMRECORD_JJ_BAG_GENERATION bag
+                                    ON op.custrecord_jj_oprtns_bagno = bag.ID
+                                LEFT JOIN CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore
+                                    ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
+                                LEFT JOIN item printdesign 
+                                    ON bagcore.custrecord_jj_bagcore_kt_col = printdesign.ID
+                                LEFT JOIN (
+                                    SELECT 
+                                        d.ID AS id_join,
+                                        d.isinactive AS isinactive_crit
+                                    FROM CUSTOMRECORD_JJ_MANUFACTURING_DEPT d
+                                ) dept
+                                    ON op.custrecord_jj_oprtns_department = dept.id_join
+                                LEFT JOIN employee emp
+                                    ON op.custrecord_jj_oprtns_employee = emp.ID
+                                WHERE op.custrecord_jj_oprtns_department IN (${deptIds.join(',')})
+                                    AND (
+                                        dir.custrecord_jj_issued_quantity > 0
+                                        OR dir.custrecord_jj_dir_starting_qty > 0
+                                    )
+                                    AND NVL(op.isinactive, 'F') = 'F'
+                                    AND NVL(dept.isinactive_crit, 'F') = 'F'
+                                    AND NVL(emp.isinactive, 'F') = 'F'
+                                    AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD HH24:MI:SS')
+                                    AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD HH24:MI:SS')
+                                    AND NVL(op.custrecord_jj_repair_order, 'F') = 'T'
+                                GROUP BY op.custrecord_jj_oprtns_department, op.custrecord_jj_oprtns_employee, BUILTIN.DF(printdesign.custitem_jj_category)
+                            `;
+
+                            log.debug("getRepairEfficiencyData - Starting Qty Query", "Executing query with category-level aggregation");
+                            let startingQtyResults = query.runSuiteQL({ query: startingQtyQuery }).asMappedResults();
+
+                            log.debug("getRepairEfficiencyData - Starting Qty Results Count", startingQtyResults.length);
+
+                            const startingQtyMap = {};
+                            const lossQtyMap = {};
+                            const categoryQtyMap = {};
+                            const employeeCategoryQtyMap = {};
+                            const employeeLevelMap = {};
+
+                            startingQtyResults.forEach(record => {
+                                const deptId = record.department_id;
+                                const employeeId = record.employee_id;
+                                const category = record.category_name || 'N/A';
+                                const deptCatKey = `${deptId}_${category}`;
+
+                                if (!startingQtyMap[deptId]) {
+                                    startingQtyMap[deptId] = 0;
+                                    lossQtyMap[deptId] = 0;
+                                }
+                                startingQtyMap[deptId] += parseFloat(record.starting_qty_gold || 0) + parseFloat(record.starting_qty_diamond || 0);
+                                lossQtyMap[deptId] += parseFloat(record.loss_qty_gold || 0) + parseFloat(record.loss_qty_diamond || 0);
+
+                                if (!categoryQtyMap[deptCatKey]) {
+                                    categoryQtyMap[deptCatKey] = {
+                                        starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
+                                        starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
+                                        issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
+                                        issued_qty_diamond: parseFloat(record.issued_qty_diamond || 0),
+                                        loss_qty_gold: parseFloat(record.loss_qty_gold || 0),
+                                        loss_qty_diamond: parseFloat(record.loss_qty_diamond || 0),
+                                        scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
+                                        scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
+                                        balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
+                                        balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
+                                        issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
+                                        loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
+                                    };
+                                }
+
+                                if (!employeeId) return;
+
+                                const empCatKey = `${deptId}_${employeeId}_${category}`;
+                                const empKey = `${deptId}_${employeeId}`;
+
+                                employeeCategoryQtyMap[empCatKey] = {
+                                    starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
+                                    starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
+                                    issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
+                                    issued_qty_diamond: parseFloat(record.issued_qty_diamond || 0),
+                                    loss_qty_gold: parseFloat(record.loss_qty_gold || 0),
+                                    loss_qty_diamond: parseFloat(record.loss_qty_diamond || 0),
+                                    scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
+                                    scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
+                                    balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
+                                    balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
+                                    issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
+                                    loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
+                                };
+
+                                if (!employeeLevelMap[empKey]) {
+                                    employeeLevelMap[empKey] = { starting_qty: 0, loss_qty: 0, categories: [] };
+                                }
+                                employeeLevelMap[empKey].categories.push({
+                                    category_name: category,
+                                    starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
+                                    starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
+                                    issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
+                                    issued_qty_diamond: parseFloat(record.issued_qty_diamond || 0),
+                                    loss_qty_gold: parseFloat(record.loss_qty_gold || 0),
+                                    loss_qty_diamond: parseFloat(record.loss_qty_diamond || 0),
+                                    scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
+                                    scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
+                                    balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
+                                    balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
+                                    issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
+                                    loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
+                                });
+                                employeeLevelMap[empKey].starting_qty += parseFloat(record.starting_qty_gold || 0) + parseFloat(record.starting_qty_diamond || 0);
+                                employeeLevelMap[empKey].loss_qty += parseFloat(record.loss_qty_gold || 0) + parseFloat(record.loss_qty_diamond || 0);
+                            });
+
+                            let summaryLog = "=== EFFICIENCY DATA FETCH SUMMARY ===\n";
+                            summaryLog += `Total Records Fetched: ${startingQtyResults.length}\n`;
+                            summaryLog += `Records with Employee IDs: ${startingQtyResults.filter(r => r.employee_id).length}\n`;
+                            summaryLog += `Records without Employee IDs: ${startingQtyResults.filter(r => !r.employee_id).length}\n`;
+                            summaryLog += `Category Map Entries: ${Object.keys(categoryQtyMap).length}\n`;
+                            summaryLog += `Employee Category Map Entries: ${Object.keys(employeeCategoryQtyMap).length}\n`;
+                            summaryLog += `Employee Level Map Entries: ${Object.keys(employeeLevelMap).length}\n`;
+                            summaryLog += "=====================================";
+                            log.debug("getRepairEfficiencyData - Data Fetch Summary", summaryLog);
+
+                            Object.keys(groupedData).forEach(locationId => {
+                                Object.keys(groupedData[locationId].departments).forEach(departmentId => {
+                                    groupedData[locationId].departments[departmentId].starting_qty = startingQtyMap[departmentId] || 0;
+                                    groupedData[locationId].departments[departmentId].loss_qty = lossQtyMap[departmentId] || 0;
+                                    groupedData[locationId].departments[departmentId].category_qty_map = categoryQtyMap;
+                                    groupedData[locationId].departments[departmentId].employee_category_qty_map = employeeCategoryQtyMap;
+                                    groupedData[locationId].departments[departmentId].issued_pieces_diamond = deptPiecesMap[departmentId]?.issued_pieces_diamond || 0;
+                                    groupedData[locationId].departments[departmentId].loss_pieces_diamond = deptPiecesMap[departmentId]?.loss_pieces_diamond || 0;
+
+                                    groupedData[locationId].departments[departmentId].employees_array.forEach(emp => {
+                                        const empKey = `${departmentId}_${emp.employee_id}`;
+                                        const empLevelData = employeeLevelMap[empKey];
+                                        if (empLevelData) {
+                                            emp.starting_qty = empLevelData.starting_qty;
+                                            emp.loss_qty = empLevelData.loss_qty;
+                                            emp.categories = empLevelData.categories;
+                                        }
+                                    });
+                                });
+                            });
+                        } else {
+                            log.debug("getRepairEfficiencyData - Starting Qty Fetch", "No departments found in groupedData");
+                        }
+                    } catch (err) {
+                        log.error("getRepairEfficiencyData - Starting Qty Error", err);
                     }
-                    return acc;
-                }, {});
 
-                // **Return the cleaned data**
-                return cleanedData;
+                    return groupedData;
+
+                } catch (error) {
+                    log.error("getRepairEfficiencyData - Error", error);
+                    return {};
+                }
             },
 
             /**
@@ -8763,6 +8865,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno) AS bag_id,
                             BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_name) AS print_design_name,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info) AS issued_pieces_diamond,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_loss_pieces_info) AS loss_pieces_diamond
                         FROM CUSTOMRECORD_JJ_OPERATIONS,
@@ -8779,13 +8882,15 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 CUSTOMRECORD_JJ_BAG_GENERATION."ID" AS id_join,
                                 CUSTOMRECORD_JJ_BAG_GENERATION.name AS bag_name_original,
                                 CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname,
-                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_name AS print_design_name
                             FROM CUSTOMRECORD_JJ_BAG_GENERATION,
                                 (SELECT CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_0,
                                         CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_join,
-                                        item_SUB.name AS name_0
+                                        item_SUB.name AS name_0,
+                                        item_SUB.itemid AS print_design_name
                                 FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING,
-                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name
+                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, item_0.itemid AS itemid
                                     FROM item item_0, CUSTOMRECORD_JJ_CATEGORY
                                     WHERE item_0.custitem_jj_category = CUSTOMRECORD_JJ_CATEGORY."ID"(+)) item_SUB
                                 WHERE CUSTOMRECORD_JJ_BAG_CORE_TRACKING.custrecord_jj_bagcore_kt_col = item_SUB."ID"(+)) CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB
@@ -8829,13 +8934,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         ORDER BY location_name, department_name, firstname, lastname
                     `;
 
-                    log.debug("getOverallEfficiencyData - Executing Query", "Query length: " + sqlQuery.length);
-
                     // Execute the query
                     let rawResults = query.runSuiteQL({ query: sqlQuery }).asMappedResults();
-                    
+
                     log.debug("getOverallEfficiencyData - Raw Results Count", rawResults.length);
-                    
+
                     // Log first 10 raw results to see bag data
                     let rawLogMsg = "=== RAW QUERY RESULTS (First 10) ===\n";
                     rawResults.slice(0, 10).forEach((record, idx) => {
@@ -8854,27 +8957,20 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         const employeeId = record.employee_id;
                         const bagName = record.bag_name;
                         const categoryName = record.category_name;
+                        const printDesignName = record.print_design_name;
 
-                        if (!locationId || !departmentId) {
-                            return;
-                        }
+                        if (!locationId || !departmentId) return;
 
                         // Aggregate pieces data per department
                         if (!deptPiecesMap[departmentId]) {
-                            deptPiecesMap[departmentId] = {
-                                issued_pieces_diamond: 0,
-                                loss_pieces_diamond: 0
-                            };
+                            deptPiecesMap[departmentId] = { issued_pieces_diamond: 0, loss_pieces_diamond: 0 };
                         }
                         deptPiecesMap[departmentId].issued_pieces_diamond += parseFloat(record.issued_pieces_diamond || 0);
                         deptPiecesMap[departmentId].loss_pieces_diamond += parseFloat(record.loss_pieces_diamond || 0);
 
                         // Initialize location if not exists
                         if (!groupedData[locationId]) {
-                            groupedData[locationId] = {
-                                location_name: record.location_name,
-                                departments: {}
-                            };
+                            groupedData[locationId] = { location_name: record.location_name, departments: {} };
                         }
 
                         // Initialize department if not exists
@@ -8885,19 +8981,28 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 employees: {},
                                 unique_bags: new Set(),
                                 unique_categories: new Set(),
+                                category_print_design_map: {},
+                                category_bags_map: {},
                                 issued_pieces_diamond: 0,
                                 loss_pieces_diamond: 0
                             };
                         }
 
                         // Add unique bag to department
-                        if (bagName) {
-                            groupedData[locationId].departments[departmentId].unique_bags.add(bagName);
-                        }
+                        if (bagName) groupedData[locationId].departments[departmentId].unique_bags.add(bagName);
 
                         // Add unique category to department
                         if (categoryName) {
                             groupedData[locationId].departments[departmentId].unique_categories.add(categoryName);
+                            if (printDesignName) {
+                                groupedData[locationId].departments[departmentId].category_print_design_map[categoryName] = printDesignName;
+                            }
+                            if (bagName) {
+                                if (!groupedData[locationId].departments[departmentId].category_bags_map[categoryName]) {
+                                    groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = new Set();
+                                }
+                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName].add(bagName);
+                            }
                         }
 
                         // Add employee to department if employee exists
@@ -8908,55 +9013,71 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     employee_id: employeeId,
                                     name: fullName || "Unknown Employee",
                                     unique_bags: new Set(),
-                                    unique_categories: new Set()
+                                    unique_categories: new Set(),
+                                    category_print_design_map: {},
+                                    category_bags_map: {}
                                 };
                             }
                             // Add unique bag to employee
-                            if (bagName) {
-                                groupedData[locationId].departments[departmentId].employees[employeeId].unique_bags.add(bagName);
-                            }
+                            if (bagName) groupedData[locationId].departments[departmentId].employees[employeeId].unique_bags.add(bagName);
+
                             // Add unique category to employee
                             if (categoryName) {
                                 groupedData[locationId].departments[departmentId].employees[employeeId].unique_categories.add(categoryName);
+                                if (printDesignName) {
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_map[categoryName] = printDesignName;
+                                }
+                                if (bagName) {
+                                    if (!groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName]) {
+                                        groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = new Set();
+                                    }
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName].add(bagName);
+                                }
                             }
                         }
                     });
 
                     // Convert employees object to array and bags Set to count for each department and employee
-                    let logMessage = "=== DEPARTMENT & EMPLOYEE BAG COUNTS ===\n";
                     Object.keys(groupedData).forEach(locationId => {
-                        logMessage += `Location ${locationId}: ${groupedData[locationId].location_name}\n`;
                         Object.keys(groupedData[locationId].departments).forEach(departmentId => {
                             const dept = groupedData[locationId].departments[departmentId];
-                            dept.employees_array = Object.values(dept.employees).map(emp => ({
-                                employee_id: emp.employee_id,
-                                name: emp.name,
-                                bag_count: emp.unique_bags.size,
-                                unique_bags_array: Array.from(emp.unique_bags),
-                                category_count: emp.unique_categories.size,
-                                unique_categories_array: Array.from(emp.unique_categories),
-                                starting_qty: 0,
-                                loss_qty: 0,
-                                categories: []
-                            }));
+                            // Serialize category_bags_map Sets to counts
+                            const deptCategoryBagCountMap = {};
+                            Object.keys(dept.category_bags_map).forEach(cat => {
+                                deptCategoryBagCountMap[cat] = dept.category_bags_map[cat].size;
+                            });
+                            dept.employees_array = Object.values(dept.employees).map(emp => {
+                                const empCategoryBagCountMap = {};
+                                Object.keys(emp.category_bags_map).forEach(cat => {
+                                    empCategoryBagCountMap[cat] = emp.category_bags_map[cat].size;
+                                });
+                                return {
+                                    employee_id: emp.employee_id,
+                                    name: emp.name,
+                                    bag_count: emp.unique_bags.size,
+                                    unique_bags_array: Array.from(emp.unique_bags),
+                                    category_count: emp.unique_categories.size,
+                                    unique_categories_array: Array.from(emp.unique_categories),
+                                    category_print_design_map: emp.category_print_design_map,
+                                    category_bag_count_map: empCategoryBagCountMap,
+                                    starting_qty: 0,
+                                    loss_qty: 0,
+                                    categories: []
+                                };
+                            });
+
                             dept.bag_count = dept.unique_bags.size;
                             dept.unique_bags_array = Array.from(dept.unique_bags);
                             dept.category_count = dept.unique_categories.size;
                             dept.unique_categories_array = Array.from(dept.unique_categories);
-                            
-                            logMessage += `  Dept ${departmentId} (${dept.department_name}): ${dept.bag_count} bags, ${dept.category_count} categories | Employees: ${dept.employees_array.length}\n`;
-                            logMessage += `    Dept Bags: [${dept.unique_bags_array.join(', ')}]\n`;
-                            logMessage += `    Dept Categories: [${dept.unique_categories_array.join(', ')}]\n`;
-                            dept.employees_array.forEach(emp => {
-                                logMessage += `    - Employee: ${emp.name} | Bags: ${emp.bag_count} | Categories: ${emp.category_count} | Bag Names: [${emp.unique_bags_array.join(', ')}] | Categories: [${emp.unique_categories_array.join(', ')}]\n`;
-                            });
-                            
+                            dept.category_bag_count_map = deptCategoryBagCountMap;
+
                             delete dept.employees;
                             delete dept.unique_bags;
                             delete dept.unique_categories;
+                            delete dept.category_bags_map;
                         });
                     });
-                    logMessage += "========================================";
 
                     // Set starting_qty to 0 for all departments
                     Object.keys(groupedData).forEach(locationId => {
@@ -8964,7 +9085,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             groupedData[locationId].departments[departmentId].starting_qty = 0;
                         });
                     });
-                    
+
                     // Fetch starting_qty for each department
                     try {
                         const deptIds = [];
@@ -8973,27 +9094,27 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 deptIds.push(departmentId);
                             });
                         });
-                        
+
                         log.debug("getOverallEfficiencyData - Starting Qty Fetch", "Department IDs: " + deptIds.join(','));
-                        
+
                         if (deptIds.length > 0) {
                             let startingQtyQuery = `
                                 SELECT 
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_department) AS department_id,
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_employee) AS employee_id,
                                     BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(printdesign.custitem_jj_category)) AS category_name,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25, 10) THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_gold,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25, 10) THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_gold,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25, 10) THEN NVL(dir.custrecord_jj_dir_loss_quantity, 0) ELSE 0 END)) AS loss_qty_gold,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_dir_loss_quantity, 0) ELSE 0 END)) AS loss_qty_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25, 10) THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_gold,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (5, 22, 23, 24, 25, 10) THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_gold,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) ELSE 0 END)) AS issued_pieces_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = 6 THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_dir_loss_quantity, 0) ELSE 0 END)) AS loss_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_quantity, 0) ELSE 0 END)) AS loss_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_scrap_quantity, 0) ELSE 0 END)) AS scrap_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_gold,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) ELSE 0 END)) AS issued_pieces_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond
                                 FROM CUSTOMRECORD_JJ_OPERATIONS op
                                 LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
                                     ON dir.custrecord_jj_operations = op.ID
@@ -9026,31 +9147,25 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD HH24:MI:SS')
                                 GROUP BY op.custrecord_jj_oprtns_department, op.custrecord_jj_oprtns_employee, BUILTIN.DF(printdesign.custitem_jj_category)
                             `;
-                            
+
                             log.debug("getOverallEfficiencyData - Starting Qty Query", "Executing query with category-level aggregation");
                             let startingQtyResults = query.runSuiteQL({ query: startingQtyQuery }).asMappedResults();
-                            
+
                             log.debug("getOverallEfficiencyData - Starting Qty Results Count", startingQtyResults.length);
-                            
-                            // **DIAGNOSTIC LOGGING: Inspect actual query results**
-                            let diagnosticLog = "=== DIAGNOSTIC: FIRST 5 QUERY RESULTS ===\n";
-                            let nullEmployeeCount = 0;
-                            let validEmployeeCount = 0;
-                            
+
                             // Create maps for department-level and category-level data
-                            const startingQtyMap = {}; // dept_id -> qty
-                            const lossQtyMap = {}; // dept_id -> qty
-                            const categoryQtyMap = {}; // dept_id_category -> {starting_qty_gold, starting_qty_diamond, issued_qty_gold, issued_qty_diamond, loss_qty_gold, loss_qty_diamond, scrap_qty_gold, scrap_qty_diamond, balance_qty_gold, balance_qty_diamond}
-                            const employeeCategoryQtyMap = {}; // dept_id_emp_id_category -> {quantities}
-                            
-                            const employeeLevelMap = {}; // dept_id_emp_id -> {starting_qty, loss_qty, categories: []}
-                            
+                            const startingQtyMap = {};
+                            const lossQtyMap = {};
+                            const categoryQtyMap = {};
+                            const employeeCategoryQtyMap = {};
+                            const employeeLevelMap = {};
+
                             startingQtyResults.forEach(record => {
                                 const deptId = record.department_id;
-                                const employeeId = record.employee_id; // Can be NULL
+                                const employeeId = record.employee_id;
                                 const category = record.category_name || 'N/A';
                                 const deptCatKey = `${deptId}_${category}`;
-                                
+
                                 // **ALWAYS: Accumulate department-level totals (regardless of employee)**
                                 if (!startingQtyMap[deptId]) {
                                     startingQtyMap[deptId] = 0;
@@ -9058,7 +9173,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 }
                                 startingQtyMap[deptId] += parseFloat(record.starting_qty_gold || 0) + parseFloat(record.starting_qty_diamond || 0);
                                 lossQtyMap[deptId] += parseFloat(record.loss_qty_gold || 0) + parseFloat(record.loss_qty_diamond || 0);
-                                
+
                                 // **ALWAYS: Store category-level data separated by class (regardless of employee)**
                                 if (!categoryQtyMap[deptCatKey]) {
                                     categoryQtyMap[deptCatKey] = {
@@ -9076,15 +9191,13 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                         loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                     };
                                 }
-                                
+
                                 // **ONLY IF EMPLOYEE EXISTS: Process employee-level data**
-                                if (!employeeId) {
-                                    return; // Skip only employee-level processing, NOT department/category processing
-                                }
-                                
+                                if (!employeeId) return;
+
                                 const empCatKey = `${deptId}_${employeeId}_${category}`;
                                 const empKey = `${deptId}_${employeeId}`;
-                                
+
                                 // Store employee-category-level data (only if employee exists)
                                 employeeCategoryQtyMap[empCatKey] = {
                                     starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
@@ -9100,16 +9213,12 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
                                     loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                 };
-                                
+
                                 // Initialize employee-level aggregation
                                 if (!employeeLevelMap[empKey]) {
-                                    employeeLevelMap[empKey] = {
-                                        starting_qty: 0,
-                                        loss_qty: 0,
-                                        categories: []
-                                    };
+                                    employeeLevelMap[empKey] = { starting_qty: 0, loss_qty: 0, categories: [] };
                                 }
-                                
+
                                 // Add category data to employee
                                 employeeLevelMap[empKey].categories.push({
                                     category_name: category,
@@ -9126,12 +9235,12 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
                                     loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                 });
-                                
+
                                 // Accumulate employee-level totals
                                 employeeLevelMap[empKey].starting_qty += parseFloat(record.starting_qty_gold || 0) + parseFloat(record.starting_qty_diamond || 0);
                                 employeeLevelMap[empKey].loss_qty += parseFloat(record.loss_qty_gold || 0) + parseFloat(record.loss_qty_diamond || 0);
                             });
-                            
+
                             // **SUMMARIZED LOG - Single comprehensive summary**
                             let summaryLog = "=== EFFICIENCY DATA FETCH SUMMARY ===\n";
                             summaryLog += `Total Records Fetched: ${startingQtyResults.length}\n`;
@@ -9142,7 +9251,66 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             summaryLog += `Employee Level Map Entries: ${Object.keys(employeeLevelMap).length}\n`;
                             summaryLog += "=====================================";
                             log.debug("getOverallEfficiencyData - Data Fetch Summary", summaryLog);
-                            
+
+                            // Fetch Wax Tree actual production gold for special departments.
+                            // Single query with OR across all 3 date fields.
+                            // Per record: if a date matches the UI range, take its corresponding weight; otherwise 0.
+                            try {
+                                let waxTreeQuery = `
+                                    SELECT
+                                        SUM(CASE
+                                            WHEN custrecord_jj_to_cutting_date >= TO_DATE('${startDate}', 'YYYY-MM-DD')
+                                             AND custrecord_jj_to_cutting_date <= TO_DATE('${endDate}', 'YYYY-MM-DD')
+                                            THEN NVL(custrecord_jj_final_tree_weight, 0)
+                                            ELSE 0
+                                        END) AS casting_qty,
+                                        SUM(CASE
+                                            WHEN custrecord_jj_to_grinding_date >= TO_DATE('${startDate}', 'YYYY-MM-DD')
+                                             AND custrecord_jj_to_grinding_date <= TO_DATE('${endDate}', 'YYYY-MM-DD')
+                                            THEN NVL(custrecord_jj_received_yield_weight, 0)
+                                            ELSE 0
+                                        END) AS tree_cutting_qty,
+                                        SUM(CASE
+                                            WHEN custrecord_jj_to_bagging_date >= TO_DATE('${startDate}', 'YYYY-MM-DD')
+                                             AND custrecord_jj_to_bagging_date <= TO_DATE('${endDate}', 'YYYY-MM-DD')
+                                            THEN NVL(custrecord_jj_received_weight, 0)
+                                            ELSE 0
+                                        END) AS grinding_qty
+                                    FROM customrecord_jj_wax_tree
+                                    WHERE isinactive = 'F'
+                                      AND (
+                                            (custrecord_jj_to_cutting_date >= TO_DATE('${startDate}', 'YYYY-MM-DD') AND custrecord_jj_to_cutting_date <= TO_DATE('${endDate}', 'YYYY-MM-DD'))
+                                         OR (custrecord_jj_to_grinding_date >= TO_DATE('${startDate}', 'YYYY-MM-DD') AND custrecord_jj_to_grinding_date <= TO_DATE('${endDate}', 'YYYY-MM-DD'))
+                                         OR (custrecord_jj_to_bagging_date >= TO_DATE('${startDate}', 'YYYY-MM-DD') AND custrecord_jj_to_bagging_date <= TO_DATE('${endDate}', 'YYYY-MM-DD'))
+                                          )
+                                `;
+                                let waxTreeResults = query.runSuiteQL({ query: waxTreeQuery }).asMappedResults();
+                                if (waxTreeResults && waxTreeResults.length > 0) {
+                                    const row = waxTreeResults[0];
+                                    const castingQty = parseFloat(row.casting_qty || 0);
+                                    const treeCuttingQty = parseFloat(row.tree_cutting_qty || 0);
+                                    const grindingQty = parseFloat(row.grinding_qty || 0);
+                                    log.debug('Wax Tree actual production gold', { castingQty, treeCuttingQty, grindingQty });
+
+                                    const waxDeptMap = {
+                                        [CASTING]: castingQty,
+                                        [TREE_CUTTING_CLEANING]: treeCuttingQty,
+                                        [GRINDING]: grindingQty
+                                    };
+                                    Object.keys(waxDeptMap).forEach(function (deptId) {
+                                        Object.keys(groupedData).forEach(function (locId) {
+                                            // groupedData department keys are strings from SQL results
+                                            const deptKey = String(deptId);
+                                            if (groupedData[locId].departments[deptKey]) {
+                                                groupedData[locId].departments[deptKey].wax_tree_actual_production_gold = waxDeptMap[deptId];
+                                            }
+                                        });
+                                    });
+                                }
+                            } catch (waxErr) {
+                                log.error('getOverallEfficiencyData - Wax Tree Error', waxErr);
+                            }
+
                             Object.keys(groupedData).forEach(locationId => {
                                 Object.keys(groupedData[locationId].departments).forEach(departmentId => {
                                     groupedData[locationId].departments[departmentId].starting_qty = startingQtyMap[departmentId] || 0;
@@ -9151,7 +9319,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     groupedData[locationId].departments[departmentId].employee_category_qty_map = employeeCategoryQtyMap;
                                     groupedData[locationId].departments[departmentId].issued_pieces_diamond = deptPiecesMap[departmentId]?.issued_pieces_diamond || 0;
                                     groupedData[locationId].departments[departmentId].loss_pieces_diamond = deptPiecesMap[departmentId]?.loss_pieces_diamond || 0;
-                                    
+
                                     groupedData[locationId].departments[departmentId].employees_array.forEach(emp => {
                                         const empKey = `${departmentId}_${emp.employee_id}`;
                                         const empLevelData = employeeLevelMap[empKey];
@@ -9792,9 +9960,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                         // const purity = (parseFloat(result.getValue({ name: 'custitem_jj_metal_purity_percent', join: 'item' }) || 0) / 100) || 0;
                         const purity = (parseFloat(purityText || 0) / 100) || 0;
+                        const itemId = result.getValue({ name: "internalid", join: "item" });
 
                         if (materialTypeId != JEWELRY_TYPE_ID && Number(quantity || 0) > 0) {
-                            const itemId = result.getValue({ name: "internalid", join: "item" });
                             if (itemId) {
                                 itemBaseDetails[itemId] = itemBaseDetails[itemId] || {
                                     gold_color: "",
@@ -9856,6 +10024,12 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 // }
                                 groupedAmount["party_diamond"] = groupedAmount["party_diamond"] || { totalQuantity: 0 };
                                 groupedAmount["party_diamond"].totalQuantity = Number(groupedAmount["party_diamond"].totalQuantity || 0) + Number(quantity || 0);
+                            }
+
+                            if (itemId && Number(itemId) == LABOUR_OVERHEADS_CHARGE_ITEM_ID) {
+                                groupedAmount["labour_overheads"] = groupedAmount["labour_overheads"] || { totalCreditAmount: quantity, totalQuantity: quantity };
+                            } else if (itemId && Number(itemId) == NET_LOSS_CHARGE_ITEM_ID) {
+                                groupedAmount["net_loss"] = groupedAmount["net_loss"] || { totalCreditAmount: quantity, totalQuantity: quantity };
                             }
                         }
                         if (materialTypeId == JEWELRY_TYPE_ID) {
@@ -9974,6 +10148,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 "custitemnumber_jj_cost_alloy",
                                 "custitemnumber_jj_serial_num_alloy_weight",
 
+                                'custitemnumber_jj_total_labour_overhead_char',
+                                'custitemnumber_jj_total_net_loss_charge',
+
                                 // ---- FG Stone / Metal attributes ----
                                 'custitemnumber_jj_fg_stone_color',
                                 'custitemnumber_jj_fg_stone_quality',
@@ -9999,6 +10176,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             const mcAmt = parseFloat(res.getValue("custitemnumber_jj_cost_making_charge") || 0);
                             const partyDiaAmt = parseFloat(res.getValue("custitemnumber_jj_cost_party_diamond") || 0);
                             const alloyAmt = parseFloat(res.getValue("custitemnumber_jj_cost_alloy") || 0);
+                            const labourOverhead = parseFloat(res.getValue("custitemnumber_jj_total_labour_overhead_char") || 0);
+                            const netLoss = parseFloat(res.getValue("custitemnumber_jj_total_net_loss_charge") || 0);
 
                             serialBase[lotNumber] = this.extractSerialBaseDetails(res);
 
@@ -10028,6 +10207,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 },
                                 making_charge: {
                                     totalCreditAmount: mcAmt
+                                },
+                                labour_overheads: {
+                                    totalQuantity: labourOverhead,
+                                    totalCreditAmount: labourOverhead
+                                },
+                                net_loss: {
+                                    totalQuantity: netLoss,
+                                    totalCreditAmount: netLoss
                                 },
                                 pure_weight: parseFloat(res.getValue("custitemnumber_jj_serial_num_pure_weight") || 0),
                                 diamondPieces: parseFloat(res.getValue("custitemnumber_jj_serial_num_diamond_pieces") || 0),
@@ -12266,7 +12453,332 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         data: null
                     };
                 }
-            }
+            },
+            getInvAdjCreatedDate(empId) {
+                try {
+                    const invAdjDates = [];
+
+                    const inventoryAdjustmentSearchObj = search.create({
+                        type: "inventoryadjustment",
+                        filters: [
+                            ["type", "anyof", "InvAdjst"],
+                            "AND",
+                            ["custbody_jj_is_recovery", "is", "T"],
+                            "AND",
+                            ["custbody_jj_recovered_employee", "anyof", empId],
+                            "AND",
+                            ["mainline", "is", "T"]
+                        ],
+                        columns: [
+                            search.createColumn({ name: "datecreated", label: "Date Created" })
+                        ]
+                    });
+
+                    const searchResultCount = inventoryAdjustmentSearchObj.runPaged().count;
+                    log.debug("Inventory Adjustment Search Result Count", searchResultCount);
+
+                    inventoryAdjustmentSearchObj.run().each(function (result) {
+                        invAdjDates.push(result.getValue({ name: "datecreated" }));
+                        return true; // continue iteration
+                    });
+
+                    if (invAdjDates.length === 0) {
+                        return {
+                            status: 'ERROR',
+                            reason: `No inventory adjustments found for employee ID ${empId}`,
+                            data: []
+                        };
+                    }
+                    log.debug("Exit time", invAdjDates);
+                    return {
+                        status: 'SUCCESS',
+                        reason: `Found ${invAdjDates.length} inventory adjustment record(s)`,
+                        data: invAdjDates
+                    };
+
+                } catch (e) {
+                    log.error('getInvAdjCreatedDate ERROR', e);
+                    return {
+                        status: 'ERROR',
+                        reason: e.message || 'Failed to retrieve inventory adjustments',
+                        data: null
+                    };
+                }
+            },
+            directIssueLossComponents(empId, departmentId, exitTime) {
+                try {
+                    let componentsList = [];
+
+                    const directIssueSearch = search.create({
+                        type: "customrecord_jj_direct_issue_return",
+                        filters: [
+                            ["custrecord_jj_operations.custrecord_jj_oprtns_employee", "anyof", empId],
+                            "AND",
+                            ["custrecord_jj_department", "anyof", departmentId],
+                            "AND",
+                            ["custrecord_jj_component.class", "anyof", GOLD_CLASS_IDS],
+                            "AND",
+                            ["custrecord_jj_operations.custrecord_jj_oprtns_exit", "after", exitTime],
+                            "AND",
+                            ["custrecord_jj_dir_loss_quantity", "greaterthan", "0"]
+                        ],
+                        columns: [
+                            search.createColumn({ name: "custrecord_jj_component", label: "component" }),
+                            search.createColumn({ name: "custrecord_jj_dir_loss_quantity", label: "lossQuantity" }),
+                            search.createColumn({
+                                name: "custitem_jj_metal_quality",
+                                join: "CUSTRECORD_JJ_COMPONENT",
+                                label: "metalQuality"
+                            }),
+                            search.createColumn({
+                                name: "custitem_jj_metal_purity_percent",
+                                join: "CUSTRECORD_JJ_COMPONENT",
+                                label: "metalPurityPercent"
+                            })
+                        ]
+                    });
+
+                    const searchColumns = jjUtil.dataSets.fetchSavedSearchColumn(directIssueSearch, 'label');
+                    // Use iterateSavedSearch for large datasets
+                    const paginatedResults = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: directIssueSearch,
+                        columns: searchColumns,
+                        PAGE_INDEX: null, // fetch all pages
+                        PAGE_SIZE: 1000
+                    });
+                    log.debug("Paginate result of directIssueLoss", paginatedResults);
+
+                    // Build componentsList from paginatedResults
+                    componentsList = (paginatedResults || []).map(line => ({
+                        component: line['component']?.text || '',
+                        lossQuantity: parseFloat(line['lossQuantity']?.value) || 0,
+                        metalQuality: line['metalQuality']?.text || '',
+                        metalPurityPercent: parseFloat(line['metalPurityPercent']?.value) || 0
+                    }));
+
+                    if (componentsList.length === 0) {
+                        return {
+                            status: 'ERROR',
+                            reason: `No direct issue loss components found for employee ${empId} in department ${departmentId} after ${exitTime}`,
+                            data: []
+                        };
+                    }
+                    log.debug("Components list", componentsList);
+                    return {
+                        status: 'SUCCESS',
+                        reason: `Found ${componentsList.length} direct issue loss record(s)`,
+                        data: componentsList
+                    };
+
+                } catch (e) {
+                    log.error('directIssueLossComponents ERROR', e);
+                    return {
+                        status: 'ERROR',
+                        reason: e.message || 'Failed to retrieve direct issue loss components',
+                        data: null
+                    };
+                }
+            },
+            aggregateEmployeeLossData(empId, departmentId, exitTime) {
+                try {
+                    log.debug('aggregateEmployeeLossData', { empId, departmentId, exitTime });
+
+                    // Call directIssueLossComponents to get raw data
+                    const rawDataResult = this.directIssueLossComponents(empId, departmentId, exitTime);
+
+                    if (rawDataResult.status !== 'SUCCESS' || !rawDataResult.data || rawDataResult.data.length === 0) {
+                        return {
+                            status: 'SUCCESS',
+                            reason: 'No loss components found for this employee',
+                            data: {
+                                totalLoss: 0,
+                                totalPureLoss: 0,
+                                components: {}
+                            }
+                        };
+                    }
+
+                    // Step 1: Group components by name and aggregate
+                    const componentMap = {};
+
+                    rawDataResult.data.forEach(item => {
+                        const componentName = item.component;
+                        const lossQty = parseFloat(item.lossQuantity) || 0;
+                        const purityPercent = parseFloat(item.metalPurityPercent) || 0;
+
+                        if (!componentMap[componentName]) {
+                            componentMap[componentName] = {
+                                loss: 0,
+                                pureLoss: 0,
+                                purityPercent: purityPercent,
+                                metalQuality: item.metalQuality
+                            };
+                        }
+
+                        // Sum loss quantities
+                        componentMap[componentName].loss += lossQty;
+
+                        // Calculate pure loss: lossQuantity * (purityPercent / 100)
+                        const pureLossForItem = lossQty * (purityPercent / 100);
+                        componentMap[componentName].pureLoss += pureLossForItem;
+                    });
+
+                    // Step 2: Calculate totals
+                    let totalLoss = 0;
+                    let totalPureLoss = 0;
+
+                    Object.values(componentMap).forEach(comp => {
+                        totalLoss += comp.loss;
+                        totalPureLoss += comp.pureLoss;
+                    });
+
+                    // Step 3: Format response with rounded values
+                    const formattedComponents = {};
+                    Object.keys(componentMap).forEach(key => {
+                        formattedComponents[key] = {
+                            loss: parseFloat(componentMap[key].loss.toFixed(4)),
+                            pureLoss: parseFloat(componentMap[key].pureLoss.toFixed(4)),
+                            purityPercent: componentMap[key].purityPercent,
+                            metalQuality: componentMap[key].metalQuality
+                        };
+                    });
+
+                    return {
+                        status: 'SUCCESS',
+                        reason: 'Employee loss data aggregated successfully',
+                        data: {
+                            totalLoss: parseFloat(totalLoss.toFixed(4)),
+                            totalPureLoss: parseFloat(totalPureLoss.toFixed(4)),
+                            components: formattedComponents
+                        }
+                    };
+
+                } catch (e) {
+                    log.error('aggregateEmployeeLossData ERROR', e);
+                    return {
+                        status: 'ERROR',
+                        reason: e.message || 'Failed to aggregate employee loss data',
+                        data: null
+                    };
+                }
+            },
+
+            /**
+             * Get service item lines for a Work Order.
+             *
+             * @param {number|string} workOrderId - Work Order internal ID
+             * @returns {Array<{internalId: string, itemId: string, itemText: string, quantity: number, itemType: string}>}
+             */
+            getWorkOrderServiceLines(workOrderId) {
+                try {
+                    const results = [];
+
+                    const workorderSearchObj = search.create({
+                        type: "workorder",
+                        settings: [{ name: "consolidationtype", value: "ACCTTYPE" }],
+                        filters: [
+                            ["type", "anyof", "WorkOrd"],
+                            "AND", ["internalid", "anyof", workOrderId],
+                            "AND", ["item.type", "anyof", "Service"],
+                            "AND", ["mainline", "is", "F"]
+                        ],
+                        columns: [
+                            search.createColumn({ name: "internalid", label: "internal_id" }),
+                            search.createColumn({ name: "item", label: "item" }),
+                            search.createColumn({ name: "quantity", label: "quantity" }),
+                            search.createColumn({ name: "type", join: "item", label: "type" }),
+                            search.createColumn({ name: "cost", join: "item", label: "purchase_price" }),
+                            search.createColumn({ name: "line", label: "line_id" })
+                        ]
+                    });
+
+                    let searchResults = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: workorderSearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(workorderSearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000,
+                    });
+
+                    searchResults.forEach(row => {
+                        results.push({
+                            internalId: row.internal_id?.value || '',
+                            itemId: row.item?.value || '',
+                            itemText: row.item?.text || '',
+                            quantity: Number(row.quantity?.value || 0),
+                            updatedQuantity: Number(row.quantity?.value || 0),
+                            itemType: row.type?.value || '',
+                            purchasePrice: row.purchase_price?.value || '',
+                            woLineNo: row.line_id?.value || ''
+                        });
+                    });
+
+                    return results;
+
+                } catch (e) {
+                    log.error('Error in getWorkOrderServiceLines', e);
+                    return [];
+                }
+            },
+
+            /**
+             * Returns true if matching operations exist
+             * @param {Array} ids - array of internal IDs
+             * @returns {boolean}
+             */
+            hasOperationResults(ids = []) {
+                try {
+                    if (!ids || !ids.length) return false;
+                    const searchObj = search.create({
+                        type: "customrecord_jj_operations",
+                        filters: [
+                            ["internalid", "anyof", ids],
+                            "AND", [
+                                ["custrecord_jj_oprtns_load_created", "is", "T"],
+                                "OR", ["custrecord_jj_oprtns_exit", "isnotempty", ""],
+                                "OR", ["isinactive", "is", "T"]
+                            ]
+                        ],
+                        columns: ["internalid"]
+                    });
+                    // Efficient existence check
+                    const result = searchObj.run().getRange({ start: 0, end: 1 });
+                    return result && result.length > 0;
+                } catch (error) {
+                    log.error({ title: "Error in hasOperationResults", details: error });
+                    return false; // safe fallback
+                }
+            },
+
+            /**
+             * Returns true if any active wax tree exists for given bag IDs
+             * @param {Array} bagIds
+             * @returns {boolean}
+             */
+            hasActiveWaxTree(bagIds = []) {
+                try {
+                    if (!bagIds || !bagIds.length) return false;
+                    const searchObj = search.create({
+                        type: "customrecord_jj_wax_tree",
+                        filters: [
+                            ["isinactive", "is", "F"],
+                            "AND", ["custrecord_jj_bags", "anyof", bagIds],
+                            "AND", ["custrecord_jj_moved_to_bagging", "is", "F"]
+                        ],
+                        columns: ["internalid"]
+                    });
+                    // Efficient check (only fetch 1 record)
+                    const result = searchObj.run().getRange({ start: 0, end: 1 });
+                    log.debug("hasActiveWaxTree result", result);
+                    return result && result.length > 0;
+                } catch (error) {
+                    log.error({
+                        title: "Error in hasActiveWaxTree",
+                        details: JSON.stringify({ error, bagIds })
+                    });
+
+                    return false; // safe fallback
+                }
+            },
         };
         jjUtil.applyTryCatch(searchResults, 'searchResults');
         return searchResults;
