@@ -8669,7 +8669,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_gold,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_diamond,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) ELSE 0 END)) AS issued_pieces_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(MAX(purity_sub.metal_purity_percent)) AS metal_purity_percent
                                 FROM CUSTOMRECORD_JJ_OPERATIONS op
                                 LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
                                     ON dir.custrecord_jj_operations = op.ID
@@ -8681,6 +8682,24 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
                                 LEFT JOIN item printdesign 
                                     ON bagcore.custrecord_jj_bagcore_kt_col = printdesign.ID
+                                LEFT JOIN (
+                                    SELECT
+                                        bagcore2.ID AS bagcore_id,
+                                        MAX(mq.custrecord_jj_dd_metal_quality_purity) AS metal_purity_percent
+                                    FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore2
+                                    JOIN transaction wo2
+                                        ON wo2.ID = bagcore2.custrecord_jj_bagcore_wo
+                                    JOIN bomRevision brev
+                                        ON brev.ID = wo2.billofmaterialsrevision
+                                    JOIN bomRevisionComponentMember brcm
+                                        ON brcm.bomrevision = brev.ID
+                                    JOIN item bom_item
+                                        ON bom_item.ID = brcm.item
+                                    JOIN CUSTOMRECORD_JJ_DD_METAL_QUALITY mq
+                                        ON mq.ID = bom_item.custitem_jj_metal_quality
+                                    GROUP BY bagcore2.ID
+                                ) purity_sub
+                                    ON purity_sub.bagcore_id = bagcore.ID
                                 LEFT JOIN (
                                     SELECT 
                                         d.ID AS id_join,
@@ -8738,6 +8757,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
                                     loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                 };
+                                const metalPurityPercent = parseFloat(record.metal_purity_percent || 0);
 
                                 if (!startingQtyMap[deptId]) {
                                     startingQtyMap[deptId] = 0;
@@ -8753,9 +8773,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                                 if (bagName) {
                                     if (!categoryBagQtyMap[deptCatBagKey]) {
-                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0, metal_purity_percent: 0 };
                                     }
                                     Object.keys(qtyData).forEach(k => { categoryBagQtyMap[deptCatBagKey][k] += qtyData[k]; });
+                                    if (metalPurityPercent > 0) categoryBagQtyMap[deptCatBagKey].metal_purity_percent = metalPurityPercent;
                                 }
 
                                 if (!employeeId) return;
@@ -8774,6 +8795,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 employeeLevelMap[empKey].categories.push({
                                     category_name: category,
                                     bag_name: bagName,
+                                    metal_purity_percent: metalPurityPercent,
                                     ...qtyData
                                 });
                                 employeeLevelMap[empKey].starting_qty += qtyData.starting_qty_gold + qtyData.starting_qty_diamond;
@@ -9122,7 +9144,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_gold,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_diamond,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) ELSE 0 END)) AS issued_pieces_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond,
+                                    BUILTIN_RESULT.TYPE_FLOAT(MAX(purity_sub.metal_purity_percent)) AS metal_purity_percent
                                 FROM CUSTOMRECORD_JJ_OPERATIONS op
                                 LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
                                     ON dir.custrecord_jj_operations = op.ID
@@ -9134,6 +9157,24 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
                                 LEFT JOIN item printdesign 
                                     ON bagcore.custrecord_jj_bagcore_kt_col = printdesign.ID
+                                LEFT JOIN (
+                                    SELECT
+                                        bagcore2.ID AS bagcore_id,
+                                        MAX(mq.custrecord_jj_dd_metal_quality_purity) AS metal_purity_percent
+                                    FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore2
+                                    JOIN transaction wo2
+                                        ON wo2.ID = bagcore2.custrecord_jj_bagcore_wo
+                                    JOIN bomRevision brev
+                                        ON brev.ID = wo2.billofmaterialsrevision
+                                    JOIN bomRevisionComponentMember brcm
+                                        ON brcm.bomrevision = brev.ID
+                                    JOIN item bom_item
+                                        ON bom_item.ID = brcm.item
+                                    JOIN CUSTOMRECORD_JJ_DD_METAL_QUALITY mq
+                                        ON mq.ID = bom_item.custitem_jj_metal_quality
+                                    GROUP BY bagcore2.ID
+                                ) purity_sub
+                                    ON purity_sub.bagcore_id = bagcore.ID
                                 LEFT JOIN (
                                     SELECT 
                                         d.ID AS id_join,
@@ -9191,6 +9232,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
                                     loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                 };
+                                const metalPurityPercent = parseFloat(record.metal_purity_percent || 0);
 
                                 // **ALWAYS: Accumulate department-level totals (regardless of employee)**
                                 if (!startingQtyMap[deptId]) {
@@ -9209,9 +9251,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 // **ALWAYS: Store per-bag qty data keyed by deptId_category_bagName**
                                 if (bagName) {
                                     if (!categoryBagQtyMap[deptCatBagKey]) {
-                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0, metal_purity_percent: 0 };
                                     }
                                     Object.keys(qtyData).forEach(k => { categoryBagQtyMap[deptCatBagKey][k] += qtyData[k]; });
+                                    // purity is a constant per bag — take the max (non-zero wins)
+                                    if (metalPurityPercent > 0) categoryBagQtyMap[deptCatBagKey].metal_purity_percent = metalPurityPercent;
                                 }
 
                                 // **ONLY IF EMPLOYEE EXISTS: Process employee-level data**
@@ -9235,6 +9279,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 employeeLevelMap[empKey].categories.push({
                                     category_name: category,
                                     bag_name: bagName,
+                                    metal_purity_percent: metalPurityPercent,
                                     ...qtyData
                                 });
 
