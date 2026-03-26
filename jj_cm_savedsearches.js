@@ -8593,15 +8593,19 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     Object.keys(groupedData).forEach(locationId => {
                         Object.keys(groupedData[locationId].departments).forEach(departmentId => {
                             const dept = groupedData[locationId].departments[departmentId];
-                            // Serialize category_bags_map Sets to counts
+                            // Serialize category_bags_map Sets to counts AND names arrays
                             const deptCategoryBagCountMap = {};
+                            const deptCategoryBagNamesMap = {};
                             Object.keys(dept.category_bags_map).forEach(cat => {
                                 deptCategoryBagCountMap[cat] = dept.category_bags_map[cat].size;
+                                deptCategoryBagNamesMap[cat] = Array.from(dept.category_bags_map[cat]);
                             });
                             dept.employees_array = Object.values(dept.employees).map(emp => {
                                 const empCategoryBagCountMap = {};
+                                const empCategoryBagNamesMap = {};
                                 Object.keys(emp.category_bags_map).forEach(cat => {
                                     empCategoryBagCountMap[cat] = emp.category_bags_map[cat].size;
+                                    empCategoryBagNamesMap[cat] = Array.from(emp.category_bags_map[cat]);
                                 });
                                 return {
                                     employee_id: emp.employee_id,
@@ -8612,6 +8616,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     unique_categories_array: Array.from(emp.unique_categories),
                                     category_print_design_map: emp.category_print_design_map,
                                     category_bag_count_map: empCategoryBagCountMap,
+                                    category_bag_names_map: empCategoryBagNamesMap,
                                     starting_qty: 0,
                                     loss_qty: 0,
                                     categories: []
@@ -8622,6 +8627,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             dept.category_count = dept.unique_categories.size;
                             dept.unique_categories_array = Array.from(dept.unique_categories);
                             dept.category_bag_count_map = deptCategoryBagCountMap;
+                            dept.category_bag_names_map = deptCategoryBagNamesMap;
                             delete dept.employees;
                             delete dept.unique_bags;
                             delete dept.unique_categories;
@@ -8651,6 +8657,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_department) AS department_id,
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_employee) AS employee_id,
                                     BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(printdesign.custitem_jj_category)) AS category_name,
+                                    BUILTIN_RESULT.TYPE_STRING(NVL(bag.altname, bag.name)) AS bag_name,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_gold,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_diamond,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_gold,
@@ -8694,7 +8701,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD HH24:MI:SS')
                                     AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD HH24:MI:SS')
                                     AND NVL(op.custrecord_jj_repair_order, 'F') = 'T'
-                                GROUP BY op.custrecord_jj_oprtns_department, op.custrecord_jj_oprtns_employee, BUILTIN.DF(printdesign.custitem_jj_category)
+                                GROUP BY op.custrecord_jj_oprtns_department, op.custrecord_jj_oprtns_employee, BUILTIN.DF(printdesign.custitem_jj_category), NVL(bag.altname, bag.name)
                             `;
 
                             log.debug("getRepairEfficiencyData - Starting Qty Query", "Executing query with category-level aggregation");
@@ -8705,6 +8712,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             const startingQtyMap = {};
                             const lossQtyMap = {};
                             const categoryQtyMap = {};
+                            const categoryBagQtyMap = {};
                             const employeeCategoryQtyMap = {};
                             const employeeLevelMap = {};
 
@@ -8712,38 +8720,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 const deptId = record.department_id;
                                 const employeeId = record.employee_id;
                                 const category = record.category_name || 'N/A';
+                                const bagName = record.bag_name || '';
                                 const deptCatKey = `${deptId}_${category}`;
+                                const deptCatBagKey = `${deptId}_${category}_${bagName}`;
 
-                                if (!startingQtyMap[deptId]) {
-                                    startingQtyMap[deptId] = 0;
-                                    lossQtyMap[deptId] = 0;
-                                }
-                                startingQtyMap[deptId] += parseFloat(record.starting_qty_gold || 0) + parseFloat(record.starting_qty_diamond || 0);
-                                lossQtyMap[deptId] += parseFloat(record.loss_qty_gold || 0) + parseFloat(record.loss_qty_diamond || 0);
-
-                                if (!categoryQtyMap[deptCatKey]) {
-                                    categoryQtyMap[deptCatKey] = {
-                                        starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
-                                        starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
-                                        issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
-                                        issued_qty_diamond: parseFloat(record.issued_qty_diamond || 0),
-                                        loss_qty_gold: parseFloat(record.loss_qty_gold || 0),
-                                        loss_qty_diamond: parseFloat(record.loss_qty_diamond || 0),
-                                        scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
-                                        scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
-                                        balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
-                                        balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
-                                        issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
-                                        loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
-                                    };
-                                }
-
-                                if (!employeeId) return;
-
-                                const empCatKey = `${deptId}_${employeeId}_${category}`;
-                                const empKey = `${deptId}_${employeeId}`;
-
-                                employeeCategoryQtyMap[empCatKey] = {
+                                const qtyData = {
                                     starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
                                     starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
                                     issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
@@ -8758,26 +8739,45 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                 };
 
+                                if (!startingQtyMap[deptId]) {
+                                    startingQtyMap[deptId] = 0;
+                                    lossQtyMap[deptId] = 0;
+                                }
+                                startingQtyMap[deptId] += qtyData.starting_qty_gold + qtyData.starting_qty_diamond;
+                                lossQtyMap[deptId] += qtyData.loss_qty_gold + qtyData.loss_qty_diamond;
+
+                                if (!categoryQtyMap[deptCatKey]) {
+                                    categoryQtyMap[deptCatKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                }
+                                Object.keys(qtyData).forEach(k => { categoryQtyMap[deptCatKey][k] += qtyData[k]; });
+
+                                if (bagName) {
+                                    if (!categoryBagQtyMap[deptCatBagKey]) {
+                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                    }
+                                    Object.keys(qtyData).forEach(k => { categoryBagQtyMap[deptCatBagKey][k] += qtyData[k]; });
+                                }
+
+                                if (!employeeId) return;
+
+                                const empCatKey = `${deptId}_${employeeId}_${category}`;
+                                const empKey = `${deptId}_${employeeId}`;
+
+                                if (!employeeCategoryQtyMap[empCatKey]) {
+                                    employeeCategoryQtyMap[empCatKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                }
+                                Object.keys(qtyData).forEach(k => { employeeCategoryQtyMap[empCatKey][k] += qtyData[k]; });
+
                                 if (!employeeLevelMap[empKey]) {
                                     employeeLevelMap[empKey] = { starting_qty: 0, loss_qty: 0, categories: [] };
                                 }
                                 employeeLevelMap[empKey].categories.push({
                                     category_name: category,
-                                    starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
-                                    starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
-                                    issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
-                                    issued_qty_diamond: parseFloat(record.issued_qty_diamond || 0),
-                                    loss_qty_gold: parseFloat(record.loss_qty_gold || 0),
-                                    loss_qty_diamond: parseFloat(record.loss_qty_diamond || 0),
-                                    scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
-                                    scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
-                                    balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
-                                    balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
-                                    issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
-                                    loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
+                                    bag_name: bagName,
+                                    ...qtyData
                                 });
-                                employeeLevelMap[empKey].starting_qty += parseFloat(record.starting_qty_gold || 0) + parseFloat(record.starting_qty_diamond || 0);
-                                employeeLevelMap[empKey].loss_qty += parseFloat(record.loss_qty_gold || 0) + parseFloat(record.loss_qty_diamond || 0);
+                                employeeLevelMap[empKey].starting_qty += qtyData.starting_qty_gold + qtyData.starting_qty_diamond;
+                                employeeLevelMap[empKey].loss_qty += qtyData.loss_qty_gold + qtyData.loss_qty_diamond;
                             });
 
                             let summaryLog = "=== EFFICIENCY DATA FETCH SUMMARY ===\n";
@@ -8785,6 +8785,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             summaryLog += `Records with Employee IDs: ${startingQtyResults.filter(r => r.employee_id).length}\n`;
                             summaryLog += `Records without Employee IDs: ${startingQtyResults.filter(r => !r.employee_id).length}\n`;
                             summaryLog += `Category Map Entries: ${Object.keys(categoryQtyMap).length}\n`;
+                            summaryLog += `Category Bag Map Entries: ${Object.keys(categoryBagQtyMap).length}\n`;
                             summaryLog += `Employee Category Map Entries: ${Object.keys(employeeCategoryQtyMap).length}\n`;
                             summaryLog += `Employee Level Map Entries: ${Object.keys(employeeLevelMap).length}\n`;
                             summaryLog += "=====================================";
@@ -9041,15 +9042,19 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     Object.keys(groupedData).forEach(locationId => {
                         Object.keys(groupedData[locationId].departments).forEach(departmentId => {
                             const dept = groupedData[locationId].departments[departmentId];
-                            // Serialize category_bags_map Sets to counts
+                            // Serialize category_bags_map Sets to counts AND names arrays
                             const deptCategoryBagCountMap = {};
+                            const deptCategoryBagNamesMap = {};
                             Object.keys(dept.category_bags_map).forEach(cat => {
                                 deptCategoryBagCountMap[cat] = dept.category_bags_map[cat].size;
+                                deptCategoryBagNamesMap[cat] = Array.from(dept.category_bags_map[cat]);
                             });
                             dept.employees_array = Object.values(dept.employees).map(emp => {
                                 const empCategoryBagCountMap = {};
+                                const empCategoryBagNamesMap = {};
                                 Object.keys(emp.category_bags_map).forEach(cat => {
                                     empCategoryBagCountMap[cat] = emp.category_bags_map[cat].size;
+                                    empCategoryBagNamesMap[cat] = Array.from(emp.category_bags_map[cat]);
                                 });
                                 return {
                                     employee_id: emp.employee_id,
@@ -9060,6 +9065,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     unique_categories_array: Array.from(emp.unique_categories),
                                     category_print_design_map: emp.category_print_design_map,
                                     category_bag_count_map: empCategoryBagCountMap,
+                                    category_bag_names_map: empCategoryBagNamesMap,
                                     starting_qty: 0,
                                     loss_qty: 0,
                                     categories: []
@@ -9071,6 +9077,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             dept.category_count = dept.unique_categories.size;
                             dept.unique_categories_array = Array.from(dept.unique_categories);
                             dept.category_bag_count_map = deptCategoryBagCountMap;
+                            dept.category_bag_names_map = deptCategoryBagNamesMap;
 
                             delete dept.employees;
                             delete dept.unique_bags;
@@ -9103,6 +9110,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_department) AS department_id,
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_employee) AS employee_id,
                                     BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(printdesign.custitem_jj_category)) AS category_name,
+                                    BUILTIN_RESULT.TYPE_STRING(NVL(bag.altname, bag.name)) AS bag_name,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_gold,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_starting_qty, 0) ELSE 0 END)) AS starting_qty_diamond,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_issued_quantity, 0) ELSE 0 END)) AS issued_qty_gold,
@@ -9145,7 +9153,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     AND NVL(emp.isinactive, 'F') = 'F'
                                     AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD HH24:MI:SS')
                                     AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD HH24:MI:SS')
-                                GROUP BY op.custrecord_jj_oprtns_department, op.custrecord_jj_oprtns_employee, BUILTIN.DF(printdesign.custitem_jj_category)
+                                GROUP BY op.custrecord_jj_oprtns_department, op.custrecord_jj_oprtns_employee, BUILTIN.DF(printdesign.custitem_jj_category), NVL(bag.altname, bag.name)
                             `;
 
                             log.debug("getOverallEfficiencyData - Starting Qty Query", "Executing query with category-level aggregation");
@@ -9157,6 +9165,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             const startingQtyMap = {};
                             const lossQtyMap = {};
                             const categoryQtyMap = {};
+                            const categoryBagQtyMap = {};
                             const employeeCategoryQtyMap = {};
                             const employeeLevelMap = {};
 
@@ -9164,42 +9173,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 const deptId = record.department_id;
                                 const employeeId = record.employee_id;
                                 const category = record.category_name || 'N/A';
+                                const bagName = record.bag_name || '';
                                 const deptCatKey = `${deptId}_${category}`;
+                                const deptCatBagKey = `${deptId}_${category}_${bagName}`;
 
-                                // **ALWAYS: Accumulate department-level totals (regardless of employee)**
-                                if (!startingQtyMap[deptId]) {
-                                    startingQtyMap[deptId] = 0;
-                                    lossQtyMap[deptId] = 0;
-                                }
-                                startingQtyMap[deptId] += parseFloat(record.starting_qty_gold || 0) + parseFloat(record.starting_qty_diamond || 0);
-                                lossQtyMap[deptId] += parseFloat(record.loss_qty_gold || 0) + parseFloat(record.loss_qty_diamond || 0);
-
-                                // **ALWAYS: Store category-level data separated by class (regardless of employee)**
-                                if (!categoryQtyMap[deptCatKey]) {
-                                    categoryQtyMap[deptCatKey] = {
-                                        starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
-                                        starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
-                                        issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
-                                        issued_qty_diamond: parseFloat(record.issued_qty_diamond || 0),
-                                        loss_qty_gold: parseFloat(record.loss_qty_gold || 0),
-                                        loss_qty_diamond: parseFloat(record.loss_qty_diamond || 0),
-                                        scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
-                                        scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
-                                        balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
-                                        balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
-                                        issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
-                                        loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
-                                    };
-                                }
-
-                                // **ONLY IF EMPLOYEE EXISTS: Process employee-level data**
-                                if (!employeeId) return;
-
-                                const empCatKey = `${deptId}_${employeeId}_${category}`;
-                                const empKey = `${deptId}_${employeeId}`;
-
-                                // Store employee-category-level data (only if employee exists)
-                                employeeCategoryQtyMap[empCatKey] = {
+                                const qtyData = {
                                     starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
                                     starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
                                     issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
@@ -9214,31 +9192,55 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                 };
 
+                                // **ALWAYS: Accumulate department-level totals (regardless of employee)**
+                                if (!startingQtyMap[deptId]) {
+                                    startingQtyMap[deptId] = 0;
+                                    lossQtyMap[deptId] = 0;
+                                }
+                                startingQtyMap[deptId] += qtyData.starting_qty_gold + qtyData.starting_qty_diamond;
+                                lossQtyMap[deptId] += qtyData.loss_qty_gold + qtyData.loss_qty_diamond;
+
+                                // **ALWAYS: Accumulate category-level data (aggregate across bags)**
+                                if (!categoryQtyMap[deptCatKey]) {
+                                    categoryQtyMap[deptCatKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                }
+                                Object.keys(qtyData).forEach(k => { categoryQtyMap[deptCatKey][k] += qtyData[k]; });
+
+                                // **ALWAYS: Store per-bag qty data keyed by deptId_category_bagName**
+                                if (bagName) {
+                                    if (!categoryBagQtyMap[deptCatBagKey]) {
+                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                    }
+                                    Object.keys(qtyData).forEach(k => { categoryBagQtyMap[deptCatBagKey][k] += qtyData[k]; });
+                                }
+
+                                // **ONLY IF EMPLOYEE EXISTS: Process employee-level data**
+                                if (!employeeId) return;
+
+                                const empCatKey = `${deptId}_${employeeId}_${category}`;
+                                const empKey = `${deptId}_${employeeId}`;
+
+                                // Store employee-category-level data (only if employee exists)
+                                if (!employeeCategoryQtyMap[empCatKey]) {
+                                    employeeCategoryQtyMap[empCatKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                }
+                                Object.keys(qtyData).forEach(k => { employeeCategoryQtyMap[empCatKey][k] += qtyData[k]; });
+
                                 // Initialize employee-level aggregation
                                 if (!employeeLevelMap[empKey]) {
                                     employeeLevelMap[empKey] = { starting_qty: 0, loss_qty: 0, categories: [] };
                                 }
 
-                                // Add category data to employee
+                                // Add per-bag entry to employee categories
                                 employeeLevelMap[empKey].categories.push({
                                     category_name: category,
-                                    starting_qty_gold: parseFloat(record.starting_qty_gold || 0),
-                                    starting_qty_diamond: parseFloat(record.starting_qty_diamond || 0),
-                                    issued_qty_gold: parseFloat(record.issued_qty_gold || 0),
-                                    issued_qty_diamond: parseFloat(record.issued_qty_diamond || 0),
-                                    loss_qty_gold: parseFloat(record.loss_qty_gold || 0),
-                                    loss_qty_diamond: parseFloat(record.loss_qty_diamond || 0),
-                                    scrap_qty_gold: parseFloat(record.scrap_qty_gold || 0),
-                                    scrap_qty_diamond: parseFloat(record.scrap_qty_diamond || 0),
-                                    balance_qty_gold: parseFloat(record.balance_qty_gold || 0),
-                                    balance_qty_diamond: parseFloat(record.balance_qty_diamond || 0),
-                                    issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
-                                    loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
+                                    bag_name: bagName,
+                                    ...qtyData
                                 });
 
                                 // Accumulate employee-level totals
-                                employeeLevelMap[empKey].starting_qty += parseFloat(record.starting_qty_gold || 0) + parseFloat(record.starting_qty_diamond || 0);
-                                employeeLevelMap[empKey].loss_qty += parseFloat(record.loss_qty_gold || 0) + parseFloat(record.loss_qty_diamond || 0);
+                                employeeLevelMap[empKey].starting_qty += qtyData.starting_qty_gold + qtyData.starting_qty_diamond;
+                                employeeLevelMap[empKey].loss_qty += qtyData.loss_qty_gold + qtyData.loss_qty_diamond;
                             });
 
                             // **SUMMARIZED LOG - Single comprehensive summary**
@@ -9247,6 +9249,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             summaryLog += `Records with Employee IDs: ${startingQtyResults.filter(r => r.employee_id).length}\n`;
                             summaryLog += `Records without Employee IDs: ${startingQtyResults.filter(r => !r.employee_id).length}\n`;
                             summaryLog += `Category Map Entries: ${Object.keys(categoryQtyMap).length}\n`;
+                            summaryLog += `Category Bag Map Entries: ${Object.keys(categoryBagQtyMap).length}\n`;
                             summaryLog += `Employee Category Map Entries: ${Object.keys(employeeCategoryQtyMap).length}\n`;
                             summaryLog += `Employee Level Map Entries: ${Object.keys(employeeLevelMap).length}\n`;
                             summaryLog += "=====================================";
@@ -9316,6 +9319,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     groupedData[locationId].departments[departmentId].starting_qty = startingQtyMap[departmentId] || 0;
                                     groupedData[locationId].departments[departmentId].loss_qty = lossQtyMap[departmentId] || 0;
                                     groupedData[locationId].departments[departmentId].category_qty_map = categoryQtyMap;
+                                    groupedData[locationId].departments[departmentId].category_bag_qty_map = categoryBagQtyMap;
                                     groupedData[locationId].departments[departmentId].employee_category_qty_map = employeeCategoryQtyMap;
                                     groupedData[locationId].departments[departmentId].issued_pieces_diamond = deptPiecesMap[departmentId]?.issued_pieces_diamond || 0;
                                     groupedData[locationId].departments[departmentId].loss_pieces_diamond = deptPiecesMap[departmentId]?.loss_pieces_diamond || 0;

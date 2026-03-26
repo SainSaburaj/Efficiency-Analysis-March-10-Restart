@@ -458,6 +458,7 @@
                                 <th class="px-3 py-2 text-left font-semibold">Item category</th>
                                 <th class="px-3 py-2 text-left font-semibold">Style Number</th>
                                 <th class="px-3 py-2 text-left font-semibold">Bag Count</th>
+                                <th class="px-3 py-2 text-left font-semibold">Bag Name</th>
 
                                 <th class="px-3 py-2 text-left font-semibold">TM Production Gold</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Issued Qty Gold</th> -->
@@ -487,80 +488,82 @@
                             <template v-if="!showEmployeesTable" v-for="(dept, deptIndex) in selectedDepartmentData" :key="'dept-' + deptIndex">
                                 <!-- If department has categories, show them with rowspan -->
                                 <template v-if="dept.unique_categories_array && dept.unique_categories_array.length > 0">
-                                    <tr v-for="(category, catIndex) in dept.unique_categories_array" :key="'dept-' + deptIndex + '-cat-' + catIndex" 
-                                        class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
-                                        <!-- SL No - only show on first category row -->
-                                        <td v-if="catIndex === 0" :rowspan="dept.unique_categories_array.length" class="px-3 py-2 group-hover:!bg-white border-r">{{ deptIndex + 1 }}</td>
-                                        
-                                        <!-- Department Name - only show on first category row -->
-                                        <td v-if="catIndex === 0" :rowspan="dept.unique_categories_array.length" class="px-3 py-2 group-hover:!bg-white border-r">{{ dept.name }}</td>
-                                        
-                                        <!-- No. of Bags - only show on first category row -->
-                                        <td v-if="catIndex === 0" :rowspan="dept.unique_categories_array.length" class="px-3 py-2 font-semibold text-center bg-blue-50 border-r">{{ dept.bag_count || 0 }}</td>
-                                        
-                                        <!-- Item Category -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
+                                    <!-- Compute total bag rows for this dept (sum of bags per category) -->
+                                    <template v-for="(category, catIndex) in dept.unique_categories_array" :key="'dept-' + deptIndex + '-cat-' + catIndex">
+                                        <!-- bags for this category -->
+                                        <template v-for="(bagName, bagIndex) in (dept.category_bag_names_map?.[category] || [''])" :key="'dept-' + deptIndex + '-cat-' + catIndex + '-bag-' + bagIndex">
+                                            <tr class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
+                                                <!-- SL No - only on very first row of dept -->
+                                                <td v-if="catIndex === 0 && bagIndex === 0"
+                                                    :rowspan="dept.unique_categories_array.reduce((s, c) => s + (dept.category_bag_names_map?.[c]?.length || 1), 0)"
+                                                    class="px-3 py-2 group-hover:!bg-white border-r">{{ deptIndex + 1 }}</td>
 
-                                        <!-- Print Design (Assembly Item) -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ dept.category_print_design_map?.[category] || '-' }}</td>
+                                                <!-- Department Name - only on very first row of dept -->
+                                                <td v-if="catIndex === 0 && bagIndex === 0"
+                                                    :rowspan="dept.unique_categories_array.reduce((s, c) => s + (dept.category_bag_names_map?.[c]?.length || 1), 0)"
+                                                    class="px-3 py-2 group-hover:!bg-white border-r">{{ dept.name }}</td>
 
-                                        <!-- Bags (per category) -->
-                                        <td class="px-3 py-2 group-hover:shadow-md text-center bg-blue-50">{{ dept.category_bag_count_map?.[category] || 0 }}</td>
+                                                <!-- No. of Bags - only on very first row of dept -->
+                                                <td v-if="catIndex === 0 && bagIndex === 0"
+                                                    :rowspan="dept.unique_categories_array.reduce((s, c) => s + (dept.category_bag_names_map?.[c]?.length || 1), 0)"
+                                                    class="px-3 py-2 font-semibold text-center bg-blue-50 border-r">{{ dept.bag_count || 0 }}</td>
 
-                                        <!-- Starting Qty Gold -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryStartingQty(dept, category) }}</td>
-                                        
-                                        <!-- Issued Qty Gold -->
-                                        <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryIssuedQty(dept, category) }}</td> -->
-                                        
-                                        <!-- Actual Production Gold -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getCategoryStartingQtyGoldRaw(dept, category) + getCategoryIssuedQtyGoldRaw(dept, category) - getCategoryLossQtyGoldRaw(dept, category) - getCategoryScrapQtyGoldRaw(dept, category) - getCategoryBalanceQtyGoldRaw(dept, category)) }}</td>
-                                        
-                                        <!-- Loss Qty Gold -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getCategoryLossQty(dept, category) }}</td>
-                                        
-                                        <!-- Scrap Qty Gold -->
-                                        <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryScrapQty(dept, category) }}</td> -->
-                                        
-                                        <!-- Balance Qty Gold -->
-                                        <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryBalanceQty(dept, category) }}</td> -->
-                                        
-                                        <!-- Gold Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(getCategoryStartingQtyGoldRaw(dept, category), getCategoryIssuedQtyGoldRaw(dept, category), getCategoryLossQtyGoldRaw(dept, category), getCategoryScrapQtyGoldRaw(dept, category), getCategoryBalanceQtyGoldRaw(dept, category))) }}%</td>
-                                        
-                                        <!-- Starting Qty Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryStartingQtyDiamond(dept, category) }}</td>
-                                        
-                                        <!-- Issued Qty Diamond -->
-                                        <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryIssuedQtyDiamond(dept, category) }}</td> -->
-                                        
-                                        <!-- Actual Production Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getCategoryStartingQtyDiamondRaw(dept, category) + getCategoryIssuedQtyDiamondRaw(dept, category) - getCategoryLossQtyDiamondRaw(dept, category) - getCategoryScrapQtyDiamondRaw(dept, category) - getCategoryBalanceQtyDiamondRaw(dept, category)) }}</td>
+                                                <!-- Item Category - rowspan = number of bags in this category -->
+                                                <td v-if="bagIndex === 0"
+                                                    :rowspan="dept.category_bag_names_map?.[category]?.length || 1"
+                                                    class="px-3 py-2 group-hover:shadow-md border-r">{{ category || 'N/A' }}</td>
 
-                                        <!-- Loss Qty Diamond -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getCategoryLossQtyDiamond(dept, category) }}</td>
-                                        
-                                        <!-- Scrap Qty Diamond -->
-                                        <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryScrapQtyDiamond(dept, category) }}</td> -->
-                                        
-                                        <!-- Balance Qty Diamond -->
-                                        <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getCategoryBalanceQtyDiamond(dept, category) }}</td> -->
-                                        
-                                        <!-- Diamond Loss % -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getCategoryStartingQtyDiamondRaw(dept, category), getCategoryIssuedQtyDiamondRaw(dept, category), getCategoryLossQtyDiamondRaw(dept, category), getCategoryScrapQtyDiamondRaw(dept, category), getCategoryBalanceQtyDiamondRaw(dept, category))) }}%</td>
+                                                <!-- Style Number (Print Design) - rowspan = bags in category -->
+                                                <td v-if="bagIndex === 0"
+                                                    :rowspan="dept.category_bag_names_map?.[category]?.length || 1"
+                                                    class="px-3 py-2 group-hover:shadow-md">{{ dept.category_print_design_map?.[category] || '-' }}</td>
 
-                                        <!-- Gold Recovery Weight -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                        
-                                        <!-- Net Loss Gold -->
-                                        <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
-                                        
-                                        <!-- Diamond Recovery Weight -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                        
-                                        <!-- Net Loss Diamond -->
-                                        <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                    </tr>
+                                                <!-- Bag Count (per category) - rowspan = bags in category -->
+                                                <td v-if="bagIndex === 0"
+                                                    :rowspan="dept.category_bag_names_map?.[category]?.length || 1"
+                                                    class="px-3 py-2 group-hover:shadow-md text-center bg-blue-50">{{ dept.category_bag_count_map?.[category] || 0 }}</td>
+
+                                                <!-- Bag Name -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ bagName || '-' }}</td>
+
+                                                <!-- TM Production Gold -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getBagStartingQtyGoldRaw(dept, category, bagName)) }}</td>
+
+                                                <!-- Actual Production Gold -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getBagStartingQtyGoldRaw(dept, category, bagName) + getBagIssuedQtyGoldRaw(dept, category, bagName) - getBagLossQtyGoldRaw(dept, category, bagName) - getBagScrapQtyGoldRaw(dept, category, bagName) - getBagBalanceQtyGoldRaw(dept, category, bagName)) }}</td>
+
+                                                <!-- Loss Qty Gold -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(getBagLossQtyGoldRaw(dept, category, bagName)) }}</td>
+
+                                                <!-- Gold Loss % -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(getBagStartingQtyGoldRaw(dept, category, bagName), getBagIssuedQtyGoldRaw(dept, category, bagName), getBagLossQtyGoldRaw(dept, category, bagName), getBagScrapQtyGoldRaw(dept, category, bagName), getBagBalanceQtyGoldRaw(dept, category, bagName))) }}%</td>
+
+                                                <!-- TM Production Diamond -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getBagStartingQtyDiamondRaw(dept, category, bagName)) }}</td>
+
+                                                <!-- Actual Production Diamond -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getBagStartingQtyDiamondRaw(dept, category, bagName) + getBagIssuedQtyDiamondRaw(dept, category, bagName) - getBagLossQtyDiamondRaw(dept, category, bagName) - getBagScrapQtyDiamondRaw(dept, category, bagName) - getBagBalanceQtyDiamondRaw(dept, category, bagName)) }}</td>
+
+                                                <!-- Loss Qty Diamond -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(getBagLossQtyDiamondRaw(dept, category, bagName)) }}</td>
+
+                                                <!-- Diamond Loss % -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getBagStartingQtyDiamondRaw(dept, category, bagName), getBagIssuedQtyDiamondRaw(dept, category, bagName), getBagLossQtyDiamondRaw(dept, category, bagName), getBagScrapQtyDiamondRaw(dept, category, bagName), getBagBalanceQtyDiamondRaw(dept, category, bagName))) }}%</td>
+
+                                                <!-- Gold Recovery Weight -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+
+                                                <!-- Net Loss Gold -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+
+                                                <!-- Diamond Recovery Weight -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+
+                                                <!-- Net Loss Diamond -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                            </tr>
+                                        </template>
+                                    </template>
                                 </template>
                             </template>
 
@@ -574,10 +577,13 @@
                                 <!-- Item Category (empty) -->
                                 <td class="px-3 py-2 font-semibold"></td>
 
-                                <!-- Print Design (empty) -->
+                                <!-- Style Number (empty) -->
                                 <td class="px-3 py-2 font-semibold"></td>
 
-                                <!-- Bags (empty) -->
+                                <!-- Bag Count (empty) -->
+                                <td class="px-3 py-2 font-semibold"></td>
+
+                                <!-- Bag Name (empty) -->
                                 <td class="px-3 py-2 font-semibold"></td>
 
                                 <!-- Starting Qty Gold -->
@@ -629,82 +635,81 @@
                         <!-- Employee Details -->
                         <tbody class="text-gray-700">
                             <template v-if="showEmployeesTable" v-for="(emp, empIndex) in selectedEmployees" :key="'emp-' + empIndex">
-                                <!-- Employee row with categories -->
+                                <!-- Employee row with categories expanded to individual bags -->
                                 <template v-if="emp.unique_categories_array && emp.unique_categories_array.length > 0">
                                     <template v-for="(category, catIndex) in emp.unique_categories_array" :key="'emp-' + empIndex + '-cat-' + catIndex">
-                                        <tr class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
-                                            <!-- SL No (rowspan for first category row) -->
-                                            <td v-if="catIndex === 0" :rowspan="emp.unique_categories_array.length" class="px-3 py-2 group-hover:!bg-white">{{ empIndex + 1 }}</td>
-                                            
-                                            <!-- Employee Name (rowspan for first category row) -->
-                                            <td v-if="catIndex === 0" :rowspan="emp.unique_categories_array.length" class="px-3 py-2 group-hover:!bg-white">{{ emp.name }}</td>
-                                            
-                                            <!-- No. of Bags (rowspan for first category row) -->
-                                            <td v-if="catIndex === 0" :rowspan="emp.unique_categories_array.length" class="px-3 py-2 font-semibold text-center bg-blue-50">{{ emp.bag_count || 0 }}</td>
-                                            
-                                            <!-- Item Category -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ category || 'N/A' }}</td>
-                                            
-                                            <!-- Print Design (Assembly Item) -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ emp.category_print_design_map?.[category] || '-' }}</td>
-                                            
-                                            <!-- Bags (per category) -->
-                                            <td class="px-3 py-2 group-hover:shadow-md text-center bg-blue-50">{{ emp.category_bag_count_map?.[category] || 0 }}</td>
-                                            
-                                            <!-- Starting Qty Gold -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryStartingQtyGold(emp, category) }}</td>
-                                            
-                                            <!-- Issued Qty Gold -->
-                                            <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryIssuedQtyGold(emp, category) }}</td> -->
-                                            
-                                            <!-- Actual Production Gold -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmployeeCategoryStartingQtyGoldRaw(emp, category) + getEmployeeCategoryIssuedQtyGoldRaw(emp, category) - getEmployeeCategoryLossQtyGoldRaw(emp, category) - getEmployeeCategoryScrapQtyGoldRaw(emp, category) - getEmployeeCategoryBalanceQtyGoldRaw(emp, category)) }}</td>
+                                        <template v-for="(bagName, bagIndex) in (emp.category_bag_names_map?.[category] || [''])" :key="'emp-' + empIndex + '-cat-' + catIndex + '-bag-' + bagIndex">
+                                            <tr class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
+                                                <!-- SL No - only on very first row of emp -->
+                                                <td v-if="catIndex === 0 && bagIndex === 0"
+                                                    :rowspan="emp.unique_categories_array.reduce((s, c) => s + (emp.category_bag_names_map?.[c]?.length || 1), 0)"
+                                                    class="px-3 py-2 group-hover:!bg-white">{{ empIndex + 1 }}</td>
 
-                                            <!-- Loss Qty Gold -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getEmployeeCategoryLossQtyGold(emp, category) }}</td>
-                                            
-                                            <!-- Scrap Qty Gold -->
-                                            <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryScrapQtyGold(emp, category) }}</td> -->
-                                            
-                                            <!-- Balance Qty Gold -->
-                                            <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryBalanceQtyGold(emp, category) }}</td> -->
-                                            
-                                            <!-- Gold Loss % -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(getEmployeeCategoryStartingQtyGoldRaw(emp, category), getEmployeeCategoryIssuedQtyGoldRaw(emp, category), getEmployeeCategoryLossQtyGoldRaw(emp, category), getEmployeeCategoryScrapQtyGoldRaw(emp, category), getEmployeeCategoryBalanceQtyGoldRaw(emp, category))) }}%</td>
-                                            
-                                            <!-- Starting Qty Diamond -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryStartingQtyDiamond(emp, category) }}</td>
+                                                <!-- Employee Name - only on very first row -->
+                                                <td v-if="catIndex === 0 && bagIndex === 0"
+                                                    :rowspan="emp.unique_categories_array.reduce((s, c) => s + (emp.category_bag_names_map?.[c]?.length || 1), 0)"
+                                                    class="px-3 py-2 group-hover:!bg-white">{{ emp.name }}</td>
 
-                                            <!-- Issued Qty Diamond -->
-                                            <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryIssuedQtyDiamond(emp, category) }}</td> -->
-                                            
-                                            <!-- Actual Production Diamond -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmployeeCategoryStartingQtyDiamondRaw(emp, category) + getEmployeeCategoryIssuedQtyDiamondRaw(emp, category) - getEmployeeCategoryLossQtyDiamondRaw(emp, category) - getEmployeeCategoryScrapQtyDiamondRaw(emp, category) - getEmployeeCategoryBalanceQtyDiamondRaw(emp, category)) }}</td>
-                                            
-                                            <!-- Loss Qty Diamond -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getEmployeeCategoryLossQtyDiamond(emp, category) }}</td>
-                                            
-                                            <!-- Scrap Qty Diamond -->
-                                            <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryScrapQtyDiamond(emp, category) }}</td> -->
-                                            
-                                            <!-- Balance Qty Diamond -->
-                                            <!-- <td class="px-3 py-2 group-hover:shadow-md">{{ getEmployeeCategoryBalanceQtyDiamond(emp, category) }}</td> -->
-                                            
-                                            <!-- Diamond Loss % -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getEmployeeCategoryStartingQtyDiamondRaw(emp, category), getEmployeeCategoryIssuedQtyDiamondRaw(emp, category), getEmployeeCategoryLossQtyDiamondRaw(emp, category), getEmployeeCategoryScrapQtyDiamondRaw(emp, category), getEmployeeCategoryBalanceQtyDiamondRaw(emp, category))) }}%</td>
-                                            
-                                            <!-- Gold Recovery Weight -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                            
-                                            <!-- Net Loss Gold -->
-                                            <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
-                                            
-                                            <!-- Diamond Recovery Weight -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                            
-                                            <!-- Net Loss Diamond -->
-                                            <td class="px-3 py-2 group-hover:shadow-md">-</td>
-                                        </tr>
+                                                <!-- No. of Bags - only on very first row -->
+                                                <td v-if="catIndex === 0 && bagIndex === 0"
+                                                    :rowspan="emp.unique_categories_array.reduce((s, c) => s + (emp.category_bag_names_map?.[c]?.length || 1), 0)"
+                                                    class="px-3 py-2 font-semibold text-center bg-blue-50">{{ emp.bag_count || 0 }}</td>
+
+                                                <!-- Item Category - rowspan = bags in this category -->
+                                                <td v-if="bagIndex === 0"
+                                                    :rowspan="emp.category_bag_names_map?.[category]?.length || 1"
+                                                    class="px-3 py-2 group-hover:shadow-md border-r">{{ category || 'N/A' }}</td>
+
+                                                <!-- Style Number (Print Design) - rowspan = bags in category -->
+                                                <td v-if="bagIndex === 0"
+                                                    :rowspan="emp.category_bag_names_map?.[category]?.length || 1"
+                                                    class="px-3 py-2 group-hover:shadow-md">{{ emp.category_print_design_map?.[category] || '-' }}</td>
+
+                                                <!-- Bag Count (per category) - rowspan = bags in category -->
+                                                <td v-if="bagIndex === 0"
+                                                    :rowspan="emp.category_bag_names_map?.[category]?.length || 1"
+                                                    class="px-3 py-2 group-hover:shadow-md text-center bg-blue-50">{{ emp.category_bag_count_map?.[category] || 0 }}</td>
+
+                                                <!-- Bag Name -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ bagName || '-' }}</td>
+
+                                                <!-- TM Production Gold -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmpBagStartingQtyGoldRaw(emp, category, bagName)) }}</td>
+
+                                                <!-- Actual Production Gold -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmpBagStartingQtyGoldRaw(emp, category, bagName) + getEmpBagIssuedQtyGoldRaw(emp, category, bagName) - getEmpBagLossQtyGoldRaw(emp, category, bagName) - getEmpBagScrapQtyGoldRaw(emp, category, bagName) - getEmpBagBalanceQtyGoldRaw(emp, category, bagName)) }}</td>
+
+                                                <!-- Loss Qty Gold -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(getEmpBagLossQtyGoldRaw(emp, category, bagName)) }}</td>
+
+                                                <!-- Gold Loss % -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(getEmpBagStartingQtyGoldRaw(emp, category, bagName), getEmpBagIssuedQtyGoldRaw(emp, category, bagName), getEmpBagLossQtyGoldRaw(emp, category, bagName), getEmpBagScrapQtyGoldRaw(emp, category, bagName), getEmpBagBalanceQtyGoldRaw(emp, category, bagName))) }}%</td>
+
+                                                <!-- TM Production Diamond -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmpBagStartingQtyDiamondRaw(emp, category, bagName)) }}</td>
+
+                                                <!-- Actual Production Diamond -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmpBagStartingQtyDiamondRaw(emp, category, bagName) + getEmpBagIssuedQtyDiamondRaw(emp, category, bagName) - getEmpBagLossQtyDiamondRaw(emp, category, bagName) - getEmpBagScrapQtyDiamondRaw(emp, category, bagName) - getEmpBagBalanceQtyDiamondRaw(emp, category, bagName)) }}</td>
+
+                                                <!-- Loss Qty Diamond -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(getEmpBagLossQtyDiamondRaw(emp, category, bagName)) }}</td>
+
+                                                <!-- Diamond Loss % -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getEmpBagStartingQtyDiamondRaw(emp, category, bagName), getEmpBagIssuedQtyDiamondRaw(emp, category, bagName), getEmpBagLossQtyDiamondRaw(emp, category, bagName), getEmpBagScrapQtyDiamondRaw(emp, category, bagName), getEmpBagBalanceQtyDiamondRaw(emp, category, bagName))) }}%</td>
+
+                                                <!-- Gold Recovery Weight -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+
+                                                <!-- Net Loss Gold -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+
+                                                <!-- Diamond Recovery Weight -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+
+                                                <!-- Net Loss Diamond -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                            </tr>
+                                        </template>
                                     </template>
                                 </template>
                             </template>
@@ -724,10 +729,13 @@
                                 <!-- Item Category (empty) -->
                                 <td class="px-3 py-2"></td>
 
-                                <!-- Print Design (empty) -->
+                                <!-- Style Number (empty) -->
                                 <td class="px-3 py-2"></td>
 
-                                <!-- Bags (empty) -->
+                                <!-- Bag Count (empty) -->
+                                <td class="px-3 py-2"></td>
+
+                                <!-- Bag Name (empty) -->
                                 <td class="px-3 py-2"></td>
 
                                 <!-- Starting Qty Gold -->
@@ -1551,7 +1559,7 @@ export default {
             if (showEmployeesTable.value) {
                 // ── EMPLOYEE TABLE ──────────────────────────────────────
                 const EMP_HEADERS = [
-                    'Location','Department','Employee','No. of Bags','Item Category','Print Design (Assembly Item)','Bags',
+                    'Location','Department','Employee','No. of Bags','Item Category','Style Number','Bag Count','Bag Name',
                     'TM Production Gold','Actual Production Gold','Loss Qty Gold','Gold Loss %',
                     'TM Production Diamond','Actual Production Diamond','Loss Qty Diamond','Diamond Loss %',
                     'Gold Recovery Weight (gm)','Net Loss Gold','Diamond Recovery Weight (ct)','Net Loss Diamond'
@@ -1575,32 +1583,37 @@ export default {
                             const bagCount = emp.bag_count || 0;
                             const cats     = emp.unique_categories_array || [];
                             let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
+                            let isFirstEmpRow = true;
 
-                            cats.forEach((cat, ci) => {
-                                const d   = (emp.category_qty_map||{})[`${emp.id}_${cat}`]||{};
-                                const sG=parseFloat(d.starting_qty_gold||0), iG=parseFloat(d.issued_qty_gold||0), lG=parseFloat(d.loss_qty_gold||0), scG=parseFloat(d.scrap_qty_gold||0), bG=parseFloat(d.balance_qty_gold||0);
-                                const sD=parseFloat(d.starting_qty_diamond||0), iD=parseFloat(d.issued_qty_diamond||0), lD=parseFloat(d.loss_qty_diamond||0), scD=parseFloat(d.scrap_qty_diamond||0), bD=parseFloat(d.balance_qty_diamond||0);
-                                const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
-                                const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
-                                sub.sG+=sG;sub.iG+=iG;sub.lG+=lG;sub.scG+=scG;sub.bG+=bG;
-                                sub.sD+=sD;sub.iD+=iD;sub.lD+=lD;sub.scD+=scD;sub.bD+=bD;
-                                gt.sG+=sG;gt.iG+=iG;gt.lG+=lG;gt.scG+=scG;gt.bG+=bG;
-                                gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
-
-                                const isFirst = ci===0;
-                                const showLoc = isFirst && !locShown;
+                            cats.forEach((cat) => {
+                                const bags = (emp.category_bag_names_map||{})[cat] || [''];
                                 const printDesign = (emp.category_print_design_map||{})[cat] || '-';
-                                const catBagCount = (emp.category_bag_count_map||{})[cat] || 0;
-                                const dr = ws.addRow([
-                                    showLoc?locName:'', isFirst?deptName:'', isFirst?empName:'',
-                                    isFirst?bagCount:'', cat, printDesign, catBagCount,
-                                    +roundToTwo(sG), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
-                                    +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
-                                    '-','-','-','-'
-                                ]);
-                                styleRow(dr, C.rowBg, normalFont, ECOL);
-                                redCols(dr, EMP_LOSS_COLS);
-                                if (showLoc) locShown = true;
+
+                                bags.forEach((bagName) => {
+                                    const bagEntry = (emp.categories||[]).find(c => c.category_name === cat && c.bag_name === bagName) || {};
+                                    const sG=parseFloat(bagEntry.starting_qty_gold||0), iG=parseFloat(bagEntry.issued_qty_gold||0), lG=parseFloat(bagEntry.loss_qty_gold||0), scG=parseFloat(bagEntry.scrap_qty_gold||0), bG=parseFloat(bagEntry.balance_qty_gold||0);
+                                    const sD=parseFloat(bagEntry.starting_qty_diamond||0), iD=parseFloat(bagEntry.issued_qty_diamond||0), lD=parseFloat(bagEntry.loss_qty_diamond||0), scD=parseFloat(bagEntry.scrap_qty_diamond||0), bD=parseFloat(bagEntry.balance_qty_diamond||0);
+                                    const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
+                                    const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
+                                    sub.sG+=sG;sub.iG+=iG;sub.lG+=lG;sub.scG+=scG;sub.bG+=bG;
+                                    sub.sD+=sD;sub.iD+=iD;sub.lD+=lD;sub.scD+=scD;sub.bD+=bD;
+                                    gt.sG+=sG;gt.iG+=iG;gt.lG+=lG;gt.scG+=scG;gt.bG+=bG;
+                                    gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
+
+                                    const showLoc = isFirstEmpRow && !locShown;
+                                    const catBagCount = (emp.category_bag_count_map||{})[cat] || 0;
+                                    const dr = ws.addRow([
+                                        showLoc?locName:'', isFirstEmpRow?deptName:'', isFirstEmpRow?empName:'',
+                                        isFirstEmpRow?bagCount:'', cat, printDesign, catBagCount, bagName||'-',
+                                        +roundToTwo(sG), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
+                                        +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
+                                        '-','-','-','-'
+                                    ]);
+                                    styleRow(dr, C.rowBg, normalFont, ECOL);
+                                    redCols(dr, EMP_LOSS_COLS);
+                                    if (showLoc) locShown = true;
+                                    isFirstEmpRow = false;
+                                });
                             });
 
                             if (cats.length > 0) {
@@ -1616,7 +1629,7 @@ export default {
             } else {
                 // ── DEPARTMENT TABLE ────────────────────────────────────
                 const DEPT_HEADERS = [
-                    'Location','Department','No. of Bags','Item Category','Print Design (Assembly Item)','Bags',
+                    'Location','Department','No. of Bags','Item Category','Style Number','Bag Count','Bag Name',
                     'TM Production Gold','Actual Production Gold','Loss Qty Gold','Gold Loss %',
                     'TM Production Diamond','Actual Production Diamond','Loss Qty Diamond','Diamond Loss %',
                     'Gold Recovery Weight (gm)','Net Loss Gold','Diamond Recovery Weight (ct)','Net Loss Diamond'
@@ -1638,32 +1651,38 @@ export default {
                         const bagCount = dept.bag_count || 0;
                         const cats     = dept.unique_categories_array || [];
                         let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
+                        let isFirstDeptRow = true;
 
-                        cats.forEach((cat, ci) => {
-                            const d   = (dept.category_qty_map||{})[`${dept.id}_${cat}`]||{};
-                            const sG=parseFloat(d.starting_qty_gold||0), iG=parseFloat(d.issued_qty_gold||0), lG=parseFloat(d.loss_qty_gold||0), scG=parseFloat(d.scrap_qty_gold||0), bG=parseFloat(d.balance_qty_gold||0);
-                            const sD=parseFloat(d.starting_qty_diamond||0), iD=parseFloat(d.issued_qty_diamond||0), lD=parseFloat(d.loss_qty_diamond||0), scD=parseFloat(d.scrap_qty_diamond||0), bD=parseFloat(d.balance_qty_diamond||0);
-                            const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
-                            const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
-                            sub.sG+=sG;sub.iG+=iG;sub.lG+=lG;sub.scG+=scG;sub.bG+=bG;
-                            sub.sD+=sD;sub.iD+=iD;sub.lD+=lD;sub.scD+=scD;sub.bD+=bD;
-                            gt.sG+=sG;gt.iG+=iG;gt.lG+=lG;gt.scG+=scG;gt.bG+=bG;
-                            gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
-
-                            const isFirst = ci===0;
-                            const showLoc = isFirst && !locShown;
+                        cats.forEach((cat) => {
+                            const bags = (dept.category_bag_names_map||{})[cat] || [''];
                             const printDesign = (dept.category_print_design_map||{})[cat] || '-';
-                            const catBagCount = (dept.category_bag_count_map||{})[cat] || 0;
-                            const dr = ws.addRow([
-                                showLoc?locName:'', isFirst?deptName:'',
-                                isFirst?bagCount:'', cat, printDesign, catBagCount,
-                                +roundToTwo(sG), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
-                                +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
-                                '-','-','-','-'
-                            ]);
-                            styleRow(dr, C.rowBg, normalFont, DCOL);
-                            redCols(dr, DEPT_LOSS_COLS);
-                            if (showLoc) locShown = true;
+
+                            bags.forEach((bagName) => {
+                                const bqKey = `${dept.id}_${cat}_${bagName}`;
+                                const d = (dept.category_bag_qty_map||{})[bqKey] || {};
+                                const sG=parseFloat(d.starting_qty_gold||0), iG=parseFloat(d.issued_qty_gold||0), lG=parseFloat(d.loss_qty_gold||0), scG=parseFloat(d.scrap_qty_gold||0), bG=parseFloat(d.balance_qty_gold||0);
+                                const sD=parseFloat(d.starting_qty_diamond||0), iD=parseFloat(d.issued_qty_diamond||0), lD=parseFloat(d.loss_qty_diamond||0), scD=parseFloat(d.scrap_qty_diamond||0), bD=parseFloat(d.balance_qty_diamond||0);
+                                const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
+                                const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
+                                sub.sG+=sG;sub.iG+=iG;sub.lG+=lG;sub.scG+=scG;sub.bG+=bG;
+                                sub.sD+=sD;sub.iD+=iD;sub.lD+=lD;sub.scD+=scD;sub.bD+=bD;
+                                gt.sG+=sG;gt.iG+=iG;gt.lG+=lG;gt.scG+=scG;gt.bG+=bG;
+                                gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
+
+                                const showLoc = isFirstDeptRow && !locShown;
+                                const catBagCount = (dept.category_bag_count_map||{})[cat] || 0;
+                                const dr = ws.addRow([
+                                    showLoc?locName:'', isFirstDeptRow?deptName:'',
+                                    isFirstDeptRow?bagCount:'', cat, printDesign, catBagCount, bagName||'-',
+                                    +roundToTwo(sG), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
+                                    +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
+                                    '-','-','-','-'
+                                ]);
+                                styleRow(dr, C.rowBg, normalFont, DCOL);
+                                redCols(dr, DEPT_LOSS_COLS);
+                                if (showLoc) locShown = true;
+                                isFirstDeptRow = false;
+                            });
                         });
 
                         if (cats.length > 0) {
@@ -2107,6 +2126,41 @@ export default {
             const data = dept.category_qty_map[key];
             return data ? parseFloat(data.balance_qty_diamond || 0) : 0;
         };
+
+        // ── Per-bag helpers (dept) ──────────────────────────────────────────────
+        const getBagQtyData = (dept, category, bagName) => {
+            if (!dept.category_bag_qty_map) return null;
+            const key = `${dept.id}_${category}_${bagName}`;
+            return dept.category_bag_qty_map[key] || null;
+        };
+        const getBagStartingQtyGoldRaw    = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.starting_qty_gold    || 0);
+        const getBagIssuedQtyGoldRaw      = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.issued_qty_gold      || 0);
+        const getBagLossQtyGoldRaw        = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.loss_qty_gold        || 0);
+        const getBagScrapQtyGoldRaw       = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.scrap_qty_gold       || 0);
+        const getBagBalanceQtyGoldRaw     = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.balance_qty_gold     || 0);
+        const getBagStartingQtyDiamondRaw = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.starting_qty_diamond || 0);
+        const getBagIssuedQtyDiamondRaw   = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.issued_qty_diamond   || 0);
+        const getBagLossQtyDiamondRaw     = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.loss_qty_diamond     || 0);
+        const getBagScrapQtyDiamondRaw    = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.scrap_qty_diamond    || 0);
+        const getBagBalanceQtyDiamondRaw  = (dept, cat, bag) => parseFloat(getBagQtyData(dept, cat, bag)?.balance_qty_diamond  || 0);
+
+        // ── Per-bag helpers (employee) ─────────────────────────────────────────
+        // Employee categories array has per-bag entries: { category_name, bag_name, ...qty fields }
+        const getEmpBagQtyData = (emp, category, bagName) => {
+            if (!emp.categories) return null;
+            return emp.categories.find(c => c.category_name === category && c.bag_name === bagName) || null;
+        };
+        const getEmpBagStartingQtyGoldRaw    = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.starting_qty_gold    || 0);
+        const getEmpBagIssuedQtyGoldRaw      = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.issued_qty_gold      || 0);
+        const getEmpBagLossQtyGoldRaw        = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.loss_qty_gold        || 0);
+        const getEmpBagScrapQtyGoldRaw       = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.scrap_qty_gold       || 0);
+        const getEmpBagBalanceQtyGoldRaw     = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.balance_qty_gold     || 0);
+        const getEmpBagStartingQtyDiamondRaw = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.starting_qty_diamond || 0);
+        const getEmpBagIssuedQtyDiamondRaw   = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.issued_qty_diamond   || 0);
+        const getEmpBagLossQtyDiamondRaw     = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.loss_qty_diamond     || 0);
+        const getEmpBagScrapQtyDiamondRaw    = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.scrap_qty_diamond    || 0);
+        const getEmpBagBalanceQtyDiamondRaw  = (emp, cat, bag) => parseFloat(getEmpBagQtyData(emp, cat, bag)?.balance_qty_diamond  || 0);
+        // ──────────────────────────────────────────────────────────────────────
 
         // Helper function to get category-level starting quantity for Gold
         const getCategoryStartingQtyGold = (dept, category) => {
@@ -2799,8 +2853,10 @@ export default {
                                     starting_qty: dept.starting_qty || 0,
                                     loss_qty: dept.loss_qty || 0,
                                     category_qty_map: dept.category_qty_map || {},
+                                    category_bag_qty_map: dept.category_bag_qty_map || {},
                                     category_print_design_map: dept.category_print_design_map || {},
                                     category_bag_count_map: dept.category_bag_count_map || {},
+                                    category_bag_names_map: dept.category_bag_names_map || {},
                                     wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
                                     employees: (dept.employees_array || []).map(emp => {
                                         // Build category_qty_map from categories array
@@ -2835,7 +2891,8 @@ export default {
                                             categories: emp.categories || [],
                                             category_qty_map: categoryQtyMap,
                                             category_print_design_map: emp.category_print_design_map || {},
-                                            category_bag_count_map: emp.category_bag_count_map || {}
+                                            category_bag_count_map: emp.category_bag_count_map || {},
+                                            category_bag_names_map: emp.category_bag_names_map || {}
                                         };
                                         return empObj;
                                     })
@@ -2936,7 +2993,8 @@ export default {
                                             categories: emp.categories || [],
                                             category_qty_map: empCategoryQtyMap,
                                             category_print_design_map: emp.category_print_design_map || {},
-                                            category_bag_count_map: emp.category_bag_count_map || {}
+                                            category_bag_count_map: emp.category_bag_count_map || {},
+                                            category_bag_names_map: emp.category_bag_names_map || {}
                                         };
                                     });
                                     return {
@@ -2949,8 +3007,10 @@ export default {
                                         starting_qty: dept.starting_qty || 0,
                                         loss_qty: dept.loss_qty || 0,
                                         category_qty_map: dept.category_qty_map || {},
+                                        category_bag_qty_map: dept.category_bag_qty_map || {},
                                         category_print_design_map: dept.category_print_design_map || {},
                                         category_bag_count_map: dept.category_bag_count_map || {},
+                                        category_bag_names_map: dept.category_bag_names_map || {},
                                         wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
                                         employees
                                     };
@@ -3526,6 +3586,26 @@ export default {
             getCategoryBalanceQtyGoldRaw,
             getCategoryBalanceQtyDiamond,
             getCategoryBalanceQtyDiamondRaw,
+            getBagStartingQtyGoldRaw,
+            getBagIssuedQtyGoldRaw,
+            getBagLossQtyGoldRaw,
+            getBagScrapQtyGoldRaw,
+            getBagBalanceQtyGoldRaw,
+            getBagStartingQtyDiamondRaw,
+            getBagIssuedQtyDiamondRaw,
+            getBagLossQtyDiamondRaw,
+            getBagScrapQtyDiamondRaw,
+            getBagBalanceQtyDiamondRaw,
+            getEmpBagStartingQtyGoldRaw,
+            getEmpBagIssuedQtyGoldRaw,
+            getEmpBagLossQtyGoldRaw,
+            getEmpBagScrapQtyGoldRaw,
+            getEmpBagBalanceQtyGoldRaw,
+            getEmpBagStartingQtyDiamondRaw,
+            getEmpBagIssuedQtyDiamondRaw,
+            getEmpBagLossQtyDiamondRaw,
+            getEmpBagScrapQtyDiamondRaw,
+            getEmpBagBalanceQtyDiamondRaw,
             totalDeptActualProductionGold,
             totalDeptGrossLossGold,
             totalDeptActualProductionDiamond,
