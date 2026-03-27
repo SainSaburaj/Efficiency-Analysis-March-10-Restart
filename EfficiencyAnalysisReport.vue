@@ -460,24 +460,28 @@
                                 <th class="px-3 py-2 text-left font-semibold">Bag Count</th>
                                 <th class="px-3 py-2 text-left font-semibold">Bag Name</th>
 
-                                <th class="px-3 py-2 text-left font-semibold">TM Production Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Issued Net Weight</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Issued Qty Gold</th> -->
-                                <th class="px-3 py-2 text-left font-semibold">Actual Production Gold</th>
-                                <th class="px-3 py-2 text-left font-semibold">Loss Qty Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Recieved Net Weight</th>
+                                <th class="px-3 py-2 text-left font-semibold">Gross Loss</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Scrap Qty Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Balance Qty Gold</th> -->
-                                <th class="px-3 py-2 text-left font-semibold">Gold Loss %</th>
+                                <th class="px-3 py-2 text-left font-semibold">Gross Loss %</th>
+
+                                <th class="px-3 py-2 text-left font-semibold">Pure Weight</th>
+                                <th class="px-3 py-2 text-left font-semibold">Pure Loss</th>
+
+                                <th class="px-3 py-2 text-left font-semibold">Net Loss</th>
+                                <th class="px-3 py-2 text-left font-semibold">Net Loss %</th>
 
                                 <th class="px-3 py-2 text-left font-semibold">TM Production Diamond</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Issued Qty Diamond</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">Actual Production Diamond</th>
                                 <th class="px-3 py-2 text-left font-semibold">Loss Qty Diamond</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Scrap Qty Diamond</th>
-                                <th class="px-3 py-2 text-left font-semibold">Balance Qty Diamond</th> -->
+                                <!-- <th class="px-3 py-2 text-left font-semibold">Balance Qty Diamond</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">Diamond Loss %</th>
 
-                                <th class="px-3 py-2 text-left font-semibold">Pure Weight</th>
-                                <th class="px-3 py-2 text-left font-semibold">Pure Loss</th>
 
                                 <th class="px-3 py-2 text-left font-semibold">Gold Recovery Weight (gm)</th>
                                 <th class="px-3 py-2 text-left font-semibold">Net Loss Gold</th>
@@ -495,7 +499,8 @@
                                     <template v-for="(category, catIndex) in dept.unique_categories_array" :key="'dept-' + deptIndex + '-cat-' + catIndex">
                                         <!-- bags for this category -->
                                         <template v-for="(bagName, bagIndex) in (dept.category_bag_names_map?.[category] || [''])" :key="'dept-' + deptIndex + '-cat-' + catIndex + '-bag-' + bagIndex">
-                                            <tr class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
+                                            <tr class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]"
+                                                :class="{ 'border-b-8 border-b-gray-200': catIndex === dept.unique_categories_array.length - 1 && bagIndex === (dept.category_bag_names_map?.[category]?.length || 1) - 1 }">
                                                 <!-- SL No - only on very first row of dept -->
                                                 <td v-if="catIndex === 0 && bagIndex === 0"
                                                     :rowspan="dept.unique_categories_array.reduce((s, c) => s + (dept.category_bag_names_map?.[c]?.length || 1), 0)"
@@ -541,17 +546,29 @@
                                                     <span v-else>{{ bagName || '-' }}</span>
                                                 </td>
 
-                                                <!-- TM Production Gold -->
+                                                <!-- Issued Net Weight -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getBagStartingQtyGoldRaw(dept, category, bagName)) }}</td>
 
-                                                <!-- Actual Production Gold -->
+                                                <!-- Recieved Net Weight -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getBagStartingQtyGoldRaw(dept, category, bagName) + getBagIssuedQtyGoldRaw(dept, category, bagName) - getBagLossQtyGoldRaw(dept, category, bagName) - getBagScrapQtyGoldRaw(dept, category, bagName) - getBagBalanceQtyGoldRaw(dept, category, bagName)) }}</td>
 
-                                                <!-- Loss Qty Gold -->
+                                                <!-- Gross Loss -->
                                                 <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(getBagLossQtyGoldRaw(dept, category, bagName)) }}</td>
 
-                                                <!-- Gold Loss % -->
+                                                <!-- Gross Loss % -->
                                                 <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(getBagStartingQtyGoldRaw(dept, category, bagName), getBagIssuedQtyGoldRaw(dept, category, bagName), getBagLossQtyGoldRaw(dept, category, bagName), getBagScrapQtyGoldRaw(dept, category, bagName), getBagBalanceQtyGoldRaw(dept, category, bagName))) }}%</td>
+
+                                                <!-- Pure Weight -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ getBagPureWeight(dept, category, bagName) }}</td>
+
+                                                <!-- Pure Loss -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getBagPureLoss(dept, category, bagName) }}</td>
+
+                                                <!-- Net Loss -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
+                                                
+                                                <!-- Net Loss % -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
 
                                                 <!-- TM Production Diamond -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getBagStartingQtyDiamondRaw(dept, category, bagName)) }}</td>
@@ -564,12 +581,6 @@
 
                                                 <!-- Diamond Loss % -->
                                                 <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getBagStartingQtyDiamondRaw(dept, category, bagName), getBagIssuedQtyDiamondRaw(dept, category, bagName), getBagLossQtyDiamondRaw(dept, category, bagName), getBagScrapQtyDiamondRaw(dept, category, bagName), getBagBalanceQtyDiamondRaw(dept, category, bagName))) }}%</td>
-
-                                                <!-- Pure Weight -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">{{ getBagPureWeight(dept, category, bagName) }}</td>
-
-                                                <!-- Pure Loss -->
-                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getBagPureLoss(dept, category, bagName) }}</td>
 
                                                 <!-- Gold Recovery Weight -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">-</td>
@@ -607,20 +618,31 @@
                                 <!-- Bag Name (empty) -->
                                 <td class="px-3 py-2 font-semibold"></td>
 
-                                <!-- Starting Qty Gold -->
+                                <!-- Issued Net Weight -->
                                 <td class="px-3 py-2">{{ totalDeptStartingQuantityGold }}</td>
 
                                 <!-- Issued Qty Gold -->
                                 <!-- <td class="px-3 py-2">{{ totalDeptIssuedQtyGold }}</td> -->
 
-                                <!-- Actual Production Gold -->
+                                <!-- Recieved Net Weight -->
                                 <td class="px-3 py-2">{{ totalDeptActualProductionGold }}</td>
 
-                                <!-- Loss Gold -->
+                                <!-- Gross Loss -->
                                 <td class="px-3 py-2 text-red-500">{{ totalDeptLossQtyGold }}</td>
                                 
                                 <!-- <td class="px-3 py-2 text-red-500"></td> -->
                                 <!-- <td class="px-3 py-2 text-red-500"></td> -->
+                                <td class="px-3 py-2 text-red-500"></td>
+                                
+                                <!-- Pure Weight (empty in total) -->
+                                <td class="px-3 py-2"></td>
+
+                                <!-- Pure Loss (empty in total) -->
+                                <td class="px-3 py-2 text-red-500"></td>
+                                
+                                <!-- Net Loss (empty in total) -->
+                                <td class="px-3 py-2 text-red-500"></td>
+                                
                                 <td class="px-3 py-2 text-red-500"></td>
                                 
                                 <!-- Starting Qty Diamond -->
@@ -639,11 +661,6 @@
                                 <!-- <td class="px-3 py-2 text-red-500"></td> -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 
-                                <!-- Pure Weight (empty in total) -->
-                                <td class="px-3 py-2"></td>
-
-                                <!-- Pure Loss (empty in total) -->
-                                <td class="px-3 py-2 text-red-500"></td>
 
                                 <!-- Gold Recovery Weight -->
                                 <td class="px-3 py-2"></td>
@@ -666,7 +683,8 @@
                                 <template v-if="emp.unique_categories_array && emp.unique_categories_array.length > 0">
                                     <template v-for="(category, catIndex) in emp.unique_categories_array" :key="'emp-' + empIndex + '-cat-' + catIndex">
                                         <template v-for="(bagName, bagIndex) in (emp.category_bag_names_map?.[category] || [''])" :key="'emp-' + empIndex + '-cat-' + catIndex + '-bag-' + bagIndex">
-                                            <tr class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]">
+                                            <tr class="border-b group hover:bg-gray-50 transition-all duration-200 text-[11px]"
+                                                :class="{ 'border-b-8 border-b-gray-200': catIndex === emp.unique_categories_array.length - 1 && bagIndex === (emp.category_bag_names_map?.[category]?.length || 1) - 1 }">
                                                 <!-- SL No - only on very first row of emp -->
                                                 <td v-if="catIndex === 0 && bagIndex === 0"
                                                     :rowspan="emp.unique_categories_array.reduce((s, c) => s + (emp.category_bag_names_map?.[c]?.length || 1), 0)"
@@ -712,17 +730,29 @@
                                                     <span v-else>{{ bagName || '-' }}</span>
                                                 </td>
 
-                                                <!-- TM Production Gold -->
+                                                <!-- Issued Net Weight -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmpBagStartingQtyGoldRaw(emp, category, bagName)) }}</td>
 
-                                                <!-- Actual Production Gold -->
+                                                <!-- Recieved Net Weight -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmpBagStartingQtyGoldRaw(emp, category, bagName) + getEmpBagIssuedQtyGoldRaw(emp, category, bagName) - getEmpBagLossQtyGoldRaw(emp, category, bagName) - getEmpBagScrapQtyGoldRaw(emp, category, bagName) - getEmpBagBalanceQtyGoldRaw(emp, category, bagName)) }}</td>
 
-                                                <!-- Loss Qty Gold -->
+                                                <!-- Gross Loss -->
                                                 <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(getEmpBagLossQtyGoldRaw(emp, category, bagName)) }}</td>
 
-                                                <!-- Gold Loss % -->
+                                                <!-- Gross Loss % -->
                                                 <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateGoldLossPercentage(getEmpBagStartingQtyGoldRaw(emp, category, bagName), getEmpBagIssuedQtyGoldRaw(emp, category, bagName), getEmpBagLossQtyGoldRaw(emp, category, bagName), getEmpBagScrapQtyGoldRaw(emp, category, bagName), getEmpBagBalanceQtyGoldRaw(emp, category, bagName))) }}%</td>
+
+                                                <!-- Pure Weight -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">{{ getEmpBagPureWeight(emp, category, bagName) }}</td>
+
+                                                <!-- Pure Loss -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getEmpBagPureLoss(emp, category, bagName) }}</td>
+                                                
+                                                <!-- Net Loss -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
+                                                
+                                                <!-- Net Loss % -->
+                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md"></td>
 
                                                 <!-- TM Production Diamond -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmpBagStartingQtyDiamondRaw(emp, category, bagName)) }}</td>
@@ -736,11 +766,6 @@
                                                 <!-- Diamond Loss % -->
                                                 <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getEmpBagStartingQtyDiamondRaw(emp, category, bagName), getEmpBagIssuedQtyDiamondRaw(emp, category, bagName), getEmpBagLossQtyDiamondRaw(emp, category, bagName), getEmpBagScrapQtyDiamondRaw(emp, category, bagName), getEmpBagBalanceQtyDiamondRaw(emp, category, bagName))) }}%</td>
 
-                                                <!-- Pure Weight -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">{{ getEmpBagPureWeight(emp, category, bagName) }}</td>
-
-                                                <!-- Pure Loss -->
-                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ getEmpBagPureLoss(emp, category, bagName) }}</td>
 
                                                 <!-- Gold Recovery Weight -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">-</td>
@@ -783,21 +808,31 @@
                                 <!-- Bag Name (empty) -->
                                 <td class="px-3 py-2"></td>
 
-                                <!-- Starting Qty Gold -->
+                                <!-- Issued Net Weight -->
                                 <td class="px-3 py-2">{{ totalEmpStartingQuantityGold }}</td>
 
                                 <!-- Issued Qty Gold -->
                                 <!-- <td class="px-3 py-2">{{ totalEmpIssuedQuantityGold }}</td> -->
                                 
-                                <!-- Actual Production Gold -->
+                                <!-- Recieved Net Weight -->
                                 <td class="px-3 py-2">{{ totalEmpActualProductionGoldCalculated }}</td>
                                 
-                                <!-- Loss Qty Gold -->
+                                <!-- Gross Loss -->
                                 <td class="px-3 py-2 text-red-500">{{ totalEmpLossQuantityGold }}</td>
                                 
+                                <!-- <td class="px-3 py-2 text-red-500"></td> -->
+                                <!-- <td class="px-3 py-2 text-red-500"></td> -->
+                                <td class="px-3 py-2 text-red-500"></td>
                                 
-                                <!-- <td class="px-3 py-2 text-red-500"></td> -->
-                                <!-- <td class="px-3 py-2 text-red-500"></td> -->
+                                <!-- Pure Weight (empty in total) -->
+                                <td class="px-3 py-2"></td>
+
+                                <!-- Pure Loss (empty in total) -->
+                                <td class="px-3 py-2 text-red-500"></td>
+                                
+                                <!-- Net Loss (empty in total) -->
+                                <td class="px-3 py-2 text-red-500"></td>
+                                
                                 <td class="px-3 py-2 text-red-500"></td>
 
                                 <!-- Starting Qty Diamond -->
@@ -817,11 +852,6 @@
                                 <!-- <td class="px-3 py-2 text-red-500"></td> -->
                                 <td class="px-3 py-2 text-red-500"></td>
 
-                                <!-- Pure Weight (empty in total) -->
-                                <td class="px-3 py-2"></td>
-
-                                <!-- Pure Loss (empty in total) -->
-                                <td class="px-3 py-2 text-red-500"></td>
 
                                 <!-- Gold Recovery Weight -->
                                 <td class="px-3 py-2"></td>
@@ -841,7 +871,7 @@
                 </div>
             </div>
             <!-- Chart & Production Section -->
-            <div class="grid grid-cols-2 gap-4 mt-4">
+            <div class="grid grid-cols-1 xs:grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
                 <!-- Doughnut: Gold vs Diamond production split -->
                 <div class="p-4 rounded-lg shadow w-full h-80 flex flex-col bg-transparent/2">
                     <h2 class="text-sm font-bold mb-2 text-center text-gray-700">Production</h2>

@@ -8793,13 +8793,13 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 lossQtyMap[deptId] += qtyData.loss_qty_gold + qtyData.loss_qty_diamond;
 
                                 if (!categoryQtyMap[deptCatKey]) {
-                                    categoryQtyMap[deptCatKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                    categoryQtyMap[deptCatKey] = { starting_qty_gold: 0, starting_qty_diamond: 0, issued_qty_gold: 0, issued_qty_diamond: 0, loss_qty_gold: 0, loss_qty_diamond: 0, scrap_qty_gold: 0, scrap_qty_diamond: 0, balance_qty_gold: 0, balance_qty_diamond: 0, issued_pieces_diamond: 0, loss_pieces_diamond: 0 };
                                 }
                                 Object.keys(qtyData).forEach(k => { categoryQtyMap[deptCatKey][k] += qtyData[k]; });
 
                                 if (bagName) {
                                     if (!categoryBagQtyMap[deptCatBagKey]) {
-                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0, metal_purity_percent: 0 };
+                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold: 0, starting_qty_diamond: 0, issued_qty_gold: 0, issued_qty_diamond: 0, loss_qty_gold: 0, loss_qty_diamond: 0, scrap_qty_gold: 0, scrap_qty_diamond: 0, balance_qty_gold: 0, balance_qty_diamond: 0, issued_pieces_diamond: 0, loss_pieces_diamond: 0, metal_purity_percent: 0 };
                                     }
                                     Object.keys(qtyData).forEach(k => { categoryBagQtyMap[deptCatBagKey][k] += qtyData[k]; });
                                     if (metalPurityPercent > 0) categoryBagQtyMap[deptCatBagKey].metal_purity_percent = metalPurityPercent;
@@ -8811,7 +8811,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 const empKey = `${deptId}_${employeeId}`;
 
                                 if (!employeeCategoryQtyMap[empCatKey]) {
-                                    employeeCategoryQtyMap[empCatKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                    employeeCategoryQtyMap[empCatKey] = { starting_qty_gold: 0, starting_qty_diamond: 0, issued_qty_gold: 0, issued_qty_diamond: 0, loss_qty_gold: 0, loss_qty_diamond: 0, scrap_qty_gold: 0, scrap_qty_diamond: 0, balance_qty_gold: 0, balance_qty_diamond: 0, issued_pieces_diamond: 0, loss_pieces_diamond: 0 };
                                 }
                                 Object.keys(qtyData).forEach(k => { employeeCategoryQtyMap[empCatKey][k] += qtyData[k]; });
 
@@ -9351,14 +9351,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                                 // **ALWAYS: Accumulate category-level data (aggregate across bags)**
                                 if (!categoryQtyMap[deptCatKey]) {
-                                    categoryQtyMap[deptCatKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                    categoryQtyMap[deptCatKey] = { starting_qty_gold: 0, starting_qty_diamond: 0, issued_qty_gold: 0, issued_qty_diamond: 0, loss_qty_gold: 0, loss_qty_diamond: 0, scrap_qty_gold: 0, scrap_qty_diamond: 0, balance_qty_gold: 0, balance_qty_diamond: 0, issued_pieces_diamond: 0, loss_pieces_diamond: 0 };
                                 }
                                 Object.keys(qtyData).forEach(k => { categoryQtyMap[deptCatKey][k] += qtyData[k]; });
 
                                 // **ALWAYS: Store per-bag qty data keyed by deptId_category_bagName**
                                 if (bagName) {
                                     if (!categoryBagQtyMap[deptCatBagKey]) {
-                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0, metal_purity_percent: 0 };
+                                        categoryBagQtyMap[deptCatBagKey] = { starting_qty_gold: 0, starting_qty_diamond: 0, issued_qty_gold: 0, issued_qty_diamond: 0, loss_qty_gold: 0, loss_qty_diamond: 0, scrap_qty_gold: 0, scrap_qty_diamond: 0, balance_qty_gold: 0, balance_qty_diamond: 0, issued_pieces_diamond: 0, loss_pieces_diamond: 0, metal_purity_percent: 0 };
                                     }
                                     Object.keys(qtyData).forEach(k => { categoryBagQtyMap[deptCatBagKey][k] += qtyData[k]; });
                                     // purity is a constant per bag — take the max (non-zero wins)
@@ -9373,7 +9373,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                                 // Store employee-category-level data (only if employee exists)
                                 if (!employeeCategoryQtyMap[empCatKey]) {
-                                    employeeCategoryQtyMap[empCatKey] = { starting_qty_gold:0, starting_qty_diamond:0, issued_qty_gold:0, issued_qty_diamond:0, loss_qty_gold:0, loss_qty_diamond:0, scrap_qty_gold:0, scrap_qty_diamond:0, balance_qty_gold:0, balance_qty_diamond:0, issued_pieces_diamond:0, loss_pieces_diamond:0 };
+                                    employeeCategoryQtyMap[empCatKey] = { starting_qty_gold: 0, starting_qty_diamond: 0, issued_qty_gold: 0, issued_qty_diamond: 0, loss_qty_gold: 0, loss_qty_diamond: 0, scrap_qty_gold: 0, scrap_qty_diamond: 0, balance_qty_gold: 0, balance_qty_diamond: 0, issued_pieces_diamond: 0, loss_pieces_diamond: 0 };
                                 }
                                 Object.keys(qtyData).forEach(k => { employeeCategoryQtyMap[empCatKey][k] += qtyData[k]; });
 
