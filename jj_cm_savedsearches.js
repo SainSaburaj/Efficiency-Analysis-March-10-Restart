@@ -8839,11 +8839,69 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             summaryLog += "=====================================";
                             log.debug("getRepairEfficiencyData - Data Fetch Summary", summaryLog);
 
+                            // Fetch metal purity via the print design item → CUSTITEM_JJ_METAL_QUALITY
+                            try {
+                                const itemIdToCatMap = {};
+                                Object.keys(groupedData).forEach(locId => {
+                                    Object.keys(groupedData[locId].departments).forEach(deptId => {
+                                        const dept = groupedData[locId].departments[deptId];
+                                        Object.keys(dept.category_print_design_id_map || {}).forEach(cat => {
+                                            const itemId = dept.category_print_design_id_map[cat];
+                                            if (!itemId) return;
+                                            if (!itemIdToCatMap[itemId]) itemIdToCatMap[itemId] = [];
+                                            itemIdToCatMap[itemId].push({ deptId, cat });
+                                        });
+                                    });
+                                });
+                                const allItemIds = Object.keys(itemIdToCatMap);
+                                if (allItemIds.length > 0) {
+                                    const itemPurityMap = {};
+                                    search.create({
+                                        type: search.Type.ITEM,
+                                        filters: [['internalid', 'anyof', allItemIds]],
+                                        columns: [
+                                            search.createColumn({ name: 'internalid' }),
+                                            search.createColumn({ name: 'custrecord_jj_dd_metal_quality_purity', join: 'CUSTITEM_JJ_METAL_QUALITY', label: 'purity' })
+                                        ]
+                                    }).run().each(r => {
+                                        const itemId = r.getValue('internalid');
+                                        const purityText = r.getText({ name: 'custrecord_jj_dd_metal_quality_purity', join: 'CUSTITEM_JJ_METAL_QUALITY' }) || '0';
+                                        itemPurityMap[itemId] = parseFloat(purityText) || 0;
+                                        return true;
+                                    });
+                                    Object.keys(itemIdToCatMap).forEach(itemId => {
+                                        const purity = itemPurityMap[itemId] || 0;
+                                        itemIdToCatMap[itemId].forEach(({ deptId, cat }) => {
+                                            const dept = Object.values(groupedData).reduce((found, loc) => found || loc.departments[deptId], null);
+                                            if (!dept) return;
+                                            Object.keys(dept.category_bag_ids_map?.[cat] || {}).forEach(bagName => {
+                                                const bKey = `${deptId}_${cat}_${bagName}`;
+                                                if (categoryBagQtyMap[bKey]) categoryBagQtyMap[bKey].metal_purity_percent = purity;
+                                            });
+                                        });
+                                    });
+                                    Object.keys(employeeLevelMap).forEach(empKey => {
+                                        const deptId = empKey.split('_')[0];
+                                        (employeeLevelMap[empKey].categories || []).forEach(cat => {
+                                            const dept = Object.values(groupedData).reduce((found, loc) => found || loc.departments[deptId], null);
+                                            if (!dept) return;
+                                            const itemId = dept.category_print_design_id_map?.[cat.category_name];
+                                            if (itemId && itemPurityMap[itemId] !== undefined) {
+                                                cat.metal_purity_percent = itemPurityMap[itemId];
+                                            }
+                                        });
+                                    });
+                                }
+                            } catch (purityErr) {
+                                log.error('getRepairEfficiencyData - Purity Lookup Error', purityErr);
+                            }
+
                             Object.keys(groupedData).forEach(locationId => {
                                 Object.keys(groupedData[locationId].departments).forEach(departmentId => {
                                     groupedData[locationId].departments[departmentId].starting_qty = startingQtyMap[departmentId] || 0;
                                     groupedData[locationId].departments[departmentId].loss_qty = lossQtyMap[departmentId] || 0;
                                     groupedData[locationId].departments[departmentId].category_qty_map = categoryQtyMap;
+                                    groupedData[locationId].departments[departmentId].category_bag_qty_map = categoryBagQtyMap;
                                     groupedData[locationId].departments[departmentId].employee_category_qty_map = employeeCategoryQtyMap;
                                     groupedData[locationId].departments[departmentId].issued_pieces_diamond = deptPiecesMap[departmentId]?.issued_pieces_diamond || 0;
                                     groupedData[locationId].departments[departmentId].loss_pieces_diamond = deptPiecesMap[departmentId]?.loss_pieces_diamond || 0;
@@ -9348,6 +9406,68 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             summaryLog += `Employee Level Map Entries: ${Object.keys(employeeLevelMap).length}\n`;
                             summaryLog += "=====================================";
                             log.debug("getOverallEfficiencyData - Data Fetch Summary", summaryLog);
+
+                            // Fetch metal purity via the print design item (assembly item) → CUSTITEM_JJ_METAL_QUALITY
+                            // This is the same approach used in getItemClassesAndPurity()
+                            try {
+                                // Collect all unique print design item IDs across all depts/categories
+                                const itemIdToCatMap = {}; // itemId → [{ deptId, category }]
+                                Object.keys(groupedData).forEach(locId => {
+                                    Object.keys(groupedData[locId].departments).forEach(deptId => {
+                                        const dept = groupedData[locId].departments[deptId];
+                                        Object.keys(dept.category_print_design_id_map || {}).forEach(cat => {
+                                            const itemId = dept.category_print_design_id_map[cat];
+                                            if (!itemId) return;
+                                            if (!itemIdToCatMap[itemId]) itemIdToCatMap[itemId] = [];
+                                            itemIdToCatMap[itemId].push({ deptId, cat });
+                                        });
+                                    });
+                                });
+                                const allItemIds = Object.keys(itemIdToCatMap);
+                                if (allItemIds.length > 0) {
+                                    const itemPurityMap = {}; // itemId → purity number
+                                    search.create({
+                                        type: search.Type.ITEM,
+                                        filters: [['internalid', 'anyof', allItemIds]],
+                                        columns: [
+                                            search.createColumn({ name: 'internalid' }),
+                                            search.createColumn({ name: 'custrecord_jj_dd_metal_quality_purity', join: 'CUSTITEM_JJ_METAL_QUALITY', label: 'purity' })
+                                        ]
+                                    }).run().each(r => {
+                                        const itemId = r.getValue('internalid');
+                                        const purityText = r.getText({ name: 'custrecord_jj_dd_metal_quality_purity', join: 'CUSTITEM_JJ_METAL_QUALITY' }) || '0';
+                                        itemPurityMap[itemId] = parseFloat(purityText) || 0;
+                                        return true;
+                                    });
+                                    log.debug('getOverallEfficiencyData - Item Purity Map', JSON.stringify(itemPurityMap));
+                                    // Apply purity to all bags in each category
+                                    Object.keys(itemIdToCatMap).forEach(itemId => {
+                                        const purity = itemPurityMap[itemId] || 0;
+                                        itemIdToCatMap[itemId].forEach(({ deptId, cat }) => {
+                                            const dept = Object.values(groupedData).reduce((found, loc) => found || loc.departments[deptId], null);
+                                            if (!dept) return;
+                                            Object.keys(dept.category_bag_ids_map?.[cat] || {}).forEach(bagName => {
+                                                const bKey = `${deptId}_${cat}_${bagName}`;
+                                                if (categoryBagQtyMap[bKey]) categoryBagQtyMap[bKey].metal_purity_percent = purity;
+                                            });
+                                        });
+                                    });
+                                    // Update employee categories
+                                    Object.keys(employeeLevelMap).forEach(empKey => {
+                                        const deptId = empKey.split('_')[0];
+                                        (employeeLevelMap[empKey].categories || []).forEach(cat => {
+                                            const dept = Object.values(groupedData).reduce((found, loc) => found || loc.departments[deptId], null);
+                                            if (!dept) return;
+                                            const itemId = dept.category_print_design_id_map?.[cat.category_name];
+                                            if (itemId && itemPurityMap[itemId] !== undefined) {
+                                                cat.metal_purity_percent = itemPurityMap[itemId];
+                                            }
+                                        });
+                                    });
+                                }
+                            } catch (purityErr) {
+                                log.error('getOverallEfficiencyData - Purity Lookup Error', purityErr);
+                            }
 
                             // Fetch Wax Tree actual production gold for special departments.
                             // Single query with OR across all 3 date fields.
