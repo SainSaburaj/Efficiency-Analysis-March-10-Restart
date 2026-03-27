@@ -445,9 +445,9 @@
                 <h2 class="text-md font-bold mb-1 text-gray-700">
                     {{ showEmployeesTable ? 'Employee Details' : 'Department Details' }}
                 </h2>
-                <div class="table-container overflow-x-auto">
+                <div class="table-container overflow-x-auto overflow-y-auto max-h-screen scrollbar-custom">
                     <table class="w-full border-collapse border border-gray-200 text-[10px]"> <!-- Reduced text size -->
-                        <thead class="bg-gray-100 text-gray-600 uppercase text-[11px]">
+                        <thead class="bg-gray-100 text-gray-600 uppercase text-[11px]" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
                                 <th class="px-3 py-2 text-left font-semibold">#</th>
                                 <th class="px-3 py-2 text-left font-semibold">
@@ -504,7 +504,10 @@
                                                 <!-- Department Name - only on very first row of dept -->
                                                 <td v-if="catIndex === 0 && bagIndex === 0"
                                                     :rowspan="dept.unique_categories_array.reduce((s, c) => s + (dept.category_bag_names_map?.[c]?.length || 1), 0)"
-                                                    class="px-3 py-2 group-hover:!bg-white border-r">{{ dept.name }}</td>
+                                                    class="px-3 py-2 group-hover:!bg-white border-r">
+                                                    <a v-if="getDeptNsUrl(dept)" :href="getDeptNsUrl(dept)" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ dept.name }}</a>
+                                                    <span v-else>{{ dept.name }}</span>
+                                                </td>
 
                                                 <!-- No. of Bags - only on very first row of dept -->
                                                 <td v-if="catIndex === 0 && bagIndex === 0"
@@ -519,7 +522,10 @@
                                                 <!-- Style Number (Print Design) - rowspan = bags in category -->
                                                 <td v-if="bagIndex === 0"
                                                     :rowspan="dept.category_bag_names_map?.[category]?.length || 1"
-                                                    class="px-3 py-2 group-hover:shadow-md">{{ dept.category_print_design_map?.[category] || '-' }}</td>
+                                                    class="px-3 py-2 group-hover:shadow-md">
+                                                    <a v-if="getStyleNsUrl(dept, category)" :href="getStyleNsUrl(dept, category)" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ dept.category_print_design_map?.[category] || '-' }}</a>
+                                                    <span v-else>{{ dept.category_print_design_map?.[category] || '-' }}</span>
+                                                </td>
 
                                                 <!-- Bag Count (per category) - rowspan = bags in category -->
                                                 <td v-if="bagIndex === 0"
@@ -527,7 +533,13 @@
                                                     class="px-3 py-2 group-hover:shadow-md text-center bg-blue-50">{{ dept.category_bag_count_map?.[category] || 0 }}</td>
 
                                                 <!-- Bag Name -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">{{ bagName || '-' }}</td>
+                                                <td class="px-3 py-2 group-hover:shadow-md">
+                                                    <a v-if="getBagNsUrl(dept, category, bagName)"
+                                                       :href="getBagNsUrl(dept, category, bagName)"
+                                                       target="_blank" rel="noopener"
+                                                       class="text-blue-600 hover:underline">{{ bagName }}</a>
+                                                    <span v-else>{{ bagName || '-' }}</span>
+                                                </td>
 
                                                 <!-- TM Production Gold -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getBagStartingQtyGoldRaw(dept, category, bagName)) }}</td>
@@ -663,7 +675,10 @@
                                                 <!-- Employee Name - only on very first row -->
                                                 <td v-if="catIndex === 0 && bagIndex === 0"
                                                     :rowspan="emp.unique_categories_array.reduce((s, c) => s + (emp.category_bag_names_map?.[c]?.length || 1), 0)"
-                                                    class="px-3 py-2 group-hover:!bg-white">{{ emp.name }}</td>
+                                                    class="px-3 py-2 group-hover:!bg-white">
+                                                    <a v-if="getEmpNsUrl(emp)" :href="getEmpNsUrl(emp)" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ emp.name }}</a>
+                                                    <span v-else>{{ emp.name }}</span>
+                                                </td>
 
                                                 <!-- No. of Bags - only on very first row -->
                                                 <td v-if="catIndex === 0 && bagIndex === 0"
@@ -678,7 +693,10 @@
                                                 <!-- Style Number (Print Design) - rowspan = bags in category -->
                                                 <td v-if="bagIndex === 0"
                                                     :rowspan="emp.category_bag_names_map?.[category]?.length || 1"
-                                                    class="px-3 py-2 group-hover:shadow-md">{{ emp.category_print_design_map?.[category] || '-' }}</td>
+                                                    class="px-3 py-2 group-hover:shadow-md">
+                                                    <a v-if="getStyleNsUrl(emp, category)" :href="getStyleNsUrl(emp, category)" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ emp.category_print_design_map?.[category] || '-' }}</a>
+                                                    <span v-else>{{ emp.category_print_design_map?.[category] || '-' }}</span>
+                                                </td>
 
                                                 <!-- Bag Count (per category) - rowspan = bags in category -->
                                                 <td v-if="bagIndex === 0"
@@ -686,7 +704,13 @@
                                                     class="px-3 py-2 group-hover:shadow-md text-center bg-blue-50">{{ emp.category_bag_count_map?.[category] || 0 }}</td>
 
                                                 <!-- Bag Name -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">{{ bagName || '-' }}</td>
+                                                <td class="px-3 py-2 group-hover:shadow-md">
+                                                    <a v-if="getEmpBagNsUrl(emp, category, bagName)"
+                                                       :href="getEmpBagNsUrl(emp, category, bagName)"
+                                                       target="_blank" rel="noopener"
+                                                       class="text-blue-600 hover:underline">{{ bagName }}</a>
+                                                    <span v-else>{{ bagName || '-' }}</span>
+                                                </td>
 
                                                 <!-- TM Production Gold -->
                                                 <td class="px-3 py-2 group-hover:shadow-md">{{ roundToTwo(getEmpBagStartingQtyGoldRaw(emp, category, bagName)) }}</td>
@@ -2220,6 +2244,43 @@ export default {
             return roundToTwo(getEmpBagLossQtyGoldRaw(emp, cat, bag) * purity);
         };
 
+        // Build a NetSuite link to the bag generation record
+        // Use app.netsuite.com (not extforms) + ns-at token for authenticated direct links
+        const _nsAppBase = `https://9685504.app.netsuite.com`;
+        const _nsAt = ENV_VAR.NS_API.API.BAG_MANAGEMENT_APP_ENDPOINT.APPEND; // "&compid=...&ns-at=..."
+
+        const getBagNsUrl = (dept, category, bagName) => {
+            const bagId = dept.category_bag_ids_map?.[category]?.[bagName];
+            if (!bagId) return null;
+            return `${_nsAppBase}/app/common/custom/custrecordentry.nl?rectype=1026&id=${bagId}${_nsAt}`;
+        };
+        const getEmpBagNsUrl = (emp, category, bagName) => {
+            const bagId = emp.category_bag_ids_map?.[category]?.[bagName];
+            if (!bagId) return null;
+            return `${_nsAppBase}/app/common/custom/custrecordentry.nl?rectype=1026&id=${bagId}${_nsAt}`;
+        };
+
+        const APPEND = ENV_VAR.NS_API.API.BAG_MANAGEMENT_APP_ENDPOINT.APPEND;
+        const BASE = `https://9685504.app.netsuite.com`;
+
+        // Department link (customrecord_jj_manufacturing_dept)
+        const getDeptNsUrl = (dept) => {
+            if (!dept?.id) return null;
+            return `${BASE}/app/common/custom/custrecordentry.nl?rectype=1011&id=${dept.id}${_nsAt}`;
+        };
+
+        // Employee link (standard employee record)
+        const getEmpNsUrl = (emp) => {
+            if (!emp?.id) return null;
+            return `${BASE}/app/common/entity/employee.nl?id=${emp.id}${_nsAt}`;
+        };
+
+        // Style Number (assembly item) link
+        const getStyleNsUrl = (entity, category) => {
+            const itemId = entity?.category_print_design_id_map?.[category];
+            if (!itemId) return null;
+            return `${BASE}/app/common/item/item.nl?id=${itemId}${_nsAt}`;
+        };
         // Helper function to get category-level starting quantity for Gold
         const getCategoryStartingQtyGold = (dept, category) => {
             if (!dept.category_qty_map) return '-';
@@ -2915,6 +2976,8 @@ export default {
                                     category_print_design_map: dept.category_print_design_map || {},
                                     category_bag_count_map: dept.category_bag_count_map || {},
                                     category_bag_names_map: dept.category_bag_names_map || {},
+                                    category_bag_ids_map: dept.category_bag_ids_map || {},
+                                    category_print_design_id_map: dept.category_print_design_id_map || {},
                                     wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
                                     employees: (dept.employees_array || []).map(emp => {
                                         // Build category_qty_map from categories array
@@ -2949,8 +3012,10 @@ export default {
                                             categories: emp.categories || [],
                                             category_qty_map: categoryQtyMap,
                                             category_print_design_map: emp.category_print_design_map || {},
+                                            category_print_design_id_map: emp.category_print_design_id_map || {},
                                             category_bag_count_map: emp.category_bag_count_map || {},
-                                            category_bag_names_map: emp.category_bag_names_map || {}
+                                            category_bag_names_map: emp.category_bag_names_map || {},
+                                            category_bag_ids_map: emp.category_bag_ids_map || {}
                                         };
                                         return empObj;
                                     })
@@ -3052,7 +3117,9 @@ export default {
                                             category_qty_map: empCategoryQtyMap,
                                             category_print_design_map: emp.category_print_design_map || {},
                                             category_bag_count_map: emp.category_bag_count_map || {},
-                                            category_bag_names_map: emp.category_bag_names_map || {}
+                                            category_bag_names_map: emp.category_bag_names_map || {},
+                                            category_bag_ids_map: emp.category_bag_ids_map || {},
+                                            category_print_design_id_map: emp.category_print_design_id_map || {}
                                         };
                                     });
                                     return {
@@ -3069,6 +3136,8 @@ export default {
                                         category_print_design_map: dept.category_print_design_map || {},
                                         category_bag_count_map: dept.category_bag_count_map || {},
                                         category_bag_names_map: dept.category_bag_names_map || {},
+                                        category_bag_ids_map: dept.category_bag_ids_map || {},
+                                        category_print_design_id_map: dept.category_print_design_id_map || {},
                                         wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
                                         employees
                                     };
@@ -3668,6 +3737,11 @@ export default {
             getBagPureLoss,
             getEmpBagPureWeight,
             getEmpBagPureLoss,
+            getBagNsUrl,
+            getEmpBagNsUrl,
+            getDeptNsUrl,
+            getEmpNsUrl,
+            getStyleNsUrl,
             totalDeptActualProductionGold,
             totalDeptGrossLossGold,
             totalDeptActualProductionDiamond,
@@ -3854,6 +3928,31 @@ export default {
     /* For Firefox */
 }
 
+/* Custom scrollbar styling */
+.scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+    background-color: #f1f5f9;
+    border-radius: 4px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+    border: 2px solid #f1f5f9;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
 
 .chart-container {
     width: 100%;

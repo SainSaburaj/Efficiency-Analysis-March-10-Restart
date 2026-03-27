@@ -8430,6 +8430,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_name) AS print_design_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_id) AS print_design_id,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info) AS issued_pieces_diamond,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_loss_pieces_info) AS loss_pieces_diamond
                         FROM CUSTOMRECORD_JJ_OPERATIONS,
@@ -8447,12 +8448,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 CUSTOMRECORD_JJ_BAG_GENERATION.name AS bag_name_original,
                                 CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0,
-                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_name AS print_design_name
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_name AS print_design_name,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_id AS print_design_id
                             FROM CUSTOMRECORD_JJ_BAG_GENERATION,
                                 (SELECT CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_0,
                                         CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_join,
                                         item_SUB.name AS name_0,
-                                        item_SUB.itemid AS print_design_name
+                                        item_SUB.itemid AS print_design_name,
+                                        item_SUB."ID" AS print_design_id
                                 FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING,
                                     (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, item_0.itemid AS itemid
                                     FROM item item_0, CUSTOMRECORD_JJ_CATEGORY
@@ -8518,9 +8521,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         const locationId = record.location_id;
                         const departmentId = record.department_id;
                         const employeeId = record.employee_id;
+                        const bagId = record.bag_id;
                         const bagName = record.bag_name;
                         const categoryName = record.category_name;
                         const printDesignName = record.print_design_name;
+                        const printDesignId = record.print_design_id;
 
                         if (!locationId || !departmentId) return;
 
@@ -8542,6 +8547,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 unique_bags: new Set(),
                                 unique_categories: new Set(),
                                 category_print_design_map: {},
+                                category_print_design_id_map: {},
                                 category_bags_map: {},
                                 issued_pieces_diamond: 0,
                                 loss_pieces_diamond: 0
@@ -8554,11 +8560,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             if (printDesignName) {
                                 groupedData[locationId].departments[departmentId].category_print_design_map[categoryName] = printDesignName;
                             }
+                            if (printDesignId) {
+                                groupedData[locationId].departments[departmentId].category_print_design_id_map[categoryName] = printDesignId;
+                            }
                             if (bagName) {
                                 if (!groupedData[locationId].departments[departmentId].category_bags_map[categoryName]) {
-                                    groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = new Set();
+                                    groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = {};
                                 }
-                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName].add(bagName);
+                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName][bagName] = bagId;
                             }
                         }
 
@@ -8571,6 +8580,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     unique_bags: new Set(),
                                     unique_categories: new Set(),
                                     category_print_design_map: {},
+                                    category_print_design_id_map: {},
                                     category_bags_map: {}
                                 };
                             }
@@ -8580,11 +8590,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 if (printDesignName) {
                                     groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_map[categoryName] = printDesignName;
                                 }
+                                if (printDesignId) {
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_id_map[categoryName] = printDesignId;
+                                }
                                 if (bagName) {
                                     if (!groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName]) {
-                                        groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = new Set();
+                                        groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = {};
                                     }
-                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName].add(bagName);
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName][bagName] = bagId;
                                 }
                             }
                         }
@@ -8593,19 +8606,27 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     Object.keys(groupedData).forEach(locationId => {
                         Object.keys(groupedData[locationId].departments).forEach(departmentId => {
                             const dept = groupedData[locationId].departments[departmentId];
-                            // Serialize category_bags_map Sets to counts AND names arrays
+                            // Serialize category_bags_map (name→id object) to counts, names arrays, and ids map
                             const deptCategoryBagCountMap = {};
                             const deptCategoryBagNamesMap = {};
+                            const deptCategoryBagIdsMap = {};
                             Object.keys(dept.category_bags_map).forEach(cat => {
-                                deptCategoryBagCountMap[cat] = dept.category_bags_map[cat].size;
-                                deptCategoryBagNamesMap[cat] = Array.from(dept.category_bags_map[cat]);
+                                const bagMap = dept.category_bags_map[cat];
+                                const names = Object.keys(bagMap);
+                                deptCategoryBagCountMap[cat] = names.length;
+                                deptCategoryBagNamesMap[cat] = names;
+                                deptCategoryBagIdsMap[cat] = bagMap; // { bagName: bagId }
                             });
                             dept.employees_array = Object.values(dept.employees).map(emp => {
                                 const empCategoryBagCountMap = {};
                                 const empCategoryBagNamesMap = {};
+                                const empCategoryBagIdsMap = {};
                                 Object.keys(emp.category_bags_map).forEach(cat => {
-                                    empCategoryBagCountMap[cat] = emp.category_bags_map[cat].size;
-                                    empCategoryBagNamesMap[cat] = Array.from(emp.category_bags_map[cat]);
+                                    const bagMap = emp.category_bags_map[cat];
+                                    const names = Object.keys(bagMap);
+                                    empCategoryBagCountMap[cat] = names.length;
+                                    empCategoryBagNamesMap[cat] = names;
+                                    empCategoryBagIdsMap[cat] = bagMap;
                                 });
                                 return {
                                     employee_id: emp.employee_id,
@@ -8615,8 +8636,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     category_count: emp.unique_categories.size,
                                     unique_categories_array: Array.from(emp.unique_categories),
                                     category_print_design_map: emp.category_print_design_map,
+                                    category_print_design_id_map: emp.category_print_design_id_map,
                                     category_bag_count_map: empCategoryBagCountMap,
                                     category_bag_names_map: empCategoryBagNamesMap,
+                                    category_bag_ids_map: empCategoryBagIdsMap,
                                     starting_qty: 0,
                                     loss_qty: 0,
                                     categories: []
@@ -8628,6 +8651,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             dept.unique_categories_array = Array.from(dept.unique_categories);
                             dept.category_bag_count_map = deptCategoryBagCountMap;
                             dept.category_bag_names_map = deptCategoryBagNamesMap;
+                            dept.category_bag_ids_map = deptCategoryBagIdsMap;
+                            dept.category_print_design_map = dept.category_print_design_map;
+                            dept.category_print_design_id_map = dept.category_print_design_id_map;
                             delete dept.employees;
                             delete dept.unique_bags;
                             delete dept.unique_categories;
@@ -8889,6 +8915,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_name) AS print_design_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_id) AS print_design_id,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info) AS issued_pieces_diamond,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_loss_pieces_info) AS loss_pieces_diamond
                         FROM CUSTOMRECORD_JJ_OPERATIONS,
@@ -8906,12 +8933,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 CUSTOMRECORD_JJ_BAG_GENERATION.name AS bag_name_original,
                                 CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0,
-                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_name AS print_design_name
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_name AS print_design_name,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_id AS print_design_id
                             FROM CUSTOMRECORD_JJ_BAG_GENERATION,
                                 (SELECT CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_0,
                                         CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_join,
                                         item_SUB.name AS name_0,
-                                        item_SUB.itemid AS print_design_name
+                                        item_SUB.itemid AS print_design_name,
+                                        item_SUB."ID" AS print_design_id
                                 FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING,
                                     (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, item_0.itemid AS itemid
                                     FROM item item_0, CUSTOMRECORD_JJ_CATEGORY
@@ -8978,6 +9007,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         const locationId = record.location_id;
                         const departmentId = record.department_id;
                         const employeeId = record.employee_id;
+                        const bagId = record.bag_id;
                         const bagName = record.bag_name;
                         const categoryName = record.category_name;
                         const printDesignName = record.print_design_name;
@@ -9005,6 +9035,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 unique_bags: new Set(),
                                 unique_categories: new Set(),
                                 category_print_design_map: {},
+                                category_print_design_id_map: {},
                                 category_bags_map: {},
                                 issued_pieces_diamond: 0,
                                 loss_pieces_diamond: 0
@@ -9020,11 +9051,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             if (printDesignName) {
                                 groupedData[locationId].departments[departmentId].category_print_design_map[categoryName] = printDesignName;
                             }
+                            if (record.print_design_id) {
+                                groupedData[locationId].departments[departmentId].category_print_design_id_map[categoryName] = record.print_design_id;
+                            }
                             if (bagName) {
                                 if (!groupedData[locationId].departments[departmentId].category_bags_map[categoryName]) {
-                                    groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = new Set();
+                                    groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = {};
                                 }
-                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName].add(bagName);
+                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName][bagName] = bagId;
                             }
                         }
 
@@ -9038,6 +9072,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     unique_bags: new Set(),
                                     unique_categories: new Set(),
                                     category_print_design_map: {},
+                                    category_print_design_id_map: {},
                                     category_bags_map: {}
                                 };
                             }
@@ -9050,11 +9085,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 if (printDesignName) {
                                     groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_map[categoryName] = printDesignName;
                                 }
+                                if (record.print_design_id) {
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_id_map[categoryName] = record.print_design_id;
+                                }
                                 if (bagName) {
                                     if (!groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName]) {
-                                        groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = new Set();
+                                        groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = {};
                                     }
-                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName].add(bagName);
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName][bagName] = bagId;
                                 }
                             }
                         }
@@ -9064,19 +9102,27 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     Object.keys(groupedData).forEach(locationId => {
                         Object.keys(groupedData[locationId].departments).forEach(departmentId => {
                             const dept = groupedData[locationId].departments[departmentId];
-                            // Serialize category_bags_map Sets to counts AND names arrays
+                            // Serialize category_bags_map (name→id) to counts, names arrays, and ids map
                             const deptCategoryBagCountMap = {};
                             const deptCategoryBagNamesMap = {};
+                            const deptCategoryBagIdsMap = {};
                             Object.keys(dept.category_bags_map).forEach(cat => {
-                                deptCategoryBagCountMap[cat] = dept.category_bags_map[cat].size;
-                                deptCategoryBagNamesMap[cat] = Array.from(dept.category_bags_map[cat]);
+                                const bagMap = dept.category_bags_map[cat];
+                                const names = Object.keys(bagMap);
+                                deptCategoryBagCountMap[cat] = names.length;
+                                deptCategoryBagNamesMap[cat] = names;
+                                deptCategoryBagIdsMap[cat] = bagMap;
                             });
                             dept.employees_array = Object.values(dept.employees).map(emp => {
                                 const empCategoryBagCountMap = {};
                                 const empCategoryBagNamesMap = {};
+                                const empCategoryBagIdsMap = {};
                                 Object.keys(emp.category_bags_map).forEach(cat => {
-                                    empCategoryBagCountMap[cat] = emp.category_bags_map[cat].size;
-                                    empCategoryBagNamesMap[cat] = Array.from(emp.category_bags_map[cat]);
+                                    const bagMap = emp.category_bags_map[cat];
+                                    const names = Object.keys(bagMap);
+                                    empCategoryBagCountMap[cat] = names.length;
+                                    empCategoryBagNamesMap[cat] = names;
+                                    empCategoryBagIdsMap[cat] = bagMap;
                                 });
                                 return {
                                     employee_id: emp.employee_id,
@@ -9086,8 +9132,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     category_count: emp.unique_categories.size,
                                     unique_categories_array: Array.from(emp.unique_categories),
                                     category_print_design_map: emp.category_print_design_map,
+                                    category_print_design_id_map: emp.category_print_design_id_map,
                                     category_bag_count_map: empCategoryBagCountMap,
                                     category_bag_names_map: empCategoryBagNamesMap,
+                                    category_bag_ids_map: empCategoryBagIdsMap,
                                     starting_qty: 0,
                                     loss_qty: 0,
                                     categories: []
@@ -9100,6 +9148,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             dept.unique_categories_array = Array.from(dept.unique_categories);
                             dept.category_bag_count_map = deptCategoryBagCountMap;
                             dept.category_bag_names_map = deptCategoryBagNamesMap;
+                            dept.category_bag_ids_map = deptCategoryBagIdsMap;
 
                             delete dept.employees;
                             delete dept.unique_bags;
