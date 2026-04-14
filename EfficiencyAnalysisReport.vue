@@ -1707,30 +1707,38 @@ export default {
 
                 let gt = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0, pw:0, pl:0 };
 
+                // merge col c from startRow to endRow inclusive; no-op for single row
+                const mergeEmpCol = (col, startRow, endRow) => {
+                    if (endRow > startRow) ws.mergeCells(startRow, col, endRow, col);
+                };
+
                 locations.value.forEach(loc => {
                     const locName = loc.name?.value || "";
-                    let locShown = false;
+                    let locFirstRow = null;
+
                     (loc.departments || []).forEach(dept => {
                         const deptName = dept.name || "";
+                        let deptFirstRow = null;
+
                         (dept.employees || []).forEach(emp => {
                             const empName  = emp.name || "";
                             const bagCount = emp.bag_count || 0;
                             const cats     = emp.unique_categories_array || [];
                             let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0, pw:0, pl:0 };
-                            let isFirstEmpRow = true;
+                            let empFirstRow = null;
 
                             cats.forEach((cat) => {
                                 const bags = (emp.category_bag_names_map||{})[cat] || [''];
                                 const printDesign = (emp.category_print_design_map||{})[cat] || '-';
                                 const catBagCount = (emp.category_bag_count_map||{})[cat] || 0;
+                                let catFirstRow = null;
 
-                                bags.forEach((bagName, bagIdx) => {
-                                    const isFirstBagInCat = bagIdx === 0;
+                                bags.forEach((bagName) => {
                                     const bagEntry = (emp.categories||[]).find(c => c.category_name === cat && c.bag_name === bagName) || {};
                                     const sG=parseFloat(bagEntry.starting_qty_gold||0), iG=parseFloat(bagEntry.issued_qty_gold||0), lG=parseFloat(bagEntry.loss_qty_gold||0), scG=parseFloat(bagEntry.scrap_qty_gold||0), bG=parseFloat(bagEntry.balance_qty_gold||0);
                                     const sD=parseFloat(bagEntry.starting_qty_diamond||0), iD=parseFloat(bagEntry.issued_qty_diamond||0), lD=parseFloat(bagEntry.loss_qty_diamond||0), scD=parseFloat(bagEntry.scrap_qty_diamond||0), bD=parseFloat(bagEntry.balance_qty_diamond||0);
                                     const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
-                                    const issuedNetWt = sG; // Issued Net Weight = starting_qty_gold
+                                    const issuedNetWt = sG;
                                     const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
                                     const purity=(parseFloat(bagEntry.metal_purity_percent||0))/100;
                                     const pureWeight=+roundToTwo(aG*purity), pureLoss=+roundToTwo(lG*purity);
@@ -1741,17 +1749,16 @@ export default {
                                     gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
                                     gt.pw+=aG*purity; gt.pl+=lG*purity;
 
-                                    const showLoc = isFirstEmpRow && !locShown;
                                     const empPureLoss = lG * purity;
                                     const empRecoveryWeight = empPureLoss > 0 && globalAvgRecoveryPercentage.value > 0
-                                        ? +roundToTwo(empPureLoss * (globalAvgRecoveryPercentage.value / 100))
-                                        : 0;
+                                        ? +roundToTwo(empPureLoss * (globalAvgRecoveryPercentage.value / 100)) : 0;
                                     const empRecoveryPct = empPureLoss > 0 && globalAvgRecoveryPercentage.value > 0
-                                        ? roundToTwo(globalAvgRecoveryPercentage.value) + '%'
-                                        : '0%';
+                                        ? roundToTwo(globalAvgRecoveryPercentage.value) + '%' : '0%';
+
+                                    // Write full values every row — merging handles visual grouping for filter compatibility
                                     const dr = ws.addRow([
-                                        showLoc?locName:'', isFirstEmpRow?deptName:'', isFirstEmpRow?empName:'',
-                                        isFirstEmpRow?bagCount:'', isFirstBagInCat?cat:'', isFirstBagInCat?printDesign:'', isFirstBagInCat?catBagCount:'', bagName||'-',
+                                        locName, deptName, empName,
+                                        bagCount, cat, printDesign, catBagCount, bagName||'-',
                                         +roundToTwo(issuedNetWt), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
                                         pureWeight, pureLoss, '-', '-',
                                         +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
@@ -1761,33 +1768,59 @@ export default {
                                     centerNums(dr, 9, ECOL);
                                     centerCols(dr, [4, 7]);
                                     redCols(dr, EMP_LOSS_COLS);
-                                    if (showLoc) locShown = true;
-                                    isFirstEmpRow = false;
+
+                                    const rn = dr.number;
+                                    if (locFirstRow === null) locFirstRow = rn;
+                                    if (deptFirstRow === null) deptFirstRow = rn;
+                                    if (empFirstRow === null) empFirstRow = rn;
+                                    if (catFirstRow === null) catFirstRow = rn;
                                 });
+
+                                // merge Item Category (col5), Style Number (col6), Bag Count (col7) across all bags in this category
+                                mergeEmpCol(5, catFirstRow, ws.rowCount);
+                                mergeEmpCol(6, catFirstRow, ws.rowCount);
+                                mergeEmpCol(7, catFirstRow, ws.rowCount);
                             });
 
+                            // subtotal row — col3 (Employee name) is empty so it merges into the emp cell above
+                            // all numeric data is intact; only the label cell is blank
                             if (cats.length > 0) {
                                 const aG=sub.sG+sub.iG-sub.lG-sub.scG-sub.bG, aD=sub.sD+sub.iD-sub.lD-sub.scD-sub.bD;
-                                const issuedNetWt=sub.sG;
                                 const subRecoveryWeight = sub.pl > 0 && globalAvgRecoveryPercentage.value > 0 ? +roundToTwo(sub.pl * (globalAvgRecoveryPercentage.value / 100)) : 0;
-                                const sr = ws.addRow(['','',`Total (${empName})`,bagCount,'','','','',+roundToTwo(issuedNetWt),+roundToTwo(aG),+roundToTwo(sub.lG),'',+roundToTwo(sub.pw),+roundToTwo(sub.pl),'','',+roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'',subRecoveryWeight,'','-','-']);
+                                const sr = ws.addRow([
+                                    locName, deptName, '',  // col3 blank — will be merged into emp cell
+                                    bagCount,'','','','',
+                                    +roundToTwo(sub.sG),+roundToTwo(aG),+roundToTwo(sub.lG),'',
+                                    +roundToTwo(sub.pw),+roundToTwo(sub.pl),'','',
+                                    +roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'',
+                                    subRecoveryWeight,'','-','-'
+                                ]);
                                 styleRow(sr, C.subtotalBg, boldFont, ECOL);
                                 centerNums(sr, 9, ECOL);
                                 centerCols(sr, [4, 7]);
                                 addThickTopBorder(sr, ECOL);
                                 redColsBold(sr, [11,14,20]);
                             }
+
+                            // merge Employee (col3) and No. of Bags (col4) across all emp rows + subtotal
+                            mergeEmpCol(3, empFirstRow, ws.rowCount);
+                            mergeEmpCol(4, empFirstRow, ws.rowCount);
                         });
+
+                        // merge Department (col2) across all dept rows (employees + subtotals)
+                        if (deptFirstRow !== null) mergeEmpCol(2, deptFirstRow, ws.rowCount);
                     });
+
+                    // merge Location (col1) across all loc rows
+                    if (locFirstRow !== null) mergeEmpCol(1, locFirstRow, ws.rowCount);
                 });
 
                 const aG=gt.sG+gt.iG-gt.lG-gt.scG-gt.bG, aD=gt.sD+gt.iD-gt.lD-gt.scD-gt.bD;
-                const issuedNetWtGt=gt.sG;
                 const allEmpBags = new Set();
                 locations.value.forEach(loc => (loc.departments||[]).forEach(dept => (dept.employees||[]).forEach(emp => (emp.unique_bags_array||[]).forEach(b => allEmpBags.add(b)))));
                 const grandEmpBagCount = allEmpBags.size || 0;
                 const grandEmpRecoveryWeight = gt.pl > 0 && globalAvgRecoveryPercentage.value > 0 ? +roundToTwo(gt.pl * (globalAvgRecoveryPercentage.value / 100)) : 0;
-                const egr = ws.addRow(['','','GRAND TOTAL',grandEmpBagCount,'','','','',+roundToTwo(issuedNetWtGt),+roundToTwo(aG),+roundToTwo(gt.lG),'',+roundToTwo(gt.pw),+roundToTwo(gt.pl),'','',+roundToTwo(gt.sD),+roundToTwo(aD),+roundToTwo(gt.lD),'',grandEmpRecoveryWeight,'','-','-']);
+                const egr = ws.addRow(['','','GRAND TOTAL',grandEmpBagCount,'','','','',+roundToTwo(gt.sG),+roundToTwo(aG),+roundToTwo(gt.lG),'',+roundToTwo(gt.pw),+roundToTwo(gt.pl),'','',+roundToTwo(gt.sD),+roundToTwo(aD),+roundToTwo(gt.lD),'',grandEmpRecoveryWeight,'','-','-']);
                 styleRow(egr, C.grandBg, boldFont, ECOL);
                 centerNums(egr, 9, ECOL);
                 centerCols(egr, [4, 7]);
@@ -1813,29 +1846,34 @@ export default {
 
                 let gt = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0, pw:0, pl:0 };
 
+                const mergeDeptCol = (col, startRow, endRow) => {
+                    if (endRow > startRow) ws.mergeCells(startRow, col, endRow, col);
+                };
+
                 locations.value.forEach(loc => {
                     const locName = loc.name?.value || "";
-                    let locShown = false;
+                    let locFirstRow = null;
+
                     (loc.departments || []).forEach(dept => {
                         const deptName = dept.name || "";
                         const bagCount = dept.bag_count || 0;
                         const cats     = dept.unique_categories_array || [];
                         let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0, pw:0, pl:0 };
-                        let isFirstDeptRow = true;
+                        let deptFirstRow = null;
 
                         cats.forEach((cat) => {
                             const bags = (dept.category_bag_names_map||{})[cat] || [''];
                             const printDesign = (dept.category_print_design_map||{})[cat] || '-';
                             const catBagCount = (dept.category_bag_count_map||{})[cat] || 0;
+                            let catFirstRow = null;
 
-                            bags.forEach((bagName, bagIdx) => {
-                                const isFirstBagInCat = bagIdx === 0;
+                            bags.forEach((bagName) => {
                                 const bqKey = `${dept.id}_${cat}_${bagName}`;
                                 const d = (dept.category_bag_qty_map||{})[bqKey] || {};
                                 const sG=parseFloat(d.starting_qty_gold||0), iG=parseFloat(d.issued_qty_gold||0), lG=parseFloat(d.loss_qty_gold||0), scG=parseFloat(d.scrap_qty_gold||0), bG=parseFloat(d.balance_qty_gold||0);
                                 const sD=parseFloat(d.starting_qty_diamond||0), iD=parseFloat(d.issued_qty_diamond||0), lD=parseFloat(d.loss_qty_diamond||0), scD=parseFloat(d.scrap_qty_diamond||0), bD=parseFloat(d.balance_qty_diamond||0);
                                 const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
-                                const issuedNetWt=sG; // Issued Net Weight = starting_qty_gold
+                                const issuedNetWt=sG;
                                 const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
                                 const purity=(parseFloat(d.metal_purity_percent||0))/100;
                                 const pureWeight=+roundToTwo(aG*purity), pureLoss=+roundToTwo(lG*purity);
@@ -1846,17 +1884,16 @@ export default {
                                 gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
                                 gt.pw+=aG*purity; gt.pl+=lG*purity;
 
-                                const showLoc = isFirstDeptRow && !locShown;
                                 const deptPureLoss = lG * purity;
                                 const deptRecoveryWeight = deptPureLoss > 0 && globalAvgRecoveryPercentage.value > 0
-                                    ? +roundToTwo(deptPureLoss * (globalAvgRecoveryPercentage.value / 100))
-                                    : 0;
+                                    ? +roundToTwo(deptPureLoss * (globalAvgRecoveryPercentage.value / 100)) : 0;
                                 const deptRecoveryPct = deptPureLoss > 0 && globalAvgRecoveryPercentage.value > 0
-                                    ? roundToTwo(globalAvgRecoveryPercentage.value) + '%'
-                                    : '0%';
+                                    ? roundToTwo(globalAvgRecoveryPercentage.value) + '%' : '0%';
+
+                                // Write full values every row — merging handles visual grouping for filter compatibility
                                 const dr = ws.addRow([
-                                    showLoc?locName:'', isFirstDeptRow?deptName:'',
-                                    isFirstDeptRow?bagCount:'', isFirstBagInCat?cat:'', isFirstBagInCat?printDesign:'', isFirstBagInCat?catBagCount:'', bagName||'-',
+                                    locName, deptName,
+                                    bagCount, cat, printDesign, catBagCount, bagName||'-',
                                     +roundToTwo(issuedNetWt), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
                                     pureWeight, pureLoss, '-', '-',
                                     +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
@@ -1866,32 +1903,56 @@ export default {
                                 centerNums(dr, 8, DCOL);
                                 centerCols(dr, [3, 6]);
                                 redCols(dr, DEPT_LOSS_COLS);
-                                if (showLoc) locShown = true;
-                                isFirstDeptRow = false;
+
+                                const rn = dr.number;
+                                if (locFirstRow === null) locFirstRow = rn;
+                                if (deptFirstRow === null) deptFirstRow = rn;
+                                if (catFirstRow === null) catFirstRow = rn;
                             });
+
+                            // merge Item Category (col4), Style Number (col5), Bag Count (col6) across all bags in this category
+                            mergeDeptCol(4, catFirstRow, ws.rowCount);
+                            mergeDeptCol(5, catFirstRow, ws.rowCount);
+                            mergeDeptCol(6, catFirstRow, ws.rowCount);
                         });
 
+                        // subtotal row — col2 (Dept name) is empty so it merges into the dept cell above
+                        // all numeric data is intact; only the label cell is blank
                         if (cats.length > 0) {
                             const aG=sub.sG+sub.iG-sub.lG-sub.scG-sub.bG, aD=sub.sD+sub.iD-sub.lD-sub.scD-sub.bD;
-                            const issuedNetWt=sub.sG;
                             const subDeptRecoveryWeight = sub.pl > 0 && globalAvgRecoveryPercentage.value > 0 ? +roundToTwo(sub.pl * (globalAvgRecoveryPercentage.value / 100)) : 0;
-                            const sr = ws.addRow(['',`Total (${deptName})`,bagCount,'','','','',+roundToTwo(issuedNetWt),+roundToTwo(aG),+roundToTwo(sub.lG),'',+roundToTwo(sub.pw),+roundToTwo(sub.pl),'','',+roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'',subDeptRecoveryWeight,'','-','-']);
+                            const sr = ws.addRow([
+                                locName, '',  // col2 blank — will be merged into dept cell
+                                bagCount,'','','','',
+                                +roundToTwo(sub.sG),+roundToTwo(aG),+roundToTwo(sub.lG),'',
+                                +roundToTwo(sub.pw),+roundToTwo(sub.pl),'','',
+                                +roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'',
+                                subDeptRecoveryWeight,'','-','-'
+                            ]);
                             styleRow(sr, C.subtotalBg, boldFont, DCOL);
                             centerNums(sr, 8, DCOL);
                             centerCols(sr, [3, 6]);
                             addThickTopBorder(sr, DCOL);
                             redColsBold(sr, [10,13,19]);
                         }
+
+                        // merge Department (col2) and No. of Bags (col3) across all dept rows + subtotal
+                        if (deptFirstRow !== null) {
+                            mergeDeptCol(2, deptFirstRow, ws.rowCount);
+                            mergeDeptCol(3, deptFirstRow, ws.rowCount);
+                        }
                     });
+
+                    // merge Location (col1) across all loc rows
+                    if (locFirstRow !== null) mergeDeptCol(1, locFirstRow, ws.rowCount);
                 });
 
                 const aG=gt.sG+gt.iG-gt.lG-gt.scG-gt.bG, aD=gt.sD+gt.iD-gt.lD-gt.scD-gt.bD;
-                const issuedNetWtGt=gt.sG;
                 const allDeptBags = new Set();
                 locations.value.forEach(loc => (loc.departments||[]).forEach(dept => (dept.unique_bags_array||[]).forEach(b => allDeptBags.add(b))));
                 const grandDeptBagCount = allDeptBags.size || locations.value.reduce((s,loc)=>(loc.departments||[]).reduce((s2,dept)=>s2+parseInt(dept.bag_count||0),s),0);
                 const grandDeptRecoveryWeight = gt.pl > 0 && globalAvgRecoveryPercentage.value > 0 ? +roundToTwo(gt.pl * (globalAvgRecoveryPercentage.value / 100)) : 0;
-                const dgr = ws.addRow(['','GRAND TOTAL',grandDeptBagCount,'','','','',+roundToTwo(issuedNetWtGt),+roundToTwo(aG),+roundToTwo(gt.lG),'',+roundToTwo(gt.pw),+roundToTwo(gt.pl),'','',+roundToTwo(gt.sD),+roundToTwo(aD),+roundToTwo(gt.lD),'',grandDeptRecoveryWeight,'','-','-']);
+                const dgr = ws.addRow(['','GRAND TOTAL',grandDeptBagCount,'','','','',+roundToTwo(gt.sG),+roundToTwo(aG),+roundToTwo(gt.lG),'',+roundToTwo(gt.pw),+roundToTwo(gt.pl),'','',+roundToTwo(gt.sD),+roundToTwo(aD),+roundToTwo(gt.lD),'',grandDeptRecoveryWeight,'','-','-']);
                 styleRow(dgr, C.grandBg, boldFont, DCOL);
                 centerNums(dgr, 8, DCOL);
                 centerCols(dgr, [3, 6]);

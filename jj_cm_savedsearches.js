@@ -39,8 +39,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const CACHE_KEY = 'item_list'; // Cache key
         const CACHE_NAME = 'item_cache'; // Cache name
         const DIAMOND_ID = 6;
-        // const METAL_ARRAY_GOLD = [4609, 8410, 8411, 25093]; // [G18, G22, G994, G14] // SB
-        const METAL_ARRAY_GOLD = [22327, 22328, 22329, 28612]; // [G18, G22, G994, G14] // PD
+        // const METAL_ARRAY_GOLD = [4609, 8410, 8411, 25093]; // [G18, G22, G994, G14] // SB Old
+        // const METAL_ARRAY_GOLD = [28612, 22327, 22328, 22329]; // [G14, G18, G22, G994] // Old
+        const METAL_ARRAY_GOLD = [53017, 53018, 53019, 53020]; // [G14, G18, G22, G994] // SB and PD
         const BARCODING_AND_FG_DEPT_ID = 24;
         const PAGE_SIZE = 10; // Number of records per page
         const OPERATION_STATUS_IN_TRANSIT = 2;
@@ -53,24 +54,25 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const MATERIAL_TYPE_ID_ALLOY = 6;
         const STOCK_ORDER_ID = 2;
         const REPAIR_ORDER_TYPE_ID = '3';
+        const JOB_WORK_ORDER_TYPE_ID = '4';
 
         const FIRST_DEPARTMENT_ID = 1;
         const CASTING_DEPT_ID = 9;
         const CASTING = 9;
         const TREE_CUTTING_CLEANING = 10;
         const GRINDING = 12;
-        // const PURE_GOLD_ARRAY = [2523];
-        const PURE_GOLD_ARRAY = [9119]; // G999
+        // const PURE_GOLD_ARRAY = [53028]; // G999 (SB)
+        const PURE_GOLD_ARRAY = [66072]; // G999 (PD)
         const GOOD_STATUS_ID = 1;
         const PARTY_DIAMOND_QUALITY = 3;
         const GOLD_CLASS_IDS = [5, 22, 23, 24, 25]; // [Gold, Gold Bullion, Gold Findings, Gold Mountings, Gold Back Chain]
         const GOLD_SCRAP_ITEM_LOT_NAME = "Scrap_Gold";
         const JEWELRY_CLASS_ID = 10;
         const GOLD_AND_JEWELRY_CLASS_IDS = [...GOLD_CLASS_IDS, JEWELRY_CLASS_ID]; // Combined for SQL queries
-        // const GOLD_SCRAP_ITEM_ID = [9321, 25090, 25091]; // Internal id of the item "Scrap" (SB)
-        // const SCRAP_ITEM_PARENT_ID = 25092; // Parent internal id for scrap items (SB)
-        const GOLD_SCRAP_ITEM_ID = [9321, 37471, 37470]; // Internal id of the item "Scrap" (PD)
-        const SCRAP_ITEM_PARENT_ID = 37469; // Parent internal id for scrap items (PD)
+        // const GOLD_SCRAP_ITEM_ID = [9321, 25090, 25091]; // Internal id of the item "Scrap" (SB Old)
+        // const SCRAP_ITEM_PARENT_ID = 25092; // Parent internal id for scrap items (SB Old)
+        const GOLD_SCRAP_ITEM_ID = [53435, 53436, 53437]; // Internal id of the item "Scrap" (SB and PD)
+        const SCRAP_ITEM_PARENT_ID = 53434; // Parent internal id for scrap items (SB and PD)
         const CURRENCY_INR_ID = 1;
         const JEWELRY_TYPE_ID = 8;
         const CARATS_TO_GRAMS_CONST = 0.2;
@@ -81,14 +83,17 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const ALLOY_CLASSES_IDS = ['8']; // added for alloy qty calculation
 
         // const ALLOY_TYPE_ID = 6;
-        const ALLOY_ITEMS = [3206, 3207, 3208]; // [Alloy Pink (P), Alloy White (W), Alloy Yellow (Y)]
+        // const ALLOY_ITEMS = [3206, 3207, 3208]; // [Alloy Pink (P), Alloy White (W), Alloy Yellow (Y)] (Old)
+        const ALLOY_ITEMS = [53429, 53430, 53431]; // [Alloy Pink (P), Alloy White (W), Alloy Yellow (Y)] (SB and PD)
 
         // const GOLD_TYPE_ID = 1;
 
-        // const LABOUR_OVERHEADS_CHARGE_ITEM_ID = 25718; // Labour Overheads Charge item record id (SB)
-        // const NET_LOSS_CHARGE_ITEM_ID = 25719; // Net Loss Charge item record id (SB)
-        const LABOUR_OVERHEADS_CHARGE_ITEM_ID = 41074; // Labour Overheads Charge item record id (PD)
-        const NET_LOSS_CHARGE_ITEM_ID = 41075; // Net Loss Charge item record id (PD)
+        // const LABOUR_OVERHEADS_CHARGE_ITEM_ID = 25718; // Labour Overheads Charge item record id (SB Old)
+        // const NET_LOSS_CHARGE_ITEM_ID = 25719; // Net Loss Charge item record id (SB Old)
+        // const FINDING_ITEM_SERVICE_ID = 26125; // Finding item service charge id (SB Old)
+        const LABOUR_OVERHEADS_CHARGE_ITEM_ID = 41074; // Labour Overheads Charge item record id (SB and PD)
+        const NET_LOSS_CHARGE_ITEM_ID = 41075; // Net Loss Charge item record id (SB and PD)
+        const FINDING_ITEM_SERVICE_ID = 41211; // Finding item service charge id (SB and PD)
 
         /**
          * @description searchResults
@@ -249,7 +254,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custrecord_jj_bagcore_customer_name", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "customer_name" }),
                             search.createColumn({ name: "custrecord_jj_bagmov_to_dept", join: "CUSTRECORD_JJ_RELATED_BAG_MOVEMENT", label: "to_department" }),
                             search.createColumn({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "order_type" }),
-                            search.createColumn({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "serial_repair" })
+                            search.createColumn({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "serial_repair" }),
+                            search.createColumn({ name: "custrecord_jj_gwt_of_repair_serial", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "serial_repair_wt" }),
                         ]
                     });
                     if (!pageIndex) {
@@ -895,6 +901,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custrecord_jj_bagcore_duedate", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "duedate" }),
                             search.createColumn({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "order_type" }),
                             search.createColumn({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "serial_repair" }),
+                            search.createColumn({ name: "custrecord_jj_gwt_of_repair_serial", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "serial_repair_wt" }),
                         )
                     }
 
@@ -2045,11 +2052,19 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                 try {
                     log.debug("metalId", metalId);
                     log.debug("bagId", bagId);
+                    if (!metalId || !bagId || !bagId?.length) {
+                        return [];
+                    }
                     let bagcoreMaterials = [];
                     let bagcoreMaterialsSearchObj = search.create({
                         type: "customrecord_jj_bagcore_materials",
                         filters: [
-                            ["custrecord_jj_bagcoremat_item", "anyof", metalId],
+                            // ["custrecord_jj_bagcoremat_item", "anyof", metalId],
+                            [
+                                ["custrecord_jj_bagcoremat_item", "anyof", metalId],
+                                "OR",
+                                ["custrecord_jj_bagcoremat_item.custitem_jj_relate_item_reference", "anyof", metalId]
+                            ],
                             "AND",
                             ["isinactive", "is", "F"],
                             "AND",
@@ -2152,6 +2167,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custrecord_jj_oprtns_vendor", label: "vendor_id" }),
                             search.createColumn({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Item Category" }),
                             search.createColumn({ name: "custrecord_jj_bagcore_customer_name", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Customer Name" }),
+
+                            search.createColumn({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "orderType" }),
+                            search.createColumn({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "repairSerial" }),
+                            search.createColumn({ name: "custrecord_jj_gwt_of_repair_serial", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "repairSerialWt" }),
+
                         ]
                     });
                     let searchResultCount = customrecord_jj_operationsSearchObj.runPaged().count;
@@ -2160,6 +2180,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     // .run().each has a limit of 4,000 results
                     let response = [];
                     customrecord_jj_operationsSearchObj.run().each(function (result) {
+                        let orderType = result.getValue({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "orderType" });
                         // Build the object in the required format
                         let obj = {
                             operation_id: {
@@ -2202,7 +2223,21 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             category: {
                                 value: result.getValue({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Item Category" }),
                                 text: result.getText({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "Item Category" })
-                            }
+                            },
+                            orderType: {
+                                value: orderType,
+                                text: result.getText({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "orderType" })
+                            },
+                            repairSerial: {
+                                value: result.getValue({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "repairSerial" }),
+                                text: result.getText({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "repairSerial" })
+                            },
+                            repairSerialWt: {
+                                value: result.getValue({ name: "custrecord_jj_gwt_of_repair_serial", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "repairSerialWt" }),
+                                text: result.getText({ name: "custrecord_jj_gwt_of_repair_serial", join: "CUSTRECORD_JJ_OPRTNS_BAGCORE", label: "repairSerialWt" })
+                            },
+                            isRepairOrder: Number(orderType) == Number(REPAIR_ORDER_TYPE_ID),
+                            isJobWorkOrder: Number(orderType) == Number(JOB_WORK_ORDER_TYPE_ID),
                         };
 
                         // Add the object to the results array
@@ -2519,32 +2554,61 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         return [];
                     }
 
-                    let bagGenerationSearchObj = search.create({
-                        type: "customrecord_jj_bag_generation",
+                    // let bagGenerationSearchObj = search.create({
+                    //     type: "customrecord_jj_bag_generation",
+                    //     filters: [
+                    //         ["isinactive", "is", "F"],
+                    //         "AND", ["custrecord_jj_baggen_merge", "is", "F"],
+                    //         "AND", ["custrecord_jj_baggen_split", "is", "F"],
+                    //         "AND", ["custrecord_jj_is_rejected", "is", "F"],
+                    //         "AND", ["custrecord_jj_baggen_dept.isinactive", "is", "F"],
+                    //         "AND", ["internalid", "anyof", bagsArray],
+                    //         "AND", ["custrecord_jj_bagcoremat_bag_name.custrecord_jj_bagcoremat_item", "anyof", metalId],
+                    //     ],
+                    //     columns: [
+                    //         search.createColumn({ name: "name", label: "ID" }),
+                    //         search.createColumn({ name: "internalid", label: "Internal Id" }),
+                    //         search.createColumn({ name: "custrecord_jj_bagcore_design", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "Style" }),
+                    //         search.createColumn({ name: "custrecord_jj_bagcoremat_piece", join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME", label: "weight" }),
+                    //         search.createColumn({ name: "custrecord_jj_baggen_qty", label: "Quantity Per Bag" }),
+                    //         search.createColumn({ name: "custrecord_jj_baggen_dept", label: "Department " }),
+                    //         search.createColumn({ name: "custrecord_jj_mandept_hod", join: "CUSTRECORD_JJ_BAGGEN_DEPT", label: "hod" }),
+                    //         search.createColumn({ name: "custrecord_jj_baggen_bagcore", label: "Bag Core Tracking" }),
+                    //         search.createColumn({ name: "custrecord_jj_bagcoremat_qty", join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME", label: "Quantity" }),
+                    //         search.createColumn({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "Customer" }),
+                    //         search.createColumn({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "category" }),
+                    //         search.createColumn({ name: "custrecord_jj_bagcore_customer_name", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "Customer Name" }),
+                    //     ]
+                    // });
+
+                    const bagGenerationSearchObj = search.create({
+                        type: "customrecord_jj_bagcore_materials",
                         filters: [
                             ["isinactive", "is", "F"],
-                            "AND", ["custrecord_jj_baggen_merge", "is", "F"],
-                            "AND", ["custrecord_jj_baggen_split", "is", "F"],
-                            "AND", ["custrecord_jj_is_rejected", "is", "F"],
-                            "AND", ["custrecord_jj_baggen_dept.isinactive", "is", "F"],
-                            "AND", ["internalid", "anyof", bagsArray],
-                            "AND", ["custrecord_jj_bagcoremat_bag_name.custrecord_jj_bagcoremat_item", "anyof", metalId],
+                            "AND", ["custrecord_jj_bagcoremat_bag_name.isinactive", "is", "F"],
+                            "AND", ["custrecord_jj_bagcoremat_bag_name.custrecord_jj_baggen_merge", "is", "F"],
+                            "AND", ["custrecord_jj_bagcoremat_bag_name.custrecord_jj_is_rejected", "is", "F"],
+                            "AND", ["custrecord_jj_bagcoremat_bag_name.custrecord_jj_baggen_split", "is", "F"],
+                            "AND", ["custrecord_jj_bagcoremat_bagcore.custrecord_jj_bagcore_is_rejected", "is", "F"],
+                            "AND", ["custrecord_jj_bagcoremat_bagcore.isinactive", "is", "F"],
+                            "AND", ["custrecord_jj_bagcoremat_bag_name", "anyof", bagsArray],
+                            "AND", [
+                                ["custrecord_jj_bagcoremat_item", "anyof", metalId],
+                                "OR", ["custrecord_jj_bagcoremat_item.custitem_jj_relate_item_reference", "anyof", metalId]
+                            ]
                         ],
                         columns: [
-                            search.createColumn({ name: "name", label: "ID" }),
-                            search.createColumn({ name: "internalid", label: "Internal Id" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_design", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "Style" }),
-                            search.createColumn({ name: "custrecord_jj_bagcoremat_piece", join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME", label: "weight" }),
-                            search.createColumn({ name: "custrecord_jj_baggen_qty", label: "Quantity Per Bag" }),
-                            search.createColumn({ name: "custrecord_jj_baggen_dept", label: "Department " }),
-                            search.createColumn({ name: "custrecord_jj_mandept_hod", join: "CUSTRECORD_JJ_BAGGEN_DEPT", label: "hod" }),
-                            search.createColumn({ name: "custrecord_jj_baggen_bagcore", label: "Bag Core Tracking" }),
-                            search.createColumn({ name: "custrecord_jj_bagcoremat_qty", join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME", label: "Quantity" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "Customer" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "category" }),
-                            search.createColumn({ name: "custrecord_jj_bagcore_customer_name", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "Customer Name" }),
+                            search.createColumn({ name: "custrecord_jj_bagcoremat_bag_name", label: "Bag Name/Number" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_design", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE", label: "Design" }),
+                            search.createColumn({ name: "custrecord_jj_bagcoremat_qty", label: "Quantity" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE", label: "Customer" }),
+                            search.createColumn({ name: "custrecord_jj_bagcoremat_bagcore", label: "Bag Core Tracking" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_customer_name", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE", label: "Customer Name" }),
+                            search.createColumn({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE", label: "Item Category" }),
+                            search.createColumn({ name: "custrecord_jj_baggen_qty", join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME", label: "Quantity Per Bag" })
                         ]
                     });
+
                     let bags = [];
                     let processedBagIds = new Set();
 
@@ -2554,7 +2618,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         return [];
                     }
                     bagGenerationSearchObj.run().each(function (result) {
-                        let bagId = result.getValue("internalid");
+                        // let bagId = result.getValue("internalid");
+                        let bagId = result.getValue("custrecord_jj_bagcoremat_bag_name");
 
                         // Skip if already added
                         if (processedBagIds.has(bagId)) {
@@ -2566,21 +2631,24 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         let resultObject = {
                             bag_no: {
                                 value: bagId,
-                                text: result.getValue("name")
+                                // text: result.getValue("name")
+                                text: result.getText("custrecord_jj_bagcoremat_bag_name")
                             },
                             style_no: {
                                 value: result.getValue({
                                     name: "custrecord_jj_bagcore_design",
-                                    join: "CUSTRECORD_JJ_BAGGEN_BAGCORE"
+                                    // join: "CUSTRECORD_JJ_BAGGEN_BAGCORE"
+                                    join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE"
                                 })
                             },
                             weight: {
                                 value: result.getValue({
                                     name: "custrecord_jj_bagcoremat_qty",
-                                    join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME"
+                                    // join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME"
                                 })
                             },
-                            quantity_per_bag: { value: result.getValue("custrecord_jj_baggen_qty") },
+                            // quantity_per_bag: { value: result.getValue("custrecord_jj_baggen_qty") },
+                            quantity_per_bag: { value: result.getValue({ name: "custrecord_jj_baggen_qty", join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME" }) },
                             // department: { 
                             //     value: result.getValue("custrecord_jj_baggen_dept"),
                             //     text: result.getText("custrecord_jj_baggen_dept")
@@ -2589,15 +2657,25 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             //     name: "custrecord_jj_mandept_hod",
                             //     join: "CUSTRECORD_JJ_BAGGEN_DEPT"
                             // }) },
-                            bag_core_tracking: { value: result.getValue("custrecord_jj_baggen_bagcore") },
+                            // bag_core_tracking: { value: result.getValue("custrecord_jj_baggen_bagcore") },
+                            bag_core_tracking: { value: result.getValue("custrecord_jj_bagcoremat_bagcore") },
+                            // customer: {
+                            //     value: result.getValue({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" }),
+                            //     text: result.getValue({ name: "custrecord_jj_bagcore_customer_name", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" })
+                            //         || result.getText({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" })
+                            // },
                             customer: {
-                                value: result.getValue({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" }),
-                                text: result.getValue({ name: "custrecord_jj_bagcore_customer_name", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" })
-                                    || result.getText({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" })
+                                value: result.getValue({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" }),
+                                text: result.getValue({ name: "custrecord_jj_bagcore_customer_name", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" })
+                                    || result.getText({ name: "custrecord_jj_bagcore_customer", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" })
                             },
+                            // category: {
+                            //     value: result.getValue({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" }),
+                            //     text: result.getText({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" })
+                            // }
                             category: {
-                                value: result.getValue({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" }),
-                                text: result.getText({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE" })
+                                value: result.getValue({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" }),
+                                text: result.getText({ name: "custrecord_jj_bagcore_item_category", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" })
                             }
                         };
                         bags.push(resultObject);
@@ -2814,6 +2892,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_total_issue) AS totalIssue,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_total_receive) AS totalReceive,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_total_loss) AS totalLoss,
+                            BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_additional_qty) AS totalBalance,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_actual_pieces) AS actualPieces,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_issued_pieces) AS issuedPieces,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_to_be_issued_pieces) AS toBeIssuedPieces,
@@ -2821,11 +2900,19 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_actual_pieces_info) AS actualPiecesInfo,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_issued_pieces_info) AS issuedPiecesInfo,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_to_be_issued_pieces_info) AS toBeIssuedPiecesInfo,
+                            BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_balance_pieces_info) AS totalBalancePiecesInfo,
 
                             BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item.custitem_jj_stone_quality)) AS stonequality,
                             BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item.custitem_jj_metal_quality)) AS metalquality,
                             BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_stone_quality) AS stonequalityid,
-                            BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_metal_quality) AS metalqualityid
+                            BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_metal_quality) AS metalqualityid,
+
+                            BUILTIN_RESULT.TYPE_INTEGER(item.custitem_jj_relate_item_reference) AS relatedItemId,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item.custitem_jj_relate_item_reference)) AS relatedItemName,
+                            BUILTIN_RESULT.TYPE_STRING(bagcore.custrecord_jj_bagcore_order_type) AS orderType,
+                            BUILTIN_RESULT.TYPE_STRING(bagcore.custrecord_jj_serial_to_repair) AS repairSerial,
+                            BUILTIN_RESULT.TYPE_FLOAT(bagcore.custrecord_jj_gwt_of_repair_serial) AS repairSerialWt
+
                         FROM 
                           CUSTOMRECORD_JJ_BAGCORE_MATERIALS
                         LEFT JOIN 
@@ -2836,6 +2923,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         LEFT JOIN 
                             item -- Join the item table
                             ON CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_item = item.ID
+                        LEFT JOIN 
+                            customrecord_jj_bag_core_tracking bagcore
+                            ON CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_bagcore = bagcore.id
                         WHERE 
                             CUSTOMRECORD_JJ_BAGCORE_MATERIALS.custrecord_jj_bagcoremat_bag_name = ?
                             AND CUSTOMRECORD_JJ_BAGCORE_MATERIALS.isinactive = 'F';`
@@ -2910,6 +3000,17 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             isOthCharge: result.itemtype === 'OthCharge',
                             isServiceItem: result.itemtype === 'Service',
                             purchasePrice: parseFloat(result.purchaseprice) || 0, // Ensure it is a number
+
+                            relatedItemId: result.relateditemid,
+                            relatedItemName: result.relateditemname,
+                            orderType: result.ordertype,
+                            isRepairOrder: Number(result.ordertype) == Number(REPAIR_ORDER_TYPE_ID),
+                            isJobWorkOrder: Number(result.ordertype) == Number(JOB_WORK_ORDER_TYPE_ID),
+                            repairSerial: result.repairserial,
+                            repairSerialWt: result.repairserialwt,
+
+                            totalBalance: result.totalbalance,
+                            totalBalancePiecesInfo: result.totalbalancepiecesinfo,
                         });
                         // }
 
@@ -3645,7 +3746,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     let searchFilters = [
                         ["custrecord_jj_oprtns_department", "anyof", BARCODING_AND_FG_DEPT_ID],
                         "AND", ["custrecord_jj_oprtns_entry", "isnotempty", ""],
-                        "AND", ["custrecord_jj_oprtns_exit", "isempty", ""],
+                        // "AND", ["custrecord_jj_oprtns_exit", "isempty", ""],
                         "AND", ["isinactive", "is", "F"],
                         "AND", ["custrecord_jj_oprtns_wo.status", "noneof", "WorkOrd:H", "WorkOrd:C"],
                         "AND", ["custrecord_jj_oprtns_wo.mainline", "is", "T"],
@@ -3658,11 +3759,15 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     if (isAssemblyBuild == true) {
                         searchFilters.push(
                             "AND", ["custrecord_jj_oprtns_bagno.custrecord_jj_associated_assembly_build", "anyof", "@NONE@"],
-                            "AND", ["custrecord_jj_oprtns_wo.status", "noneof", "WorkOrd:G"]
+                            "AND", ["custrecord_jj_oprtns_wo.status", "noneof", "WorkOrd:G"],
+                            "AND", ["custrecord_jj_oprtns_exit", "isempty", ""],
                         );
                     }
                     else if (isAssemblyBuild == false) {
-                        searchFilters.push("AND", ["custrecord_jj_oprtns_bagno.custrecord_jj_associated_assembly_build", "noneof", "@NONE@"]);
+                        searchFilters.push(
+                            "AND", ["custrecord_jj_oprtns_bagno.custrecord_jj_associated_assembly_build", "noneof", "@NONE@"],
+                            "AND", ["custrecord_jj_oprtns_end", "is", "T"],
+                        );
                     }
 
                     let bagDetailsArray = [];
@@ -3711,6 +3816,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         OrderTypeName: r.order_type?.text || '',
                         salesOrderDate: r.sales_order_date?.value || ''
                     }));
+                    log.debug("bagDetailsArray", bagDetailsArray);
 
                     // operationsRecordSearch.run().each(result => {
                     //     let bagNoId = result.getValue({ name: "custrecord_jj_oprtns_bagno" });
@@ -3872,6 +3978,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                             'custitemnumber_jj_total_labour_overhead_char',
                             'custitemnumber_jj_total_net_loss_charge',
+                            'custitemnumber_jj_finding_item_service_chrg',
 
                             // ---- FG Stone / Metal attributes ----
                             'custitemnumber_jj_fg_stone_color',
@@ -4232,7 +4339,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "cost", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "cost" }),
                             search.createColumn({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE", label: "order_type" }),
                             search.createColumn({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE", label: "serial_repair" }),
+                            search.createColumn({ name: "custrecord_jj_gwt_of_repair_serial", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE", label: "serial_repair_wt" }),
                             search.createColumn({ name: "custitem_jj_metal_quality", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "metal_quality" }),
+                            search.createColumn({ name: "averagecost", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "averagecost" }),
+                            search.createColumn({ name: "custrecord_jj_related_lot", join: "CUSTRECORD_JJ_BAG_CORE_MATERIAL", label: "related_lot" }),
+                            search.createColumn({ name: "custitem_jj_relate_item_reference", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "related_item" }),
                         ]
                     });
 
@@ -4244,6 +4355,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             lotNumber: result.getValue({ name: "custrecord_jj_lot_number", join: "CUSTRECORD_JJ_BAG_CORE_MATERIAL" }),
                             lotNumberName: result.getText({ name: "custrecord_jj_lot_number", join: "CUSTRECORD_JJ_BAG_CORE_MATERIAL" }),
                             quantity: result.getValue({ name: "custrecord_jj_quantity", join: "CUSTRECORD_JJ_BAG_CORE_MATERIAL" }),
+                            relatedLot: result.getValue({ name: "custrecord_jj_related_lot", join: "CUSTRECORD_JJ_BAG_CORE_MATERIAL" }),
                             materialLotDetailsId: result.getValue({ name: "internalid", join: "CUSTRECORD_JJ_BAG_CORE_MATERIAL" }),
                             isInactive: result.getValue({ name: "isinactive", join: "CUSTRECORD_JJ_BAG_CORE_MATERIAL" }),
                             lastIssueDate: result.getValue({ name: "custrecord_jj_last_issue_date", join: "CUSTRECORD_JJ_BAG_CORE_MATERIAL" }),
@@ -4253,7 +4365,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         };
                         // const isNotEmpty = Object.values(materialLotDetailsEntry).every(value => value !== null && value !== undefined && value !== '' && value !== true && value !== 'T');
                         const isNotEmpty = Object.entries(materialLotDetailsEntry)
-                            .filter(([key]) => key !== 'latestQty' && key !== 'lastIssueDate' && key !== 'pieces' && key !== 'latestPieces') // Exclude these fields
+                            .filter(([key]) => key !== 'latestQty' && key !== 'lastIssueDate' && key !== 'pieces' && key !== 'latestPieces' && key !== 'relatedLot') // Exclude these fields
                             .every(([, value]) => value !== null && value !== undefined && value !== '');
 
                         if (!groupedResults[internalId]) {
@@ -4263,6 +4375,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 bagName: result.getText({ name: "custrecord_jj_bagcoremat_bag_name" }),
                                 department: result.getValue({ name: "custrecord_jj_baggen_present_dept", join: "CUSTRECORD_JJ_BAGCOREMAT_BAG_NAME" }),
                                 itemId: result.getValue({ name: "custrecord_jj_bagcoremat_item" }),
+                                itemName: result.getText({ name: "custrecord_jj_bagcoremat_item" }),
                                 actualQuantity: result.getValue({ name: "custrecord_jj_bagcoremat_qty" }),
                                 totalIssue: result.getValue({ name: "custrecord_jj_bagcoremat_total_issue" }),
                                 toBeIssued: result.getValue({ name: "custrecord_jj_bagcoremat_to_issue" }),
@@ -4292,9 +4405,15 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 isOthCharge: result.getValue({ name: "type" }) === 'OthCharge',
                                 isServiceItem: result.getValue({ name: "type" }) === 'Service',
                                 purchasePrice: result.getValue({ name: "cost", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM" }),
+                                averagecost: result.getValue({ name: "averagecost", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM" }),
 
                                 isRepair: result.getValue({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" }) == REPAIR_ORDER_TYPE_ID,
-                                serialRepair: result.getValue({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" }),
+                                repairSerial: result.getValue({ name: "custrecord_jj_serial_to_repair", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" }),
+                                repairSerialWt: result.getValue({ name: "custrecord_jj_gwt_of_repair_serial", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" }),
+
+                                isJobwork: result.getValue({ name: "custrecord_jj_bagcore_order_type", join: "CUSTRECORD_JJ_BAGCOREMAT_BAGCORE" }) == JOB_WORK_ORDER_TYPE_ID,
+                                relatedItem: result.getValue({ name: "custitem_jj_relate_item_reference", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM" }),
+                                relatedItemName: result.getText({ name: "custitem_jj_relate_item_reference", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM" }),
 
                                 materialLotDetails: []
                             };
@@ -8932,6 +9051,21 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                 }
             },
 
+            // Helper: run a SuiteQL query and return all results as an array of plain objects.
+            // Uses query.runSuiteQL iterator — no row limit, no paging issues.
+            runQuery(sql) {
+                const results = [];
+                try {
+                    query.runSuiteQL({ query: sql }).iterator().each(function (row) {
+                        results.push(row.value.asMap());
+                        return true;
+                    });
+                } catch (e) {
+                    log.error('runQuery error', e);
+                }
+                return results;
+            },
+
             /**
              * Retrieves overall efficiency data for ALL departments (not limited to Sourcing).
              * Used for the Overall Efficiency Analysis page.
@@ -9045,7 +9179,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     `;
 
                     // Execute the query
-                    let rawResults = query.runSuiteQL({ query: sqlQuery }).asMappedResults();
+                    let rawResults = this.runQuery(sqlQuery);
 
                     log.debug("getOverallEfficiencyData - Raw Results Count", rawResults.length);
 
@@ -9234,6 +9368,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         log.debug("getOverallEfficiencyData - Starting Qty Fetch", "Department IDs: " + deptIds.join(','));
 
                         if (deptIds.length > 0) {
+                            // purity_sub BOM join removed — purity is resolved separately via search.create below,
+                            // which is faster and avoids the 5-table BOM chain running per operation row.
                             let startingQtyQuery = `
                                 SELECT 
                                     BUILTIN_RESULT.TYPE_INTEGER(op.custrecord_jj_oprtns_department) AS department_id,
@@ -9251,8 +9387,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class IN (${GOLD_AND_JEWELRY_CLASS_IDS.join(', ')}) THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_gold,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_additional_quantity, 0) ELSE 0 END)) AS balance_qty_diamond,
                                     BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_issued_pieces_info, 0) ELSE 0 END)) AS issued_pieces_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond,
-                                    BUILTIN_RESULT.TYPE_FLOAT(MAX(purity_sub.metal_purity_percent)) AS metal_purity_percent
+                                    BUILTIN_RESULT.TYPE_FLOAT(SUM(CASE WHEN item.class = ${DIAMOND_ID} THEN NVL(dir.custrecord_jj_dir_loss_pieces_info, 0) ELSE 0 END)) AS loss_pieces_diamond
                                 FROM CUSTOMRECORD_JJ_OPERATIONS op
                                 LEFT JOIN CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN dir
                                     ON dir.custrecord_jj_operations = op.ID
@@ -9264,24 +9399,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     ON bag.custrecord_jj_baggen_bagcore = bagcore.ID
                                 LEFT JOIN item printdesign 
                                     ON bagcore.custrecord_jj_bagcore_kt_col = printdesign.ID
-                                LEFT JOIN (
-                                    SELECT
-                                        bagcore2.ID AS bagcore_id,
-                                        MAX(mq.custrecord_jj_dd_metal_quality_purity) AS metal_purity_percent
-                                    FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING bagcore2
-                                    JOIN transaction wo2
-                                        ON wo2.ID = bagcore2.custrecord_jj_bagcore_wo
-                                    JOIN bomRevision brev
-                                        ON brev.ID = wo2.billofmaterialsrevision
-                                    JOIN bomRevisionComponentMember brcm
-                                        ON brcm.bomrevision = brev.ID
-                                    JOIN item bom_item
-                                        ON bom_item.ID = brcm.item
-                                    JOIN CUSTOMRECORD_JJ_DD_METAL_QUALITY mq
-                                        ON mq.ID = bom_item.custitem_jj_metal_quality
-                                    GROUP BY bagcore2.ID
-                                ) purity_sub
-                                    ON purity_sub.bagcore_id = bagcore.ID
                                 LEFT JOIN (
                                     SELECT 
                                         d.ID AS id_join,
@@ -9302,10 +9419,11 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') >= TO_DATE('${sqlStartDate}', 'YYYY-MM-DD HH24:MI:SS')
                                     AND BUILTIN.CAST_AS(op.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD HH24:MI:SS')
                                 GROUP BY op.custrecord_jj_oprtns_department, op.custrecord_jj_oprtns_employee, BUILTIN.DF(printdesign.custitem_jj_category), NVL(bag.altname, bag.name)
+                                ORDER BY 1, 2, 3, 4
                             `;
 
                             log.debug("getOverallEfficiencyData - Starting Qty Query", "Executing query with category-level aggregation");
-                            let startingQtyResults = query.runSuiteQL({ query: startingQtyQuery }).asMappedResults();
+                            let startingQtyResults = this.runQuery(startingQtyQuery);
 
                             log.debug("getOverallEfficiencyData - Starting Qty Results Count", startingQtyResults.length);
 
@@ -9339,7 +9457,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     issued_pieces_diamond: parseFloat(record.issued_pieces_diamond || 0),
                                     loss_pieces_diamond: parseFloat(record.loss_pieces_diamond || 0)
                                 };
-                                const metalPurityPercent = parseFloat(record.metal_purity_percent || 0);
+                                const metalPurityPercent = 0; // resolved later via search.create purity lookup
 
                                 // **ALWAYS: Accumulate department-level totals (regardless of employee)**
                                 if (!startingQtyMap[deptId]) {
@@ -9482,17 +9600,35 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                             ELSE 0
                                         END) AS casting_qty,
                                         SUM(CASE
+                                            WHEN custrecord_jj_to_cutting_date >= TO_DATE('${startDate}', 'YYYY-MM-DD')
+                                             AND custrecord_jj_to_cutting_date <= TO_DATE('${endDate}', 'YYYY-MM-DD')
+                                            THEN NVL(custrecord_jj_casting_loss, 0)
+                                            ELSE 0
+                                        END) AS casting_loss,
+                                        SUM(CASE
                                             WHEN custrecord_jj_to_grinding_date >= TO_DATE('${startDate}', 'YYYY-MM-DD')
                                              AND custrecord_jj_to_grinding_date <= TO_DATE('${endDate}', 'YYYY-MM-DD')
                                             THEN NVL(custrecord_jj_received_yield_weight, 0)
                                             ELSE 0
                                         END) AS tree_cutting_qty,
                                         SUM(CASE
+                                            WHEN custrecord_jj_to_grinding_date >= TO_DATE('${startDate}', 'YYYY-MM-DD')
+                                             AND custrecord_jj_to_grinding_date <= TO_DATE('${endDate}', 'YYYY-MM-DD')
+                                            THEN NVL(custrecord_jj_cutting_loss_weight, 0)
+                                            ELSE 0
+                                        END) AS tree_cutting_loss,
+                                        SUM(CASE
                                             WHEN custrecord_jj_to_bagging_date >= TO_DATE('${startDate}', 'YYYY-MM-DD')
                                              AND custrecord_jj_to_bagging_date <= TO_DATE('${endDate}', 'YYYY-MM-DD')
                                             THEN NVL(custrecord_jj_received_weight, 0)
                                             ELSE 0
-                                        END) AS grinding_qty
+                                        END) AS grinding_qty,
+                                        SUM(CASE
+                                            WHEN custrecord_jj_to_bagging_date >= TO_DATE('${startDate}', 'YYYY-MM-DD')
+                                             AND custrecord_jj_to_bagging_date <= TO_DATE('${endDate}', 'YYYY-MM-DD')
+                                            THEN NVL(custrecord_jj_loss_weight, 0)
+                                            ELSE 0
+                                        END) AS grinding_loss
                                     FROM customrecord_jj_wax_tree
                                     WHERE isinactive = 'F'
                                       AND (
@@ -9505,21 +9641,24 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 if (waxTreeResults && waxTreeResults.length > 0) {
                                     const row = waxTreeResults[0];
                                     const castingQty = parseFloat(row.casting_qty || 0);
+                                    const castingLoss = parseFloat(row.casting_loss || 0);
                                     const treeCuttingQty = parseFloat(row.tree_cutting_qty || 0);
+                                    const treeCuttingLoss = parseFloat(row.tree_cutting_loss || 0);
                                     const grindingQty = parseFloat(row.grinding_qty || 0);
-                                    log.debug('Wax Tree actual production gold', { castingQty, treeCuttingQty, grindingQty });
+                                    const grindingLoss = parseFloat(row.grinding_loss || 0);
+                                    log.debug('Wax Tree actual production gold', { castingQty, castingLoss, treeCuttingQty, treeCuttingLoss, grindingQty, grindingLoss });
 
                                     const waxDeptMap = {
-                                        [CASTING]: castingQty,
-                                        [TREE_CUTTING_CLEANING]: treeCuttingQty,
-                                        [GRINDING]: grindingQty
+                                        [CASTING]: { production: castingQty, loss: castingLoss },
+                                        [TREE_CUTTING_CLEANING]: { production: treeCuttingQty, loss: treeCuttingLoss },
+                                        [GRINDING]: { production: grindingQty, loss: grindingLoss }
                                     };
                                     Object.keys(waxDeptMap).forEach(function (deptId) {
                                         Object.keys(groupedData).forEach(function (locId) {
-                                            // groupedData department keys are strings from SQL results
                                             const deptKey = String(deptId);
                                             if (groupedData[locId].departments[deptKey]) {
-                                                groupedData[locId].departments[deptKey].wax_tree_actual_production_gold = waxDeptMap[deptId];
+                                                groupedData[locId].departments[deptKey].wax_tree_actual_production_gold = waxDeptMap[deptId].production;
+                                                groupedData[locId].departments[deptKey].wax_tree_loss_gold = waxDeptMap[deptId].loss;
                                             }
                                         });
                                     });
@@ -10248,6 +10387,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 groupedAmount["labour_overheads"] = groupedAmount["labour_overheads"] || { totalCreditAmount: quantity, totalQuantity: quantity };
                             } else if (itemId && Number(itemId) == NET_LOSS_CHARGE_ITEM_ID) {
                                 groupedAmount["net_loss"] = groupedAmount["net_loss"] || { totalCreditAmount: quantity, totalQuantity: quantity };
+                            } else if (itemId && Number(itemId) == FINDING_ITEM_SERVICE_ID) {
+                                groupedAmount["finding_service"] = groupedAmount["finding_service"] || { totalCreditAmount: quantity, totalQuantity: quantity };
                             }
                         }
                         if (materialTypeId == JEWELRY_TYPE_ID) {
@@ -10368,6 +10509,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                                 'custitemnumber_jj_total_labour_overhead_char',
                                 'custitemnumber_jj_total_net_loss_charge',
+                                'custitemnumber_jj_finding_item_service_chrg',
 
                                 // ---- FG Stone / Metal attributes ----
                                 'custitemnumber_jj_fg_stone_color',
@@ -10396,6 +10538,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             const alloyAmt = parseFloat(res.getValue("custitemnumber_jj_cost_alloy") || 0);
                             const labourOverhead = parseFloat(res.getValue("custitemnumber_jj_total_labour_overhead_char") || 0);
                             const netLoss = parseFloat(res.getValue("custitemnumber_jj_total_net_loss_charge") || 0);
+                            const findingService = parseFloat(res.getValue("custitemnumber_jj_finding_item_service_chrg") || 0);
 
                             serialBase[lotNumber] = this.extractSerialBaseDetails(res);
 
@@ -10433,6 +10576,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 net_loss: {
                                     totalQuantity: netLoss,
                                     totalCreditAmount: netLoss
+                                },
+                                finding_service: {
+                                    totalQuantity: findingService,
+                                    totalCreditAmount: findingService
                                 },
                                 pure_weight: parseFloat(res.getValue("custitemnumber_jj_serial_num_pure_weight") || 0),
                                 diamondPieces: parseFloat(res.getValue("custitemnumber_jj_serial_num_diamond_pieces") || 0),
@@ -12723,26 +12870,52 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     };
                 }
             },
-            directIssueLossComponents(empId, departmentId, exitTime) {
+            directIssueLossComponents(empId, departmentId, exitTime, latestInventoryDate) {
                 try {
                     let componentsList = [];
 
+                    // Use the passed latestInventoryDate if provided, otherwise fetch it
+                    if (!latestInventoryDate) {
+                        latestInventoryDate = this.getLatestInventoryStatusChangeDate(departmentId);
+                    }
+                    log.debug('Latest Inventory Status Change Date', latestInventoryDate);
+
+                    const filters = [
+                        ["custrecord_jj_operations.custrecord_jj_oprtns_employee", "anyof", empId],
+                        "AND",
+                        ["custrecord_jj_department", "anyof", departmentId],
+                        "AND",
+                        ["custrecord_jj_component.class", "anyof", GOLD_CLASS_IDS],
+                        "AND",
+                        ["custrecord_jj_dir_loss_quantity", "greaterthan", "0"]
+                    ];
+
+                    // Add exit filter based on exitTime and latestInventoryDate
+                    if (exitTime && latestInventoryDate) {
+                        // When exit time exists, fetch loss from exit time to latest inventory date
+                        filters.push("AND");
+                        // filters.push(["custrecord_jj_operations.custrecord_jj_oprtns_exit", "within", exitTime, latestInventoryDate]);
+                        filters.push(["custrecord_jj_loss_entered_date", "within", exitTime, latestInventoryDate]);
+                    } else if (latestInventoryDate) {
+                        // When no exit time, fetch loss till the latest inventory date
+                        filters.push("AND");
+                        // filters.push(["custrecord_jj_operations.custrecord_jj_oprtns_exit", "onorbefore", latestInventoryDate]);
+                        filters.push(["custrecord_jj_loss_entered_date", "onorbefore", latestInventoryDate]);
+                        log.debug("Last inventory status change date", latestInventoryDate);
+                    }
+
                     const directIssueSearch = search.create({
                         type: "customrecord_jj_direct_issue_return",
-                        filters: [
-                            ["custrecord_jj_operations.custrecord_jj_oprtns_employee", "anyof", empId],
-                            "AND",
-                            ["custrecord_jj_department", "anyof", departmentId],
-                            "AND",
-                            ["custrecord_jj_component.class", "anyof", GOLD_CLASS_IDS],
-                            "AND",
-                            ["custrecord_jj_operations.custrecord_jj_oprtns_exit", "after", exitTime],
-                            "AND",
-                            ["custrecord_jj_dir_loss_quantity", "greaterthan", "0"]
-                        ],
+                        filters: filters,
                         columns: [
-                            search.createColumn({ name: "custrecord_jj_component", label: "component" }),
-                            search.createColumn({ name: "custrecord_jj_dir_loss_quantity", label: "lossQuantity" }),
+                            search.createColumn({
+                                name: "custrecord_jj_component",
+                                label: "component"
+                            }),
+                            search.createColumn({
+                                name: "custrecord_jj_dir_loss_quantity",
+                                label: "lossQuantity"
+                            }),
                             search.createColumn({
                                 name: "custitem_jj_metal_quality",
                                 join: "CUSTRECORD_JJ_COMPONENT",
@@ -12757,16 +12930,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     });
 
                     const searchColumns = jjUtil.dataSets.fetchSavedSearchColumn(directIssueSearch, 'label');
-                    // Use iterateSavedSearch for large datasets
+
                     const paginatedResults = jjUtil.dataSets.iterateSavedSearch({
                         searchObj: directIssueSearch,
                         columns: searchColumns,
-                        PAGE_INDEX: null, // fetch all pages
+                        PAGE_INDEX: null,
                         PAGE_SIZE: 1000
                     });
+
                     log.debug("Paginate result of directIssueLoss", paginatedResults);
 
-                    // Build componentsList from paginatedResults
                     componentsList = (paginatedResults || []).map(line => ({
                         component: line['component']?.text || '',
                         lossQuantity: parseFloat(line['lossQuantity']?.value) || 0,
@@ -12777,11 +12950,13 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     if (componentsList.length === 0) {
                         return {
                             status: 'ERROR',
-                            reason: `No direct issue loss components found for employee ${empId} in department ${departmentId} after ${exitTime}`,
+                            reason: `No direct issue loss components found for employee ${empId} in department ${departmentId}${exitTime ? ` after ${exitTime}` : ''}`,
                             data: []
                         };
                     }
+
                     log.debug("Components list", componentsList);
+
                     return {
                         status: 'SUCCESS',
                         reason: `Found ${componentsList.length} direct issue loss record(s)`,
@@ -12797,12 +12972,18 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     };
                 }
             },
-            aggregateEmployeeLossData(empId, departmentId, exitTime) {
+            aggregateEmployeeLossData(empId, departmentId, exitTime, latestInventoryDate) {
                 try {
-                    log.debug('aggregateEmployeeLossData', { empId, departmentId, exitTime });
+                    log.debug('aggregateEmployeeLossData', { empId, departmentId, exitTime, latestInventoryDate });
+
+                    // Use the passed latestInventoryDate if provided, otherwise fetch it
+                    if (!latestInventoryDate) {
+                        latestInventoryDate = this.getLatestInventoryStatusChangeDate(departmentId);
+                    }
+                    log.debug('Loss Last Transferred Date', latestInventoryDate);
 
                     // Call directIssueLossComponents to get raw data
-                    const rawDataResult = this.directIssueLossComponents(empId, departmentId, exitTime);
+                    const rawDataResult = this.directIssueLossComponents(empId, departmentId, exitTime, latestInventoryDate);
 
                     if (rawDataResult.status !== 'SUCCESS' || !rawDataResult.data || rawDataResult.data.length === 0) {
                         return {
@@ -12811,7 +12992,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             data: {
                                 totalLoss: 0,
                                 totalPureLoss: 0,
-                                components: {}
+                                components: {},
+                                lossLastTransferred: latestInventoryDate
                             }
                         };
                     }
@@ -12867,7 +13049,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         data: {
                             totalLoss: parseFloat(totalLoss.toFixed(4)),
                             totalPureLoss: parseFloat(totalPureLoss.toFixed(4)),
-                            components: formattedComponents
+                            components: formattedComponents,
+                            lossLastTransferred: latestInventoryDate
                         }
                     };
 
@@ -12997,6 +13180,869 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     return false; // safe fallback
                 }
             },
+
+            getMakingChargeFromItem(goldFindingIds) {
+                try {
+                    let transactionIds = [];
+                    let itemObjectMap = {};
+                    const stringGF = goldFindingIds.map(String)
+                    const itemSearchObj = search.create({
+                        type: "item",
+                        filters: [
+                            ["internalid", "anyof", stringGF],
+                            // "AND",
+                            // ["transaction.type", "anyof", "VendBill"],
+                            // "AND",
+                            // ["transaction.mainline", "is", "F"],
+                            // "AND",
+                            // ["transaction.taxline", "is", "F"],
+                            // "AND",
+                            // ["transaction.cogs", "is", "F"]
+                        ],
+                        columns: [
+                            search.createColumn({ name: "internalid", summary: "GROUP", label: "item_id" }),
+                            search.createColumn({ name: "custitem_jj_making_charge", summary: "MAX", label: "item_mc" }),
+                            search.createColumn({ name: "internalid", join: "transaction", summary: "MAX", label: "tran_id" }),
+                            search.createColumn({ name: "type", join: "transaction", summary: "GROUP", label: "tran_type" })
+                        ]
+                    });
+                    let searchResults = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: itemSearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(itemSearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000,
+                    });
+
+
+                    // searchResults is already an array from iterateSavedSearch, iterate directly
+                    searchResults.forEach(function (result) {
+                        const itemId = result?.item_id?.value;
+                        const itemMC = result?.item_mc?.value;
+                        const tranId = result?.tran_id?.value;
+                        const tranType = result?.tran_type?.value;
+                        log.debug("Item search results", { itemId, itemMC, tranId, tranType });
+
+                        if (tranType == "VendBill") {
+                            transactionIds.push(tranId);
+                        }
+
+                        if (!itemObjectMap[itemId]) {
+                            itemObjectMap[itemId] = {
+                                item_mc: itemMC || 0,
+                                tran_qty: 0,
+                                tran_mc: 0,
+                                rate: itemMC || 0
+                            };
+                        }
+                    });
+                    return { transactionIds: transactionIds, itemObjectMap: itemObjectMap };
+
+                } catch (error) {
+                    log.error({
+                        title: "Error in finding transaction ids",
+                        details: "Error finding latest transaction ids"
+                    });
+                    return false;
+
+                }
+
+            },
+
+            getMakingChargeFromBill(transactionIds, goldFindingIds, itemObjectMap) {
+                try {
+
+                    let processedItemIds = new Set();
+                    const stringGF = goldFindingIds.map(String)
+                    const vendorbillSearchObj = search.create({
+                        type: "vendorbill",
+                        filters: [
+                            ["internalid", "anyof", transactionIds],
+                            "AND",
+                            ["type", "anyof", "VendBill"],
+                            "AND",
+                            ["item.internalid", "anyof", stringGF],
+                            "AND",
+                            ["mainline", "is", "F"],
+                            "AND",
+                            ["cogs", "is", "F"],
+                            "AND",
+                            ["taxline", "is", "F"]
+                        ],
+                        columns: [
+                            search.createColumn({
+                                name: "internalid",
+                                summary: "GROUP",
+                                sort: search.Sort.DESC,
+                                label: "tran_id"
+                            }),
+                            search.createColumn({
+                                name: "internalid",
+                                join: "item",
+                                summary: "GROUP",
+                                label: "item_id"
+                            }),
+                            search.createColumn({
+                                name: "custcol_jj_making_charge_amount",
+                                summary: "MAX",
+                                label: "making_charge_amount"
+                            }),
+                            search.createColumn({
+                                name: "quantity",
+                                summary: "MAX",
+                                label: "quantity"
+                            })
+                        ]
+                    });
+                    let searchResults = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: vendorbillSearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(vendorbillSearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000,
+                    });
+
+                    if (searchResults.length > 0) {
+                        log.debug("First Result Keys", Object.keys(searchResults[0]));
+                        log.debug("First Result Full", JSON.stringify(searchResults[0]));
+                    }
+
+                    // searchResults is already an array from iterateSavedSearch, iterate directly
+                    searchResults.forEach(function (result) {
+                        const itemId = result?.item_id?.value;
+                        const makingChargeAmount = result?.making_charge_amount?.value;
+                        const quantity = result?.quantity?.value;
+
+
+                        if (itemId && !processedItemIds.has(itemId)) {
+                            // Update itemObjectMap with Vendor Bill data
+                            if (itemObjectMap[itemId]) {
+                                itemObjectMap[itemId].tran_mc = makingChargeAmount || itemObjectMap[itemId].tran_mc;
+                                itemObjectMap[itemId].tran_qty = Math.abs(quantity || 0);
+                                itemObjectMap[itemId].rate = itemObjectMap[itemId].tran_qty > 0 ? itemObjectMap[itemId].tran_mc / itemObjectMap[itemId].tran_qty : 0;
+                            }
+
+                            processedItemIds.add(itemId);
+                        }
+                    });
+
+                    return itemObjectMap;
+                } catch (error) {
+                    log.error({
+                        title: "Error in get making charge for gold finding item",
+                        details: error.message || error.toString()
+                    });
+                    // Return the original itemObjectMap on error to prevent undefined
+                    return itemObjectMap;
+                }
+            },
+
+            /**
+             * Get departments that have actual loss items in inventory
+             * @param {string} materialType - Material type (gold_type, diamond_type, color_stone_type)
+             * @param {boolean} isInProgress - Whether to check loss or loss outsourced status
+             * @param {string} userId - User ID for filtering departments
+             * @param {boolean} isAdmin - Whether user is admin (sees all departments)
+             * @returns {Array} Array of departments with loss items
+             */
+            getDepartmentsWithLoss(materialType, isInProgress, userId, isAdmin) {
+                try {
+                    log.debug('getDepartmentsWithLoss', { materialType, isInProgress, userId, isAdmin });
+
+                    // Step 1: Get all active departments with their configurations
+                    let allDepartments = searchResults.getAllManufacturingDepartments(null, null);
+                    log.debug('All departments count', allDepartments.length);
+
+                    if (!allDepartments || allDepartments.length === 0) {
+                        return [];
+                    }
+
+                    // Step 2: Build department mapping by bin+location
+                    let departmentMap = {}; // { "bin_location": { deptId, deptName, statusId } }
+                    let allStatusIds = []; // Collect all loss status IDs
+
+                    allDepartments.forEach(dept => {
+                        try {
+                            let deptFields = searchResults.getDepartmentFields(dept.value);
+
+                            if (!deptFields || !deptFields.bin || !deptFields.location) {
+                                return; // Skip departments without proper configuration
+                            }
+
+                            let statusId = null;
+
+                            // Determine which status to use based on material type and progress state
+                            if (materialType === 'gold_type') {
+                                statusId = isInProgress ? deptFields.lossOutsourcedStatus : deptFields.lossStatus;
+                            } else if (materialType === 'diamond_type') {
+                                // For diamonds, combine missed, burnt, and broken statuses
+                                let statuses = [];
+                                if (deptFields.diamondMissedStatus) statuses.push(deptFields.diamondMissedStatus);
+                                if (deptFields.diamondBurntStatus) statuses.push(deptFields.diamondBurntStatus);
+                                if (deptFields.diamondBrokenStatus) statuses.push(deptFields.diamondBrokenStatus);
+                                if (statuses.length > 0) {
+                                    statusId = statuses.join(',');
+                                }
+                            }
+
+                            if (statusId) {
+                                let key = deptFields.bin + '_' + deptFields.location;
+                                departmentMap[key] = {
+                                    deptId: dept.value,
+                                    deptName: dept.name,
+                                    bin: deptFields.bin,
+                                    location: deptFields.location,
+                                    statusId: statusId
+                                };
+
+                                // Collect all status IDs for the search
+                                let statusArray = statusId.split(',');
+                                statusArray.forEach(s => {
+                                    if (s && !allStatusIds.includes(s)) {
+                                        allStatusIds.push(s);
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            log.error('Error processing department', { dept: dept.value, error: e.message });
+                        }
+                    });
+
+                    log.debug('Department map created', { count: Object.keys(departmentMap).length, statusIds: allStatusIds });
+
+                    if (allStatusIds.length === 0) {
+                        log.debug('No valid status IDs found', 'Returning empty array');
+                        return [];
+                    }
+
+                    // Step 3: Search for inventory with loss status across all departments
+                    let filters = [
+                        ["status", "anyof", allStatusIds],
+                        "AND", ["available", "greaterthan", "0"],
+                        "AND", ["binnumber", "noneof", "@NONE@"],
+                        "AND", ["location", "noneof", "@NONE@"]
+                    ];
+
+                    // Add material type filters
+                    if (materialType === 'gold_type') {
+                        filters.push("AND", ["item.class", "anyof", GOLD_CLASS_IDS]);
+                    } else if (materialType === 'diamond_type') {
+                        filters.push("AND", ["item.class", "anyof", DIAMOND_CLASSES_IDS]);
+                    } else if (materialType === 'color_stone_type') {
+                        filters.push("AND", ["item.class", "anyof", STONE_CLASSES_IDS]);
+                    }
+
+                    let columns = [
+                        search.createColumn({ name: "binnumber", summary: "GROUP" }),
+                        search.createColumn({ name: "location", summary: "GROUP" }),
+                        search.createColumn({ name: "available", summary: "SUM" })
+                    ];
+
+                    let inventorySearch = search.create({
+                        type: "inventorybalance",
+                        filters: filters,
+                        columns: columns
+                    });
+
+                    // Step 4: Match inventory results to departments
+                    let departmentsWithLoss = [];
+                    let departmentIdsWithLoss = new Set();
+
+                    inventorySearch.run().each(function (result) {
+                        let bin = result.getValue({ name: "binnumber", summary: "GROUP" });
+                        let location = result.getValue({ name: "location", summary: "GROUP" });
+                        let quantity = result.getValue({ name: "available", summary: "SUM" });
+
+                        let key = bin + '_' + location;
+
+                        if (departmentMap[key] && parseFloat(quantity) > 0) {
+                            let deptInfo = departmentMap[key];
+
+                            // Avoid duplicates
+                            if (!departmentIdsWithLoss.has(deptInfo.deptId)) {
+                                departmentIdsWithLoss.add(deptInfo.deptId);
+                                departmentsWithLoss.push({
+                                    value: deptInfo.deptId,
+                                    name: deptInfo.deptName
+                                });
+                            }
+                        }
+
+                        return true; // Continue iteration
+                    });
+
+                    log.debug('Departments with loss found', departmentsWithLoss.length);
+
+                    // Step 5: Filter by user permissions if not admin
+                    if (!isAdmin && userId) {
+                        try {
+                            // Get user's assigned departments
+                            let userDeptFilters = [
+                                ["isinactive", "is", "F"],
+                                "AND", ["custrecord_jj_mandept_employees", "anyof", userId]
+                            ];
+
+                            let userDeptSearch = search.create({
+                                type: "customrecord_jj_manufacturing_dept",
+                                filters: userDeptFilters,
+                                columns: [search.createColumn({ name: "internalid" })]
+                            });
+
+                            let userDepartmentIds = [];
+                            userDeptSearch.run().each(function (result) {
+                                userDepartmentIds.push(result.getValue('internalid'));
+                                return true;
+                            });
+
+                            log.debug('User departments', userDepartmentIds);
+
+                            // Filter departments with loss to only those user has access to
+                            departmentsWithLoss = departmentsWithLoss.filter(dept =>
+                                userDepartmentIds.includes(dept.value)
+                            );
+
+                            log.debug('Departments after user filter', departmentsWithLoss.length);
+                        } catch (e) {
+                            log.error('Error filtering by user', e.message);
+                        }
+                    }
+
+                    return departmentsWithLoss;
+
+                } catch (error) {
+                    log.error('getDepartmentsWithLoss error', error);
+                    return [];
+                }
+            },
+
+            /**
+             * Returns: { <oldLotId>: <newLotId> }
+             *
+             * @param {string|number|[string|number]} adjustmentId
+             * @param {Object} itemMap { <oldItemId>: <newItemId> }
+             * @return {Object}
+             */
+            jobWorkLotMapping(adjustmentId, itemMap) {
+                try {
+                    log.debug("adjustmentId, itemMap", { adjustmentId, itemMap });
+                    if (!adjustmentId) {
+                        log.error("Error jobWorkLotMapping", "Empty adjustment ID");
+                        return {};
+                    }
+                    const adjustmentIds = Array.isArray(adjustmentId) ? adjustmentId : [adjustmentId];
+
+                    if (!adjustmentIds?.length) {
+                        log.error("Error jobWorkLotMapping", "Empty adjustment Array");
+                        return {};
+                    }
+
+                    const inventoryadjustmentSearchObj = search.create({
+                        type: search.Type.INVENTORY_ADJUSTMENT,
+                        filters: [
+                            ['type', 'anyof', 'InvAdjst'],
+                            'AND', ['custbody_jj_is_jobwork', 'is', 'T'],
+                            'AND', ['internalid', 'anyof', adjustmentIds],
+                            'AND', ['mainline', 'is', 'F']
+                        ],
+                        columns: [
+                            search.createColumn({ name: 'internalid', label: 'internal_id' }),
+                            search.createColumn({ name: 'tranid', label: 'tran_id' }),
+                            search.createColumn({ name: 'item', join: 'inventoryDetail', label: 'item' }),
+                            search.createColumn({ name: 'binnumber', join: 'inventoryDetail', label: 'bin_number' }),
+                            search.createColumn({ name: 'inventorynumber', join: 'inventoryDetail', label: ' lot_number' }),
+                            //  search.createColumn({ name: 'status', join: 'inventoryDetail', label: 'status' }),
+                            //  search.createColumn({ name: 'quantity', join: 'inventoryDetail', label: 'quantity' })
+                        ]
+                    });
+
+                    const lotMap = {}; // oldLotId → newLotId
+                    const fromLines = {}; // key → { lot, item, qty }
+                    const toLines = {}; // key → { lot, item, qty }
+
+                    // Use keys & values sets
+                    const newItemKeys = new Set(Object.keys(itemMap).map(Number));   // old items
+                    const newItemValues = new Set(Object.values(itemMap).map(Number)); // new items
+
+                    log.debug("newItemKeys (old items)", [...newItemKeys]);
+                    log.debug("newItemValues (new items)", [...newItemValues]);
+
+                    inventoryadjustmentSearchObj.run().each(function (searchResult) {
+                        const adjId = searchResult.getValue({ name: 'internalid', label: 'internal_id' });
+                        const itemId = Number(searchResult.getValue({ name: 'item', join: 'inventoryDetail', label: 'item' }));
+                        const bin = searchResult.getValue({ name: 'binnumber', join: 'inventoryDetail', label: 'bin_number' });
+                        const invNum = searchResult.getValue({ name: 'inventorynumber', join: 'inventoryDetail', label: ' lot_number' });
+                        const invText = searchResult.getText({ name: 'inventorynumber', join: 'inventoryDetail', label: ' lot_number' });
+                        // const status = searchResult.getValue({ name: 'status', join: 'inventoryDetail', label: 'status' });
+                        // const qty = Number(searchResult.getValue({ name: 'quantity', join: 'inventoryDetail', label: 'quantity' }));
+
+                        log.debug("adjId, itemId, bin, invNum, invText", { adjId, itemId, bin, invNum, invText })
+
+                        // Identify old vs new using sets
+                        const isOld = newItemKeys.has(itemId);
+                        const isNew = newItemValues.has(itemId);
+
+                        if (!isOld && !isNew) return true;
+
+                        // Normalized key (always based on NEW item)
+                        let key = '';
+                        if (isOld) {
+                            key = `${adjId}|${itemMap[itemId]}|${invText}`;
+                        } else if (isNew) {
+                            key = `${adjId}|${itemId}|${invText}`;
+                        }
+
+                        const lineData = {
+                            lot: invNum,
+                            item: itemId,
+                            invText: invText
+                        };
+
+                        log.debug("Processed Line", { key, isOld, isNew, lineData });
+
+                        if (isOld) {
+                            fromLines[key] = lineData;
+                        } else if (isNew) {
+                            toLines[key] = lineData;
+                        }
+                        return true;
+                    });
+
+                    log.debug("fromLines", fromLines);
+                    log.debug("toLines", toLines);
+
+                    // Direct key-based mapping
+                    Object.keys(fromLines).forEach(key => {
+                        const from = fromLines[key];
+                        const to = toLines[key];
+                        log.debug("Pairing lines", { key, from, to });
+
+                        if (to) {
+                            lotMap[Number(from.lot)] = Number(to.lot);
+                        }
+                    });
+
+                    log.debug("Final lotMap", lotMap);
+
+                    return lotMap;
+                } catch (e) {
+                    log.error("Error in jobWorkLotMapping", e);
+                    return {};
+                }
+            },
+
+            getLatestInventoryStatusChangeDate(departmentId) {
+                try {
+                    const inventorystatuschangeSearchObj = search.create({
+                        type: "inventorystatuschange",
+                        filters: [
+                            ["type", "anyof", "StatChng"],
+                            "AND",
+                            ["custbody_jj_loss_transferred_dept", "anyof", departmentId],
+                            "AND",
+                            ["mainline", "is", "T"],
+                            "AND",
+                            ["custbody_jj_loss_transferred", "is", "T"]
+                        ],
+                        columns: [
+                            search.createColumn({
+                                name: "datecreated",
+                                summary: "MAX",
+                                label: "date_created"
+                            })
+                        ]
+                    });
+
+                    let searchResults = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: inventorystatuschangeSearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(inventorystatuschangeSearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000,
+                    });
+
+                    if (searchResults.length > 0) {
+                        log.debug("First Result Keys", Object.keys(searchResults[0]));
+                        log.debug("First Result Full", JSON.stringify(searchResults[0]));
+                    }
+
+                    return searchResults?.[0]?.date_created?.value || null;
+
+                } catch (error) {
+                    log.error({
+                        title: "Error in getLatestInventoryStatusChangeDate",
+                        details: error.message || error.toString()
+                    });
+                    return null;
+                }
+            },
+
+            /**
+             * Retrieves inventory status change records where the loss transferred checkbox is checked.
+             * Used to populate the "Loss Transactions" dropdown in the recovery gold detail page.
+             *
+             * @returns {Array} Array of { value: internalId, text: tranid, trandate: trandate }
+             */
+            getLossTransactions(departmentId) {
+                try {
+                    let filters = [
+                        ["type", "anyof", "StatChng"],
+                        "AND", ["mainline", "is", "F"],
+                        "AND", ["taxline", "is", "F"],
+                        "AND", ["custbody_jj_loss_transferred", "is", "T"],
+                        "AND", ["inventorydetail.status", "anyof", "25"]
+                    ];
+
+                    if (departmentId) {
+                        filters.push("AND", ["custbody_jj_loss_transferred_dept", "anyof", [departmentId]]);
+                    }
+
+                    log.debug('getLossTransactions filters', JSON.stringify(filters));
+
+                    let inventorystatuschangeSearchObj = search.create({
+                        type: "inventorystatuschange",
+                        filters: filters,
+                        columns: [
+                            search.createColumn({ name: "internalid", sort: search.Sort.DESC, label: "internal_id" }),
+                            search.createColumn({ name: "tranid", label: "tran_id" }),
+                            search.createColumn({ name: "datecreated", label: "tran_date" }),
+                            search.createColumn({ name: "item", label: "item" }),
+                            search.createColumn({ name: "quantity", label: "quantity" }),
+                            search.createColumn({ name: "line", label: "line" }),
+                            search.createColumn({ name: "inventorynumber", join: "inventoryDetail", label: "inventory_number" }),
+                            search.createColumn({ name: "quantity", join: "inventoryDetail", label: "lot_quantity" }),
+                            search.createColumn({ name: "lineid", join: "inventoryDetail", label: "Line ID" }),
+                            search.createColumn({ name: "lineuniquekey", label: "line_unique_key" }),
+                            search.createColumn({ name: "custitem_jj_metal_purity_percent", join: "item", label: "purity" }),
+                            search.createColumn({ name: "custbody_jj_recovered_pure_qty", label: "recovered_pure_qty" })
+                        ]
+                    });
+
+                    // Group by transaction, then by item within each transaction
+                    let transactionMap = {};
+
+                    inventorystatuschangeSearchObj.run().each(function (result) {
+                        const tranId = result.getValue({ name: "internalid" });
+                        const tranName = result.getValue({ name: "tranid" });
+                        const createdDate = result.getValue({ name: "datecreated" });
+                        const itemId = result.getValue({ name: "item" });
+                        const itemName = result.getText({ name: "item" });
+                        const lineNum = result.getValue({ name: "line", join: "inventoryDetail" });
+                        const lineUniqueKey = result.getValue({ name: "lineuniquekey" });
+                        const lineQuantity = Math.abs(parseFloat(result.getValue({ name: "quantity" }) || 0));
+                        const lotQuantityRaw = result.getValue({ name: "quantity", join: "inventoryDetail" });
+                        const quantity = lotQuantityRaw !== null && lotQuantityRaw !== ''
+                            ? Math.abs(parseFloat(lotQuantityRaw))
+                            : lineQuantity;
+                        const invNumId = result.getValue({ name: "inventorynumber", join: "inventoryDetail" });
+                        const invNumName = result.getText({ name: "inventorynumber", join: "inventoryDetail" });
+                        const purityRaw = parseFloat(result.getValue({ name: "custitem_jj_metal_purity_percent", join: "item" }) || 0);
+                        const purity = purityRaw / 100;
+
+                        if (!tranId || !itemId) return true;
+
+                        // Init transaction
+                        if (!transactionMap[tranId]) {
+                            transactionMap[tranId] = {
+                                value: tranId,
+                                text: tranName,
+                                trandate: createdDate,
+                                recoveredPureQty: Number(parseFloat(result.getValue({ name: "custbody_jj_recovered_pure_qty" }) || 0).toFixed(4)),
+                                items: {}
+                            };
+                        }
+
+                        // Init item within transaction
+                        if (!transactionMap[tranId].items[itemId]) {
+                            transactionMap[tranId].items[itemId] = {
+                                itemId: itemId,
+                                itemName: itemName,
+                                purity: purity,
+                                lossQty: 0,
+                                lossOutsourcedQty: 0,
+                                pureWeight: 0,
+                                pureRecovered: 0,
+                                recoveredQty: 0,
+                                lossPieces: 0,
+                                lossOutsourcedPieces: 0,
+                                inventoryDetails: {
+                                    lossQty: [],
+                                    lossOutsourcedQty: [],
+                                    lossPieces: [],
+                                    lossOutsourcedPieces: []
+                                }
+                            };
+                        }
+
+                        const pureQty = Number(parseFloat(quantity * (purity || 1)).toFixed(4));
+
+                        // Lot-level entry
+                        const lotEntry = {
+                            inventoryNumber: invNumId,
+                            inventoryName: invNumName,
+                            quantityAvailable: quantity,
+                            createdDate: createdDate,
+                            pureWeight: pureQty,
+                            purity: purity,
+                            pureRecoveredPerLot: 0,
+                            recoveredQtyPerLot: 0
+                        };
+
+                        log.debug('getLossTransactions table data for ' + tranName, { itemId, itemName, quantity, purity, pureQty, invNumId, invNumName, lineUniqueKey, lineNum });
+
+                        // Deduplicate by line number — each transaction line should only be counted once
+                        // (status change returns from-row and to-row for the same line)
+                        // const lineKey = tranId + '_' + lineNum;
+                        // const alreadyAdded = transactionMap[tranId].items[itemId].processedLines &&
+                        //     transactionMap[tranId].items[itemId].processedLines.indexOf(lineKey) !== -1;
+
+                        // if (!alreadyAdded) {
+                        // if (!transactionMap[tranId].items[itemId].processedLines) {
+                        //     transactionMap[tranId].items[itemId].processedLines = [];
+                        // }
+                        // transactionMap[tranId].items[itemId].processedLines.push(lineKey);
+
+                        // transactionMap[tranId].items[itemId].lossQty = Number(
+                        //     parseFloat(transactionMap[tranId].items[itemId].lossQty + quantity).toFixed(4)
+                        // );
+                        transactionMap[tranId].items[itemId].lossQty = Number(
+                            parseFloat(transactionMap[tranId].items[itemId].lossQty + quantity).toFixed(4)
+                        );
+                        transactionMap[tranId].items[itemId].lossOutsourcedQty = Number(
+                            parseFloat(transactionMap[tranId].items[itemId].lossOutsourcedQty + quantity).toFixed(4)
+                        );
+                        transactionMap[tranId].items[itemId].pureWeight = Number(
+                            parseFloat(transactionMap[tranId].items[itemId].pureWeight + pureQty).toFixed(4)
+                        );
+                        if (invNumId) {
+                            transactionMap[tranId].items[itemId].inventoryDetails.lossQty.push(lotEntry);
+                            transactionMap[tranId].items[itemId].inventoryDetails.lossOutsourcedQty.push(Object.assign({}, lotEntry));
+                        }
+                        // }
+
+                        return true;
+                    });
+
+                    // Convert to array, items map → array
+                    const lossTransactions = Object.values(transactionMap).map(function (tran) {
+                        return {
+                            value: tran.value,
+                            text: tran.text,
+                            trandate: tran.trandate,
+                            recoveredPureQty: tran.recoveredPureQty,
+                            items: Object.values(tran.items)
+                        };
+                    });
+
+                    Object.keys(transactionMap).forEach(function (key) {
+                        const tran = transactionMap[key];
+                        const tableData = Object.values(tran.items).map(function (item) {
+                            return {
+                                itemName: item.itemName,
+                                lossQty: item.lossQty,
+                                pureWeight: item.pureWeight,
+                                lots: (item.inventoryDetails.lossQty || []).map(function (l) {
+                                    return { inventoryNumber: l.inventoryNumber, inventoryName: l.inventoryName, quantityAvailable: l.quantityAvailable };
+                                })
+                            };
+                        });
+                        // log.debug('getLossTransactions table data for ' + tran.text, JSON.stringify(tableData));
+                    });
+
+                    return { status: 'SUCCESS', reason: 'Loss transactions retrieved', data: lossTransactions };
+                } catch (error) {
+                    log.error('getLossTransactions error', error);
+                    return { status: 'ERROR', reason: error.message, data: [] };
+                }
+            },
+
+            getEmployeeWiseRecoveryByTransaction(lossTranId) {
+                try {
+                    let results = [];
+
+                    let searchObj = search.create({
+                        type: 'customrecord_jj_employee_wise_recovery',
+                        filters: [
+                            ['isinactive', 'is', 'F'],
+                            'AND', ['custrecord_jj_emp_recovery_loss_tran', 'anyof', lossTranId]
+                        ],
+                        columns: [
+                            search.createColumn({ name: 'internalid', label: 'id' }),
+                            search.createColumn({ name: 'custrecord_jj_emp_recovery_employee', label: 'employee' }),
+                            search.createColumn({ name: 'custrecord_jj_emp_recovery_department', label: 'department' }),
+                            search.createColumn({ name: 'custrecord_jj_emp_recovery_loss_tran', label: 'loss_transaction' }),
+                            search.createColumn({ name: 'custrecord_jj_emp_recovery_rec_qty', label: 'recovered_qty' }),
+                            search.createColumn({ name: 'custrecord_jj_emp_recovery_pure_rec_qty', label: 'pure_recovered_qty' }),
+                            search.createColumn({ name: 'custrecord_jj_emp_recovery_touch', label: 'touch' }),
+                            search.createColumn({ name: 'custrecord_jj_emp_recovery_percentage', label: 'recovery_percentage' }),
+                            search.createColumn({ name: 'custrecord_jj_recovery_inv_adjustment', label: 'inventory_adjustment' }),
+                        ]
+                    });
+
+                    searchObj.run().each(function (result) {
+                        results.push({
+                            id: result.getValue({ name: 'internalid' }),
+                            employee: { value: result.getValue({ name: 'custrecord_jj_emp_recovery_employee' }), text: result.getText({ name: 'custrecord_jj_emp_recovery_employee' }) },
+                            department: { value: result.getValue({ name: 'custrecord_jj_emp_recovery_department' }), text: result.getText({ name: 'custrecord_jj_emp_recovery_department' }) },
+                            loss_transaction: { value: result.getValue({ name: 'custrecord_jj_emp_recovery_loss_tran' }), text: result.getText({ name: 'custrecord_jj_emp_recovery_loss_tran' }) },
+                            recovered_qty: result.getValue({ name: 'custrecord_jj_emp_recovery_rec_qty' }),
+                            pure_recovered_qty: result.getValue({ name: 'custrecord_jj_emp_recovery_pure_rec_qty' }),
+                            touch: result.getValue({ name: 'custrecord_jj_emp_recovery_touch' }),
+                            recovery_percentage: result.getValue({ name: 'custrecord_jj_emp_recovery_percentage' }),
+                            inventory_adjustment: { value: result.getValue({ name: 'custrecord_jj_recovery_inv_adjustment' }), text: result.getText({ name: 'custrecord_jj_recovery_inv_adjustment' }) },
+                        });
+                        return true;
+                    });
+
+                    return { status: 'SUCCESS', reason: 'Records retrieved', data: results };
+                } catch (error) {
+                    log.error('getEmployeeWiseRecoveryByTransaction error', error);
+                    return { status: 'ERROR', reason: error.message, data: [] };
+                }
+            },
+
+            /**
+             * Get inventory status change records within a date range and compute
+             * the average employee recovery percentage from linked employee wise recovery records.
+             * Used by the Efficiency Analysis page.
+             *
+             * @param {string} startDateRaw - YYYY-MM-DD
+             * @param {string} endDateRaw   - YYYY-MM-DD
+             * @returns {{ status, reason, data: { avgRecoveryPercentage } }}
+             */
+            getAvgRecoveryPercentageByDateRange(startDate, endDate) {
+                try {
+                    log.debug('RECOVERY-EFFICIENCY date range', { startDate, endDate });
+
+                    if (!startDate || !endDate) {
+                        return { status: 'SUCCESS', reason: 'Invalid or missing date range', data: { avgRecoveryPercentage: 0 } };
+                    }
+
+                    // Same approach as getOverallEfficiencyData — SuiteQL with TO_DATE
+                    const sql = `
+                        SELECT BUILTIN_RESULT.TYPE_INTEGER(transaction.ID) AS id,
+                               BUILTIN_RESULT.TYPE_STRING(transaction.tranid) AS tranid,
+                               BUILTIN_RESULT.TYPE_DATE(transaction.trandate) AS trandate
+                        FROM transaction
+                        WHERE transaction.type = 'StatChng'
+                          AND transaction.trandate >= TO_DATE('${startDate}', 'YYYY-MM-DD')
+                          AND transaction.trandate <= TO_DATE('${endDate}', 'YYYY-MM-DD')
+                    `;
+
+                    log.debug('RECOVERY-EFFICIENCY sql', sql);
+
+                    const results = query.runSuiteQL({ query: sql }).asMappedResults();
+
+                    log.debug('RECOVERY-EFFICIENCY inv status change records', {
+                        count: results.length,
+                        records: results
+                    });
+
+                    if (!results.length) {
+                        return { status: 'SUCCESS', reason: 'No inv status change records in date range', data: { avgRecoveryPercentage: 0 } };
+                    }
+
+                    const tranIds = results.map(function (r) { return r.id; }).filter(Boolean);
+
+                    // Step 2: Get employee wise recovery records linked to those inv status change IDs
+                    const empRecSearch = search.create({
+                        type: 'customrecord_jj_employee_wise_recovery',
+                        filters: [
+                            ['custrecord_jj_emp_recovery_loss_tran', 'anyof', tranIds]
+                        ],
+                        columns: [
+                            search.createColumn({ name: 'custrecord_jj_emp_recovery_percentage', label: 'recovery_percentage' }),
+                        ]
+                    });
+
+                    const empResults = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: empRecSearch,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(empRecSearch, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000
+                    });
+
+                    log.debug('RECOVERY-EFFICIENCY employee wise recovery records', {
+                        count: empResults.length,
+                        records: empResults
+                    });
+
+                    const allRecoveryPercentages = empResults
+                        .map(function (r) { return parseFloat(r['recovery_percentage']?.value || 0); })
+                        .filter(function (pct) { return pct > 0; });
+
+                    if (!allRecoveryPercentages.length) {
+                        return { status: 'SUCCESS', reason: 'No recovery percentages found', data: { avgRecoveryPercentage: 0 } };
+                    }
+
+                    const avgRecoveryPercentage = parseFloat(
+                        (allRecoveryPercentages.reduce(function (s, v) { return s + v; }, 0) / allRecoveryPercentages.length).toFixed(4)
+                    );
+
+                    log.debug('RECOVERY-EFFICIENCY avgRecoveryPercentage', { avgRecoveryPercentage });
+
+                    return { status: 'SUCCESS', reason: 'Recovery data retrieved', data: { avgRecoveryPercentage: avgRecoveryPercentage } };
+                } catch (error) {
+                    log.error('getAvgRecoveryPercentageByDateRange error', error);
+                    return { status: 'ERROR', reason: error.message, data: null };
+                }
+            },
+
+            /**
+             * Get Inventory Item Cost Details
+             *
+             * @param {number|string|Array} itemIds
+             * @param {number|string} locationId
+             * @returns {Array}
+             */
+            getInventoryItemCostDetails(itemIds, locationId) {
+                try {
+                    if (!itemIds || !locationId) {
+                        log.error("Invalid Input", { itemIds, locationId });
+                        return [];
+                    }
+
+                    const itemIdArray = Array.isArray(itemIds) ? itemIds : [itemIds];
+
+                    if (!itemIdArray.length) {
+                        log.error("Empty itemIds Array");
+                        return [];
+                    }
+
+                    const results = [];
+
+                    const inventoryitemSearchObj = search.create({
+                        // type: search.Type.INVENTORY_ITEM,
+                        type: search.Type.ITEM,
+                        filters: [
+                            // ["type", "anyof", "InvtPart"],
+                            // "AND", 
+                            ["internalid", "anyof", itemIdArray],
+                            "AND", ["inventorylocation", "anyof", locationId]
+                        ],
+                        columns: ["internalid", "itemid", "averagecost", "cost", "inventorylocation", "locationaveragecost"]
+                    });
+
+                    inventoryitemSearchObj.run().each(result => {
+                        try {
+                            results.push({
+                                itemId: Number(result.getValue({ name: "internalid" })),
+                                itemName: result.getValue({ name: "itemid" }),
+                                averageCost: Number(result.getValue({ name: "averagecost" })) || 0,
+                                purchasePrice: Number(result.getValue({ name: "cost" })) || 0,
+                                locationId: result.getValue({ name: "inventorylocation" }),
+                                locationAvgCost: Number(result.getValue({ name: "locationaveragecost" })) || 0
+                            });
+                        } catch (innerError) {
+                            log.error("Error processing search result", innerError);
+                        }
+                        return true;
+                    });
+
+                    log.debug("Inventory Item Details Result", results);
+                    return results;
+
+                } catch (e) {
+                    log.error("Error in getInventoryItemCostDetails", e);
+                    return [];
+                }
+            }
         };
         jjUtil.applyTryCatch(searchResults, 'searchResults');
         return searchResults;
