@@ -26,9 +26,9 @@
         <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-gray-500"></div>
     </div>
 
-    <div v-else class="flex h-screen">
+    <div v-else class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside class="w-64 bg-gradient-to-b  text-white flex flex-col shadow-lg min-h-screen">
+        <aside class="w-64 bg-gradient-to-b text-white flex flex-col shadow-lg h-screen sticky top-0 flex-shrink-0 overflow-y-auto scrollbar-hidden">
             <!-- Sidebar Header -->
             <div class="p-5 text-lg font-bold flex items-center space-x-2 text-gray-800">
                 <i class="fas fa-map-marker-alt text-gray-800"></i>
@@ -83,7 +83,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-8  overflow-auto scrollbar-hidden">
+        <main class="flex-1 p-4 overflow-auto scrollbar-hidden min-h-screen">
             <!-- Header Section -->
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">{{ dashboardTitle }}</h1>
@@ -262,7 +262,7 @@
                                 </div>
                                 <div class="flex items-center space-x-1">
                                     <i class="fas fa-arrow-down text-red-500 text-[9px]"></i>
-                                    <p class="text-red-500 text-[10px]">{{ (getDepartmentTotalLossQtyGold(dept) || 0).toFixed(2) }}</p>
+                                    <p class="text-red-500 text-[10px]">{{ (getDepartmentWaxTreeLossGold(dept) !== null ? getDepartmentWaxTreeLossGold(dept) : getDepartmentTotalLossQtyGold(dept) || 0).toFixed(2) }}</p>
                                 </div>
                             </div>
 
@@ -445,7 +445,7 @@
                 <h2 class="text-md font-bold mb-1 text-gray-700">
                     {{ showEmployeesTable ? 'Employee Details' : 'Department Details' }}
                 </h2>
-                <div class="table-container overflow-x-auto overflow-y-auto max-h-screen scrollbar-custom">
+                <div class="table-container overflow-x-auto overflow-y-auto max-h-[33rem] scrollbar-custom">
                     <table class="w-full border-collapse border border-gray-200 text-[10px]"> <!-- Reduced text size -->
                         <thead class="bg-gray-100 text-gray-600 uppercase text-[11px]" style="position: sticky; top: 0; z-index: 10;">
                             <tr>
@@ -484,9 +484,11 @@
 
 
                                 <th class="px-3 py-2 text-left font-semibold">Gold Recovery Weight (gm)</th>
-                                <th class="px-3 py-2 text-left font-semibold">Net Loss Gold</th>
+                                <th class="px-3 py-2 text-left font-semibold">Gold Recovery Percentage</th>
+                                
+                                <!-- <th class="px-3 py-2 text-left font-semibold">Net Loss Gold</th>
                                 <th class="px-3 py-2 text-left font-semibold">Diamond Recovery Weight (ct)</th>
-                                <th class="px-3 py-2 text-left font-semibold">Net Loss Diamond</th>
+                                <th class="px-3 py-2 text-left font-semibold">Net Loss Diamond</th> -->
                             </tr>
                         </thead>
 
@@ -582,17 +584,28 @@
                                                 <!-- Diamond Loss % -->
                                                 <td class="px-3 py-2 text-red-500 group-hover:shadow-md">{{ roundToTwo(calculateDiamondLossPercentage(getBagStartingQtyDiamondRaw(dept, category, bagName), getBagIssuedQtyDiamondRaw(dept, category, bagName), getBagLossQtyDiamondRaw(dept, category, bagName), getBagScrapQtyDiamondRaw(dept, category, bagName), getBagBalanceQtyDiamondRaw(dept, category, bagName))) }}%</td>
 
-                                                <!-- Gold Recovery Weight -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                                <!-- Gold Recovery Weight — per bag: bag pure loss × global avg recovery % -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">
+                                                    {{ (getBagLossQtyGoldRaw(dept, category, bagName) * getBagPurityFactor(dept, category, bagName)) > 0 && globalAvgRecoveryPercentage > 0
+                                                        ? roundToTwo(getBagLossQtyGoldRaw(dept, category, bagName) * getBagPurityFactor(dept, category, bagName) * (globalAvgRecoveryPercentage / 100))
+                                                        : '0.00' }}
+                                                </td>
+                                                
+                                                <!-- Gold Recovery Percentage — global avg -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">
+                                                    {{ (getBagLossQtyGoldRaw(dept, category, bagName) * getBagPurityFactor(dept, category, bagName)) > 0 && globalAvgRecoveryPercentage > 0
+                                                        ? roundToTwo(globalAvgRecoveryPercentage) + '%'
+                                                        : '0%' }}
+                                                </td>
 
                                                 <!-- Net Loss Gold -->
-                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                                <!-- <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td> -->
 
                                                 <!-- Diamond Recovery Weight -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                                <!-- <td class="px-3 py-2 group-hover:shadow-md">-</td> -->
 
                                                 <!-- Net Loss Diamond -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                                <!-- <td class="px-3 py-2 group-hover:shadow-md">-</td> -->
                                             </tr>
                                         </template>
                                     </template>
@@ -634,11 +647,11 @@
                                 <!-- <td class="px-3 py-2 text-red-500"></td> -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 
-                                <!-- Pure Weight (empty in total) -->
-                                <td class="px-3 py-2"></td>
+                                <!-- Pure Weight -->
+                                <td class="px-3 py-2">{{ totalDeptPureWeight }}</td>
 
-                                <!-- Pure Loss (empty in total) -->
-                                <td class="px-3 py-2 text-red-500"></td>
+                                <!-- Pure Loss -->
+                                <td class="px-3 py-2 text-red-500">{{ totalDeptPureLoss }}</td>
                                 
                                 <!-- Net Loss (empty in total) -->
                                 <td class="px-3 py-2 text-red-500"></td>
@@ -663,16 +676,19 @@
                                 
 
                                 <!-- Gold Recovery Weight -->
+                                <td class="px-3 py-2">{{ totalDeptGoldRecoveryWeight }}</td>
+                                
+                                <!-- Gold Recovery Percentage -->
                                 <td class="px-3 py-2"></td>
 
                                 <!-- Net Loss Gold -->
-                                <td class="px-3 py-2 text-red-500"></td>
+                                <!-- <td class="px-3 py-2 text-red-500"></td> -->
 
                                 <!-- Diamond Recovery Weight -->
-                                <td class="px-3 py-2"></td>
+                                <!-- <td class="px-3 py-2"></td> -->
 
                                 <!-- Net Loss Diamond -->
-                                <td class="px-3 py-2 text-red-500"></td>
+                                <!-- <td class="px-3 py-2 text-red-500"></td> -->
                             </tr>
                         </tbody>
 
@@ -768,16 +784,27 @@
 
 
                                                 <!-- Gold Recovery Weight -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                                <td class="px-3 py-2 group-hover:shadow-md">
+                                                    {{ (getEmpBagLossQtyGoldRaw(emp, category, bagName) * getEmpBagPurityFactor(emp, category, bagName)) > 0 && globalAvgRecoveryPercentage > 0
+                                                        ? roundToTwo(getEmpBagLossQtyGoldRaw(emp, category, bagName) * getEmpBagPurityFactor(emp, category, bagName) * (globalAvgRecoveryPercentage / 100))
+                                                        : '0.00' }}
+                                                </td>
+                                                
+                                                <!-- Gold Recovery Percentage -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">
+                                                    {{ (getEmpBagLossQtyGoldRaw(emp, category, bagName) * getEmpBagPurityFactor(emp, category, bagName)) > 0 && globalAvgRecoveryPercentage > 0
+                                                        ? roundToTwo(globalAvgRecoveryPercentage) + '%'
+                                                        : '0%' }}
+                                                </td>
 
                                                 <!-- Net Loss Gold -->
-                                                <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td>
+                                                <!-- <td class="px-3 py-2 text-red-500 group-hover:shadow-md">-</td> -->
 
                                                 <!-- Diamond Recovery Weight -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                                <!-- <td class="px-3 py-2 group-hover:shadow-md">-</td> -->
 
                                                 <!-- Net Loss Diamond -->
-                                                <td class="px-3 py-2 group-hover:shadow-md">-</td>
+                                                <!-- <td class="px-3 py-2 group-hover:shadow-md">-</td> -->
                                             </tr>
                                         </template>
                                     </template>
@@ -824,15 +851,15 @@
                                 <!-- <td class="px-3 py-2 text-red-500"></td> -->
                                 <td class="px-3 py-2 text-red-500"></td>
                                 
-                                <!-- Pure Weight (empty in total) -->
-                                <td class="px-3 py-2"></td>
+                                <!-- Pure Weight -->
+                                <td class="px-3 py-2">{{ totalEmpPureWeight }}</td>
 
-                                <!-- Pure Loss (empty in total) -->
-                                <td class="px-3 py-2 text-red-500"></td>
+                                <!-- Pure Loss -->
+                                <td class="px-3 py-2 text-red-500">{{ totalEmpPureLoss }}</td>
                                 
                                 <!-- Net Loss (empty in total) -->
                                 <td class="px-3 py-2 text-red-500"></td>
-                                
+
                                 <td class="px-3 py-2 text-red-500"></td>
 
                                 <!-- Starting Qty Diamond -->
@@ -854,16 +881,19 @@
 
 
                                 <!-- Gold Recovery Weight -->
+                                <td class="px-3 py-2">{{ totalEmpGoldRecoveryWeight }}</td>
+                                
+                                <!-- Gold Recovery Percentage -->
                                 <td class="px-3 py-2"></td>
 
                                 <!-- Net Loss Gold -->
-                                <td class="px-3 py-2 text-red-500"></td>
+                                <!-- <td class="px-3 py-2 text-red-500"></td> -->
                                 
                                 <!-- Diamond Recovery Weight -->
-                                <td class="px-3 py-2"></td>
+                                <!-- <td class="px-3 py-2"></td> -->
 
                                 <!-- Net Loss Diamond -->
-                                <td class="px-3 py-2 text-red-500"></td>
+                                <!-- <td class="px-3 py-2 text-red-500"></td> -->
                             </tr>
                         </tbody>
 
@@ -938,14 +968,15 @@ export default {
             listEfficiencyData,
             fetchListEfficiencyAnalysis,
             fetchInventoryAdjustments,
-            listInventoryAdjustments
-
+            listInventoryAdjustments,
+            fetchRecoveryDataByDept,
         } = useAllEfficiencyAnalysisApi();
         
         const to = ref(false); // ✅ Controls the visibility of the popup
         const locations = ref([]);
         const isInitialLoading = ref(true);
         const showNoDataPopup = ref(false); // ✅ Define showNoDataPopup as a reactive variable
+        const globalAvgRecoveryPercentage = ref(0);
 
         const CASTING = Number(ENV_VAR.CONSTANTS.DEPARTMENT_CASTING);
         const TREE_CUTTING_CLEANING = Number(ENV_VAR.CONSTANTS.DEPARTMENT_TREE_CUTTING_CLEANING);
@@ -1064,9 +1095,17 @@ export default {
         });
 
         const totalDeptGoldRecoveryWeight = computed(() => {
+            if (!globalAvgRecoveryPercentage.value) return '0.00';
             let sum = 0;
             selectedDepartmentData.value.forEach(dept => {
-                sum += parseFloat(dept.totalWeightGold || 0);
+                (dept.unique_categories_array || []).forEach(cat => {
+                    (dept.category_bag_names_map?.[cat] || []).forEach(bagName => {
+                        const pureLoss = getBagLossQtyGoldRaw(dept, cat, bagName) * getBagPurityFactor(dept, cat, bagName);
+                        if (pureLoss > 0) {
+                            sum += pureLoss * (globalAvgRecoveryPercentage.value / 100);
+                        }
+                    });
+                });
             });
             return roundToTwo(sum);
         });
@@ -1229,9 +1268,17 @@ export default {
         });
 
         const totalEmpGoldRecoveryWeight = computed(() => {
+            if (!globalAvgRecoveryPercentage.value) return '0.00';
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                sum += parseFloat(emp.tmGrossLossWeight || 0);
+                (emp.unique_categories_array || []).forEach(cat => {
+                    (emp.category_bag_names_map?.[cat] || []).forEach(bagName => {
+                        const pureLoss = getEmpBagLossQtyGoldRaw(emp, cat, bagName) * getEmpBagPurityFactor(emp, cat, bagName);
+                        if (pureLoss > 0) {
+                            sum += pureLoss * (globalAvgRecoveryPercentage.value / 100);
+                        }
+                    });
+                });
             });
             return roundToTwo(sum);
         });
@@ -1247,17 +1294,7 @@ export default {
         const totalEmpStartingQuantityGold = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.category_qty_map && emp.unique_categories_array) {
-                    emp.unique_categories_array.forEach(category => {
-                        const key = `${emp.id}_${category}`;
-                        const data = emp.category_qty_map[key];
-                        if (data) {
-                            sum += parseFloat(data.starting_qty_gold || 0);
-                        }
-                    });
-                } else {
-                    sum += parseFloat(emp.starting_quantity_gold || 0);
-                }
+                (emp.categories || []).forEach(cat => { sum += parseFloat(cat.starting_qty_gold || 0); });
             });
             return roundToTwo(sum);
         });
@@ -1265,13 +1302,7 @@ export default {
         const totalEmpIssuedQuantityGold = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
-                    emp.categories.forEach(cat => {
-                        sum += parseFloat(cat.issued_quantity_gold || 0);
-                    });
-                } else {
-                    sum += parseFloat(emp.issued_quantity_gold || 0);
-                }
+                (emp.categories || []).forEach(cat => { sum += parseFloat(cat.issued_qty_gold || 0); });
             });
             return roundToTwo(sum);
         });
@@ -1279,17 +1310,7 @@ export default {
         const totalEmpLossQuantityGold = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.category_qty_map && emp.unique_categories_array) {
-                    emp.unique_categories_array.forEach(category => {
-                        const key = `${emp.id}_${category}`;
-                        const data = emp.category_qty_map[key];
-                        if (data) {
-                            sum += parseFloat(data.loss_qty_gold || 0);
-                        }
-                    });
-                } else {
-                    sum += parseFloat(emp.loss_quantity_gold || 0);
-                }
+                (emp.categories || []).forEach(cat => { sum += parseFloat(cat.loss_qty_gold || 0); });
             });
             return roundToTwo(sum);
         });
@@ -1297,17 +1318,7 @@ export default {
         const totalEmpStartingQuantityDiamond = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.category_qty_map && emp.unique_categories_array) {
-                    emp.unique_categories_array.forEach(category => {
-                        const key = `${emp.id}_${category}`;
-                        const data = emp.category_qty_map[key];
-                        if (data) {
-                            sum += parseFloat(data.starting_qty_diamond || 0);
-                        }
-                    });
-                } else {
-                    sum += parseFloat(emp.starting_quantity_diamond || 0);
-                }
+                (emp.categories || []).forEach(cat => { sum += parseFloat(cat.starting_qty_diamond || 0); });
             });
             return roundToTwo(sum);
         });
@@ -1315,13 +1326,7 @@ export default {
         const totalEmpIssuedQuantityDiamond = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.categories && emp.categories.length > 0) {
-                    emp.categories.forEach(cat => {
-                        sum += parseFloat(cat.issued_quantity_diamond || 0);
-                    });
-                } else {
-                    sum += parseFloat(emp.issued_quantity_diamond || 0);
-                }
+                (emp.categories || []).forEach(cat => { sum += parseFloat(cat.issued_qty_diamond || 0); });
             });
             return roundToTwo(sum);
         });
@@ -1329,17 +1334,7 @@ export default {
         const totalEmpLossQuantityDiamond = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.category_qty_map && emp.unique_categories_array) {
-                    emp.unique_categories_array.forEach(category => {
-                        const key = `${emp.id}_${category}`;
-                        const data = emp.category_qty_map[key];
-                        if (data) {
-                            sum += parseFloat(data.loss_qty_diamond || 0);
-                        }
-                    });
-                } else {
-                    sum += parseFloat(emp.loss_quantity_diamond || 0);
-                }
+                (emp.categories || []).forEach(cat => { sum += parseFloat(cat.loss_qty_diamond || 0); });
             });
             return roundToTwo(sum);
         });
@@ -1347,19 +1342,11 @@ export default {
         const totalEmpActualProductionGoldCalculated = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.category_qty_map && emp.unique_categories_array) {
-                    emp.unique_categories_array.forEach(category => {
-                        const key = `${emp.id}_${category}`;
-                        const data = emp.category_qty_map[key];
-                        if (data) {
-                            const actualProd = (parseFloat(data.starting_qty_gold || 0) + parseFloat(data.issued_qty_gold || 0) - parseFloat(data.loss_qty_gold || 0) - parseFloat(data.scrap_qty_gold || 0) - parseFloat(data.balance_qty_gold || 0));
-                            sum += actualProd;
-                        }
-                    });
-                } else {
-                    const actualProd = (parseFloat(emp.starting_quantity_gold || 0) + parseFloat(emp.issued_quantity_gold || 0) - parseFloat(emp.loss_quantity_gold || 0) - parseFloat(emp.scrap_quantity_gold || 0) - parseFloat(emp.balance_quantity_gold || 0));
-                    sum += actualProd;
-                }
+                (emp.categories || []).forEach(cat => {
+                    sum += parseFloat(cat.starting_qty_gold || 0) + parseFloat(cat.issued_qty_gold || 0)
+                         - parseFloat(cat.loss_qty_gold || 0) - parseFloat(cat.scrap_qty_gold || 0)
+                         - parseFloat(cat.balance_qty_gold || 0);
+                });
             });
             return roundToTwo(sum);
         });
@@ -1367,19 +1354,65 @@ export default {
         const totalEmpActualProductionDiamondCalculated = computed(() => {
             let sum = 0;
             selectedEmployees.value.forEach(emp => {
-                if (emp.category_qty_map && emp.unique_categories_array) {
-                    emp.unique_categories_array.forEach(category => {
-                        const key = `${emp.id}_${category}`;
-                        const data = emp.category_qty_map[key];
-                        if (data) {
-                            const actualProd = (parseFloat(data.starting_qty_diamond || 0) + parseFloat(data.issued_qty_diamond || 0) - parseFloat(data.loss_qty_diamond || 0) - parseFloat(data.scrap_qty_diamond || 0) - parseFloat(data.balance_qty_diamond || 0));
-                            sum += actualProd;
-                        }
+                (emp.categories || []).forEach(cat => {
+                    sum += parseFloat(cat.starting_qty_diamond || 0) + parseFloat(cat.issued_qty_diamond || 0)
+                         - parseFloat(cat.loss_qty_diamond || 0) - parseFloat(cat.scrap_qty_diamond || 0)
+                         - parseFloat(cat.balance_qty_diamond || 0);
+                });
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptPureWeight = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                (dept.unique_categories_array || []).forEach(cat => {
+                    (dept.category_bag_names_map?.[cat] || []).forEach(bagName => {
+                        const bKey = `${dept.id}_${cat}_${bagName}`;
+                        const d = (dept.category_bag_qty_map || {})[bKey] || {};
+                        const purity = parseFloat(d.metal_purity_percent || 0) / 100;
+                        const aG = parseFloat(d.starting_qty_gold || 0) + parseFloat(d.issued_qty_gold || 0) - parseFloat(d.loss_qty_gold || 0) - parseFloat(d.scrap_qty_gold || 0) - parseFloat(d.balance_qty_gold || 0);
+                        sum += aG * purity;
                     });
-                } else {
-                    const actualProd = (parseFloat(emp.starting_quantity_diamond || 0) + parseFloat(emp.issued_quantity_diamond || 0) - parseFloat(emp.loss_quantity_diamond || 0) - parseFloat(emp.scrap_quantity_diamond || 0) - parseFloat(emp.balance_quantity_diamond || 0));
-                    sum += actualProd;
-                }
+                });
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalDeptPureLoss = computed(() => {
+            let sum = 0;
+            selectedDepartmentData.value.forEach(dept => {
+                (dept.unique_categories_array || []).forEach(cat => {
+                    (dept.category_bag_names_map?.[cat] || []).forEach(bagName => {
+                        const bKey = `${dept.id}_${cat}_${bagName}`;
+                        const d = (dept.category_bag_qty_map || {})[bKey] || {};
+                        const purity = parseFloat(d.metal_purity_percent || 0) / 100;
+                        sum += parseFloat(d.loss_qty_gold || 0) * purity;
+                    });
+                });
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpPureWeight = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                (emp.categories || []).forEach(cat => {
+                    const purity = parseFloat(cat.metal_purity_percent || 0) / 100;
+                    const aG = parseFloat(cat.starting_qty_gold || 0) + parseFloat(cat.issued_qty_gold || 0) - parseFloat(cat.loss_qty_gold || 0) - parseFloat(cat.scrap_qty_gold || 0) - parseFloat(cat.balance_qty_gold || 0);
+                    sum += aG * purity;
+                });
+            });
+            return roundToTwo(sum);
+        });
+
+        const totalEmpPureLoss = computed(() => {
+            let sum = 0;
+            selectedEmployees.value.forEach(emp => {
+                (emp.categories || []).forEach(cat => {
+                    const purity = parseFloat(cat.metal_purity_percent || 0) / 100;
+                    sum += parseFloat(cat.loss_qty_gold || 0) * purity;
+                });
             });
             return roundToTwo(sum);
         });
@@ -1611,12 +1644,19 @@ export default {
             const boldFont     = { bold: true, size: 10 };
             const normalFont   = { size: 10 };
             const redFont      = { size: 10, color: { argb: 'FF' + C.redFg } };
+            const boldRedFont  = { bold: true, size: 10, color: { argb: 'FF' + C.redFg } };
             const blueBoldFont = { bold: true, size: 10, color: { argb: 'FF' + C.blueFg } };
             const thinBorder   = {
                 top:   { style:'thin', color:{ argb:'FF'+C.borderColor } },
                 left:  { style:'thin', color:{ argb:'FF'+C.borderColor } },
                 bottom:{ style:'thin', color:{ argb:'FF'+C.borderColor } },
                 right: { style:'thin', color:{ argb:'FF'+C.borderColor } },
+            };
+            const addThickTopBorder = (row, colCount) => {
+                for (let c = 1; c <= colCount; c++) {
+                    const cell = row.getCell(c);
+                    cell.border = { ...cell.border, bottom: { style: 'medium', color: { argb: 'FF374151' } } };
+                }
             };
             const fillSolid = (hex) => ({ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+hex } });
             const styleRow  = (row, bg, font, colCount) => {
@@ -1628,7 +1668,17 @@ export default {
                     cell.alignment = { vertical:'middle', wrapText:true };
                 }
             };
-            const redCols = (row, cols) => cols.forEach(c => { row.getCell(c).font = { ...redFont }; });
+            // Center-align numeric columns (from startCol to colCount)
+            const centerNums = (row, startCol, colCount) => {
+                for (let c = startCol; c <= colCount; c++) {
+                    row.getCell(c).alignment = { vertical:'middle', horizontal:'center', wrapText:true };
+                }
+            };
+            const centerCols = (row, cols) => cols.forEach(c => {
+                row.getCell(c).alignment = { vertical:'middle', horizontal:'center', wrapText:true };
+            });
+            const redCols     = (row, cols) => cols.forEach(c => { row.getCell(c).font = { ...redFont }; });
+            const redColsBold = (row, cols) => cols.forEach(c => { row.getCell(c).font = { ...boldRedFont }; });
 
             // Title
             ws.addRow([`Efficiency Report`]);
@@ -1640,20 +1690,22 @@ export default {
             if (showEmployeesTable.value) {
                 // ── EMPLOYEE TABLE ──────────────────────────────────────
                 const EMP_HEADERS = [
-                    'Location','Department','Employee','No. of Bags','Item Category','Bag Name','Print Design (Assembly Item)',
-                    'TM Production Gold','Actual Production Gold','Loss Qty Gold','Gold Loss %',
+                    'Location','Department','Employee','No. of Bags',
+                    'Item Category','Style Number','Bag Count','Bag Name',
+                    'Issued Net Weight','Received Net Weight','Gross Loss','Gross Loss %',
+                    'Pure Weight','Pure Loss','Net Loss','Net Loss %',
                     'TM Production Diamond','Actual Production Diamond','Loss Qty Diamond','Diamond Loss %',
-                    'Pure Weight','Pure Loss',
                     'Gold Recovery Weight (gm)','Net Loss Gold','Diamond Recovery Weight (ct)','Net Loss Diamond'
                 ];
                 const ECOL = EMP_HEADERS.length;
-                const EMP_LOSS_COLS = [10,11,14,15,17,19];
+                // loss cols: Gross Loss=11, Gross Loss%=12, Pure Loss=14, Net Loss=15, Net Loss%=16, Diamond Loss%=20
+                const EMP_LOSS_COLS = [11,12,14,15,16,20];
                 const ehRow = ws.addRow(EMP_HEADERS);
                 styleRow(ehRow, C.headerBg, headerFont, ECOL);
                 ehRow.height = 30;
                 EMP_HEADERS.forEach((h, i) => { ws.getColumn(i+1).width = i===0?14:i<=4?16:18; });
 
-                let gt = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
+                let gt = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0, pw:0, pl:0 };
 
                 locations.value.forEach(loc => {
                     const locName = loc.name?.value || "";
@@ -1664,37 +1716,50 @@ export default {
                             const empName  = emp.name || "";
                             const bagCount = emp.bag_count || 0;
                             const cats     = emp.unique_categories_array || [];
-                            let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
+                            let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0, pw:0, pl:0 };
                             let isFirstEmpRow = true;
 
                             cats.forEach((cat) => {
                                 const bags = (emp.category_bag_names_map||{})[cat] || [''];
                                 const printDesign = (emp.category_print_design_map||{})[cat] || '-';
+                                const catBagCount = (emp.category_bag_count_map||{})[cat] || 0;
 
-                                bags.forEach((bagName) => {
+                                bags.forEach((bagName, bagIdx) => {
+                                    const isFirstBagInCat = bagIdx === 0;
                                     const bagEntry = (emp.categories||[]).find(c => c.category_name === cat && c.bag_name === bagName) || {};
                                     const sG=parseFloat(bagEntry.starting_qty_gold||0), iG=parseFloat(bagEntry.issued_qty_gold||0), lG=parseFloat(bagEntry.loss_qty_gold||0), scG=parseFloat(bagEntry.scrap_qty_gold||0), bG=parseFloat(bagEntry.balance_qty_gold||0);
                                     const sD=parseFloat(bagEntry.starting_qty_diamond||0), iD=parseFloat(bagEntry.issued_qty_diamond||0), lD=parseFloat(bagEntry.loss_qty_diamond||0), scD=parseFloat(bagEntry.scrap_qty_diamond||0), bD=parseFloat(bagEntry.balance_qty_diamond||0);
                                     const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
+                                    const issuedNetWt = sG; // Issued Net Weight = starting_qty_gold
                                     const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
                                     const purity=(parseFloat(bagEntry.metal_purity_percent||0))/100;
                                     const pureWeight=+roundToTwo(aG*purity), pureLoss=+roundToTwo(lG*purity);
                                     sub.sG+=sG;sub.iG+=iG;sub.lG+=lG;sub.scG+=scG;sub.bG+=bG;
                                     sub.sD+=sD;sub.iD+=iD;sub.lD+=lD;sub.scD+=scD;sub.bD+=bD;
+                                    sub.pw+=aG*purity; sub.pl+=lG*purity;
                                     gt.sG+=sG;gt.iG+=iG;gt.lG+=lG;gt.scG+=scG;gt.bG+=bG;
                                     gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
+                                    gt.pw+=aG*purity; gt.pl+=lG*purity;
 
                                     const showLoc = isFirstEmpRow && !locShown;
-                                    const catBagCount = (emp.category_bag_count_map||{})[cat] || 0;
+                                    const empPureLoss = lG * purity;
+                                    const empRecoveryWeight = empPureLoss > 0 && globalAvgRecoveryPercentage.value > 0
+                                        ? +roundToTwo(empPureLoss * (globalAvgRecoveryPercentage.value / 100))
+                                        : 0;
+                                    const empRecoveryPct = empPureLoss > 0 && globalAvgRecoveryPercentage.value > 0
+                                        ? roundToTwo(globalAvgRecoveryPercentage.value) + '%'
+                                        : '0%';
                                     const dr = ws.addRow([
                                         showLoc?locName:'', isFirstEmpRow?deptName:'', isFirstEmpRow?empName:'',
-                                        isFirstEmpRow?bagCount:'', cat, printDesign, catBagCount, bagName||'-',
-                                        +roundToTwo(sG), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
+                                        isFirstEmpRow?bagCount:'', isFirstBagInCat?cat:'', isFirstBagInCat?printDesign:'', isFirstBagInCat?catBagCount:'', bagName||'-',
+                                        +roundToTwo(issuedNetWt), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
+                                        pureWeight, pureLoss, '-', '-',
                                         +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
-                                        pureWeight, pureLoss,
-                                        '-','-','-','-'
+                                        empRecoveryWeight, empRecoveryPct, '-', '-'
                                     ]);
                                     styleRow(dr, C.rowBg, normalFont, ECOL);
+                                    centerNums(dr, 9, ECOL);
+                                    centerCols(dr, [4, 7]);
                                     redCols(dr, EMP_LOSS_COLS);
                                     if (showLoc) locShown = true;
                                     isFirstEmpRow = false;
@@ -1703,31 +1768,50 @@ export default {
 
                             if (cats.length > 0) {
                                 const aG=sub.sG+sub.iG-sub.lG-sub.scG-sub.bG, aD=sub.sD+sub.iD-sub.lD-sub.scD-sub.bD;
-                                const sr = ws.addRow(['','',`Total (${empName})`,bagCount,'','','',+roundToTwo(sub.sG),+roundToTwo(aG),+roundToTwo(sub.lG),'',+roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'','','','','']);
+                                const issuedNetWt=sub.sG;
+                                const subRecoveryWeight = sub.pl > 0 && globalAvgRecoveryPercentage.value > 0 ? +roundToTwo(sub.pl * (globalAvgRecoveryPercentage.value / 100)) : 0;
+                                const sr = ws.addRow(['','',`Total (${empName})`,bagCount,'','','','',+roundToTwo(issuedNetWt),+roundToTwo(aG),+roundToTwo(sub.lG),'',+roundToTwo(sub.pw),+roundToTwo(sub.pl),'','',+roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'',subRecoveryWeight,'','-','-']);
                                 styleRow(sr, C.subtotalBg, boldFont, ECOL);
-                                redCols(sr, [10,14]);
+                                centerNums(sr, 9, ECOL);
+                                centerCols(sr, [4, 7]);
+                                addThickTopBorder(sr, ECOL);
+                                redColsBold(sr, [11,14,20]);
                             }
                         });
                     });
                 });
 
+                const aG=gt.sG+gt.iG-gt.lG-gt.scG-gt.bG, aD=gt.sD+gt.iD-gt.lD-gt.scD-gt.bD;
+                const issuedNetWtGt=gt.sG;
+                const allEmpBags = new Set();
+                locations.value.forEach(loc => (loc.departments||[]).forEach(dept => (dept.employees||[]).forEach(emp => (emp.unique_bags_array||[]).forEach(b => allEmpBags.add(b)))));
+                const grandEmpBagCount = allEmpBags.size || 0;
+                const grandEmpRecoveryWeight = gt.pl > 0 && globalAvgRecoveryPercentage.value > 0 ? +roundToTwo(gt.pl * (globalAvgRecoveryPercentage.value / 100)) : 0;
+                const egr = ws.addRow(['','','GRAND TOTAL',grandEmpBagCount,'','','','',+roundToTwo(issuedNetWtGt),+roundToTwo(aG),+roundToTwo(gt.lG),'',+roundToTwo(gt.pw),+roundToTwo(gt.pl),'','',+roundToTwo(gt.sD),+roundToTwo(aD),+roundToTwo(gt.lD),'',grandEmpRecoveryWeight,'','-','-']);
+                styleRow(egr, C.grandBg, boldFont, ECOL);
+                centerNums(egr, 9, ECOL);
+                centerCols(egr, [4, 7]);
+                redColsBold(egr, [11,14,20]);
+
             } else {
                 // ── DEPARTMENT TABLE ────────────────────────────────────
                 const DEPT_HEADERS = [
-                    'Location','Department','No. of Bags','Item Category','Bag Name','Style Number',
-                    'TM Production Gold','Actual Production Gold','Loss Qty Gold','Gold Loss %',
+                    'Location','Department','No. of Bags',
+                    'Item Category','Style Number','Bag Count','Bag Name',
+                    'Issued Net Weight','Received Net Weight','Gross Loss','Gross Loss %',
+                    'Pure Weight','Pure Loss','Net Loss','Net Loss %',
                     'TM Production Diamond','Actual Production Diamond','Loss Qty Diamond','Diamond Loss %',
-                    'Pure Weight','Pure Loss',
                     'Gold Recovery Weight (gm)','Net Loss Gold','Diamond Recovery Weight (ct)','Net Loss Diamond'
                 ];
                 const DCOL = DEPT_HEADERS.length;
-                const DEPT_LOSS_COLS = [9,10,13,14,16,18];
+                // loss cols: Gross Loss=10, Gross Loss%=11, Pure Loss=13, Net Loss=14, Net Loss%=15, Diamond Loss%=19
+                const DEPT_LOSS_COLS = [10,11,13,14,15,19];
                 const dhRow = ws.addRow(DEPT_HEADERS);
                 styleRow(dhRow, C.headerBg, headerFont, DCOL);
                 dhRow.height = 30;
                 DEPT_HEADERS.forEach((h, i) => { ws.getColumn(i+1).width = i===0?14:i<=3?16:18; });
 
-                let gt = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
+                let gt = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0, pw:0, pl:0 };
 
                 locations.value.forEach(loc => {
                     const locName = loc.name?.value || "";
@@ -1736,37 +1820,51 @@ export default {
                         const deptName = dept.name || "";
                         const bagCount = dept.bag_count || 0;
                         const cats     = dept.unique_categories_array || [];
-                        let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0 };
+                        let sub = { sG:0,iG:0,lG:0,scG:0,bG:0, sD:0,iD:0,lD:0,scD:0,bD:0, pw:0, pl:0 };
                         let isFirstDeptRow = true;
 
                         cats.forEach((cat) => {
                             const bags = (dept.category_bag_names_map||{})[cat] || [''];
                             const printDesign = (dept.category_print_design_map||{})[cat] || '-';
+                            const catBagCount = (dept.category_bag_count_map||{})[cat] || 0;
 
-                            bags.forEach((bagName) => {
+                            bags.forEach((bagName, bagIdx) => {
+                                const isFirstBagInCat = bagIdx === 0;
                                 const bqKey = `${dept.id}_${cat}_${bagName}`;
                                 const d = (dept.category_bag_qty_map||{})[bqKey] || {};
                                 const sG=parseFloat(d.starting_qty_gold||0), iG=parseFloat(d.issued_qty_gold||0), lG=parseFloat(d.loss_qty_gold||0), scG=parseFloat(d.scrap_qty_gold||0), bG=parseFloat(d.balance_qty_gold||0);
                                 const sD=parseFloat(d.starting_qty_diamond||0), iD=parseFloat(d.issued_qty_diamond||0), lD=parseFloat(d.loss_qty_diamond||0), scD=parseFloat(d.scrap_qty_diamond||0), bD=parseFloat(d.balance_qty_diamond||0);
                                 const aG=sG+iG-lG-scG-bG, aD=sD+iD-lD-scD-bD;
+                                const issuedNetWt=sG; // Issued Net Weight = starting_qty_gold
                                 const gLP=aG!==0?(lG/aG)*100:0, dLP=aD!==0?(lD/aD)*100:0;
                                 const purity=(parseFloat(d.metal_purity_percent||0))/100;
                                 const pureWeight=+roundToTwo(aG*purity), pureLoss=+roundToTwo(lG*purity);
                                 sub.sG+=sG;sub.iG+=iG;sub.lG+=lG;sub.scG+=scG;sub.bG+=bG;
                                 sub.sD+=sD;sub.iD+=iD;sub.lD+=lD;sub.scD+=scD;sub.bD+=bD;
+                                sub.pw+=aG*purity; sub.pl+=lG*purity;
                                 gt.sG+=sG;gt.iG+=iG;gt.lG+=lG;gt.scG+=scG;gt.bG+=bG;
                                 gt.sD+=sD;gt.iD+=iD;gt.lD+=lD;gt.scD+=scD;gt.bD+=bD;
+                                gt.pw+=aG*purity; gt.pl+=lG*purity;
 
                                 const showLoc = isFirstDeptRow && !locShown;
+                                const deptPureLoss = lG * purity;
+                                const deptRecoveryWeight = deptPureLoss > 0 && globalAvgRecoveryPercentage.value > 0
+                                    ? +roundToTwo(deptPureLoss * (globalAvgRecoveryPercentage.value / 100))
+                                    : 0;
+                                const deptRecoveryPct = deptPureLoss > 0 && globalAvgRecoveryPercentage.value > 0
+                                    ? roundToTwo(globalAvgRecoveryPercentage.value) + '%'
+                                    : '0%';
                                 const dr = ws.addRow([
                                     showLoc?locName:'', isFirstDeptRow?deptName:'',
-                                    isFirstDeptRow?bagCount:'', cat, bagName||'-', printDesign,
-                                    +roundToTwo(sG), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
+                                    isFirstDeptRow?bagCount:'', isFirstBagInCat?cat:'', isFirstBagInCat?printDesign:'', isFirstBagInCat?catBagCount:'', bagName||'-',
+                                    +roundToTwo(issuedNetWt), +roundToTwo(aG), +roundToTwo(lG), roundToTwo(gLP)+'%',
+                                    pureWeight, pureLoss, '-', '-',
                                     +roundToTwo(sD), +roundToTwo(aD), +roundToTwo(lD), roundToTwo(dLP)+'%',
-                                    pureWeight, pureLoss,
-                                    '-','-','-','-'
+                                    deptRecoveryWeight, deptRecoveryPct, '-', '-'
                                 ]);
                                 styleRow(dr, C.rowBg, normalFont, DCOL);
+                                centerNums(dr, 8, DCOL);
+                                centerCols(dr, [3, 6]);
                                 redCols(dr, DEPT_LOSS_COLS);
                                 if (showLoc) locShown = true;
                                 isFirstDeptRow = false;
@@ -1775,20 +1873,29 @@ export default {
 
                         if (cats.length > 0) {
                             const aG=sub.sG+sub.iG-sub.lG-sub.scG-sub.bG, aD=sub.sD+sub.iD-sub.lD-sub.scD-sub.bD;
-                            const sr = ws.addRow(['',`Total (${deptName})`,bagCount,'','','',+roundToTwo(sub.sG),+roundToTwo(aG),+roundToTwo(sub.lG),'',+roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'','','','','','']);
+                            const issuedNetWt=sub.sG;
+                            const subDeptRecoveryWeight = sub.pl > 0 && globalAvgRecoveryPercentage.value > 0 ? +roundToTwo(sub.pl * (globalAvgRecoveryPercentage.value / 100)) : 0;
+                            const sr = ws.addRow(['',`Total (${deptName})`,bagCount,'','','','',+roundToTwo(issuedNetWt),+roundToTwo(aG),+roundToTwo(sub.lG),'',+roundToTwo(sub.pw),+roundToTwo(sub.pl),'','',+roundToTwo(sub.sD),+roundToTwo(aD),+roundToTwo(sub.lD),'',subDeptRecoveryWeight,'','-','-']);
                             styleRow(sr, C.subtotalBg, boldFont, DCOL);
-                            redCols(sr, [9,13]);
+                            centerNums(sr, 8, DCOL);
+                            centerCols(sr, [3, 6]);
+                            addThickTopBorder(sr, DCOL);
+                            redColsBold(sr, [10,13,19]);
                         }
                     });
                 });
 
                 const aG=gt.sG+gt.iG-gt.lG-gt.scG-gt.bG, aD=gt.sD+gt.iD-gt.lD-gt.scD-gt.bD;
+                const issuedNetWtGt=gt.sG;
                 const allDeptBags = new Set();
                 locations.value.forEach(loc => (loc.departments||[]).forEach(dept => (dept.unique_bags_array||[]).forEach(b => allDeptBags.add(b))));
                 const grandDeptBagCount = allDeptBags.size || locations.value.reduce((s,loc)=>(loc.departments||[]).reduce((s2,dept)=>s2+parseInt(dept.bag_count||0),s),0);
-                const dgr = ws.addRow(['','GRAND TOTAL',grandDeptBagCount,'','','',+roundToTwo(gt.sG),+roundToTwo(aG),+roundToTwo(gt.lG),'',+roundToTwo(gt.sD),+roundToTwo(aD),+roundToTwo(gt.lD),'','','','','','']);
+                const grandDeptRecoveryWeight = gt.pl > 0 && globalAvgRecoveryPercentage.value > 0 ? +roundToTwo(gt.pl * (globalAvgRecoveryPercentage.value / 100)) : 0;
+                const dgr = ws.addRow(['','GRAND TOTAL',grandDeptBagCount,'','','','',+roundToTwo(issuedNetWtGt),+roundToTwo(aG),+roundToTwo(gt.lG),'',+roundToTwo(gt.pw),+roundToTwo(gt.pl),'','',+roundToTwo(gt.sD),+roundToTwo(aD),+roundToTwo(gt.lD),'',grandDeptRecoveryWeight,'','-','-']);
                 styleRow(dgr, C.grandBg, boldFont, DCOL);
-                redCols(dgr, [9,13]);
+                centerNums(dgr, 8, DCOL);
+                centerCols(dgr, [3, 6]);
+                redColsBold(dgr, [10,13,19]);
             }
 
             // Download as .xlsx
@@ -1905,6 +2012,7 @@ export default {
         };
 
         // Helper function to get total issued quantity gold for a department
+        // newIssuedQty = starting + issued - scrap - balance (loss is shown separately in the card)
         const getDepartmentTotalIssuedQtyGold = (dept) => {
             if (!dept.category_qty_map) return 0;
             let sum = 0;
@@ -1912,7 +2020,10 @@ export default {
                 // Only sum if the key starts with this department's ID
                 if (key.startsWith(`${dept.id}_`)) {
                     const catData = dept.category_qty_map[key];
-                    sum += parseFloat(catData.issued_qty_gold || 0);
+                    sum += parseFloat(catData.starting_qty_gold || 0)
+                         + parseFloat(catData.issued_qty_gold || 0)
+                         - parseFloat(catData.scrap_qty_gold || 0)
+                         - parseFloat(catData.balance_qty_gold || 0);
                 }
             });
             return sum;
@@ -1926,7 +2037,10 @@ export default {
                 // Only sum if the key starts with this department's ID
                 if (key.startsWith(`${dept.id}_`)) {
                     const catData = dept.category_qty_map[key];
-                    sum += parseFloat(catData.issued_qty_diamond || 0);
+                    sum += parseFloat(catData.starting_qty_diamond || 0)
+                         + parseFloat(catData.issued_qty_diamond || 0)
+                         - parseFloat(catData.scrap_qty_diamond || 0)
+                         - parseFloat(catData.balance_qty_diamond || 0);
                 }
             });
             return sum;
@@ -1937,11 +2051,14 @@ export default {
             if (emp.categories && emp.categories.length > 0) {
                 let sum = 0;
                 emp.categories.forEach(cat => {
-                    sum += parseFloat(cat.issued_qty_gold || 0);
+                    sum += parseFloat(cat.starting_qty_gold || 0)
+                         + parseFloat(cat.issued_qty_gold || 0)
+                         - parseFloat(cat.scrap_qty_gold || 0)
+                         - parseFloat(cat.balance_qty_gold || 0);
                 });
                 return sum;
             }
-            return parseFloat(emp.issued_quantity_gold || 0);
+            return 0;
         };
 
         // Helper function to get total issued quantity diamond for an employee
@@ -1949,11 +2066,14 @@ export default {
             if (emp.categories && emp.categories.length > 0) {
                 let sum = 0;
                 emp.categories.forEach(cat => {
-                    sum += parseFloat(cat.issued_qty_diamond || 0);
+                    sum += parseFloat(cat.starting_qty_diamond || 0)
+                         + parseFloat(cat.issued_qty_diamond || 0)
+                         - parseFloat(cat.scrap_qty_diamond || 0)
+                         - parseFloat(cat.balance_qty_diamond || 0);
                 });
                 return sum;
             }
-            return parseFloat(emp.issued_quantity_diamond || 0);
+            return 0;
         };
         
         // Helper function to get total loss quantity gold for a department
@@ -2030,6 +2150,12 @@ export default {
                 }
             });
             return sum;
+        };
+
+        // Helper: wax tree loss gold for casting/tree cutting/grinding (card display)
+        const getDepartmentWaxTreeLossGold = (dept) => {
+            if (![CASTING, TREE_CUTTING_CLEANING, GRINDING].includes(parseInt(dept.id))) return null;
+            return parseFloat(dept.wax_tree_loss_gold || 0);
         };
 
         // Helper function to get total actual production diamond for a department
@@ -2276,7 +2402,7 @@ export default {
 
         // Build a NetSuite link to the bag generation record
         // Use app.netsuite.com (not extforms) + ns-at token for authenticated direct links
-        const _nsAppBase = `https://9685504.app.netsuite.com`;
+        const _nsAppBase = ENV_VAR.NS_API.BASE_DOMAIN;
         const _nsAt = ENV_VAR.NS_API.API.BAG_MANAGEMENT_APP_ENDPOINT.APPEND; // "&compid=...&ns-at=..."
 
         const getBagNsUrl = (dept, category, bagName) => {
@@ -2291,7 +2417,7 @@ export default {
         };
 
         const APPEND = ENV_VAR.NS_API.API.BAG_MANAGEMENT_APP_ENDPOINT.APPEND;
-        const BASE = `https://9685504.app.netsuite.com`;
+        const BASE = ENV_VAR.NS_API.BASE_DOMAIN;
 
         // Department link (customrecord_jj_manufacturing_dept)
         const getDeptNsUrl = (dept) => {
@@ -3009,6 +3135,7 @@ export default {
                                     category_bag_ids_map: dept.category_bag_ids_map || {},
                                     category_print_design_id_map: dept.category_print_design_id_map || {},
                                     wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
+                                    wax_tree_loss_gold: dept.wax_tree_loss_gold ?? null,
                                     employees: (dept.employees_array || []).map(emp => {
                                         // Build category_qty_map from categories array
                                         const categoryQtyMap = {};
@@ -3169,12 +3296,19 @@ export default {
                                         category_bag_ids_map: dept.category_bag_ids_map || {},
                                         category_print_design_id_map: dept.category_print_design_id_map || {},
                                         wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
+                                        wax_tree_loss_gold: dept.wax_tree_loss_gold ?? null,
                                         employees
                                     };
                                 });
                             }
                         }
                     }
+
+                    // Fetch global avg recovery % once for the selected date range
+                    console.log('[Recovery] Fetching with dates:', formattedStartDate, formattedEndDate);
+                    const recoveryData = await fetchRecoveryDataByDept(formattedStartDate, formattedEndDate);
+                    globalAvgRecoveryPercentage.value = parseFloat(recoveryData.avgRecoveryPercentage || 0);
+                    console.log('[Recovery] Global avg recovery %:', globalAvgRecoveryPercentage.value);
 
                     isInitialLoading.value = false;
                 } else {
@@ -3713,6 +3847,7 @@ export default {
             getEmployeeTotalIssuedQtyAllCategories,
             getEmployeeTotalLossQtyAllCategories,
             getDepartmentTotalActualProductionGold,
+            getDepartmentWaxTreeLossGold,
             getDepartmentTotalActualProductionDiamond,
             getDepartmentTotalIssuedPiecesDiamond,
             getDepartmentTotalLossPiecesDiamond,
@@ -3765,8 +3900,10 @@ export default {
             getEmpBagBalanceQtyDiamondRaw,
             getBagPureWeight,
             getBagPureLoss,
+            getBagPurityFactor,
             getEmpBagPureWeight,
             getEmpBagPureLoss,
+            getEmpBagPurityFactor,
             getBagNsUrl,
             getEmpBagNsUrl,
             getDeptNsUrl,
@@ -3804,8 +3941,13 @@ export default {
             totalEmpLossQuantityDiamond,
             totalEmpActualProductionGoldCalculated,
             totalEmpActualProductionDiamondCalculated,
+            totalDeptPureWeight,
+            totalDeptPureLoss,
+            totalEmpPureWeight,
+            totalEmpPureLoss,
             showNoDataMessage,
             fetchEfficiencyAnalysisData,
+            globalAvgRecoveryPercentage,
             calculateGoldLossPercentage,
             calculateDiamondLossPercentage,
             getEmployeeCategoryStartingQty,
