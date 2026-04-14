@@ -27,6 +27,12 @@ const END_POINTS = {
         apiType: "listInventoryAdjustments",
         name: "LIST_INVENTORY_ADJSUTMENTS",
     },
+    // Get Recovery Data By Dept And Date Range
+    GET_RECOVERY_DATA_BY_DEPT: {
+        endpointName: "BAG_REPORTS_APP_ENDPOINT",
+        apiType: "getRecoveryDataByDeptAndDateRange",
+        name: "GET_RECOVERY_DATA_BY_DEPT",
+    },
 
 };
 
@@ -145,6 +151,25 @@ export function useAllEfficiencyAnalysisApi() {
             loading.value = false;
         }
     };
+    const fetchRecoveryDataByDept = async (startDate, endDate) => {
+        try {
+            const endpoint = "GET_RECOVERY_DATA_BY_DEPT";
+            const response = await fetch(generateEndPoint(endpoint, END_POINTS), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ startDate, endDate }),
+            });
+            const responseJson = await response.json();
+            if (responseJson && responseJson.status === "SUCCESS" && responseJson.data) {
+                return unwrapInEscapedBody(responseJson.data);
+            }
+            return { avgRecoveryPercentage: 0 };
+        } catch (err) {
+            console.error("Error fetching recovery data:", err);
+            return { avgRecoveryPercentage: 0 };
+        }
+    };
+
     //fetch inventory adjustments
     const fetchInventoryAdjustments = async (startDate, endDate) => {
         try {
@@ -189,6 +214,7 @@ export function useAllEfficiencyAnalysisApi() {
         listLocationsData,
         listEfficiencyData,
         fetchListEfficiencyAnalysis,
-        fetchInventoryAdjustments
+        fetchInventoryAdjustments,
+        fetchRecoveryDataByDept
     };
 }

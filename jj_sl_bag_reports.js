@@ -51,7 +51,17 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                         departmentList = cm_model.getAllManufacturingDepartments([CASTING_DEPARTMENT_ID], requestBody?.department_name);
                     } else if (requestBody?.dept_hod) {
                         departmentList = cm_model.getAllManufacturingDepartments(null, "dept_hod");
-                    } else if (requestBody?.params == "user_specific" || requestBody?.params == "loss_recovery") {
+                    } else if (requestBody?.params == "loss_recovery") {
+                        // NEW LOGIC: Get only departments that have actual loss items
+                        let materialType = requestBody?.material_type || 'gold_type'; // Default to gold
+                        let isInProgress = requestBody?.isInProgress || false;
+                        departmentList = cm_model.getDepartmentsWithLoss(
+                            materialType,
+                            isInProgress,
+                            requestBody?.user_id,
+                            requestBody?.all_department
+                        );
+                    } else if (requestBody?.params == "user_specific") {
                         departmentList = cm_model.getAllManufacturingDepartments(null, requestBody?.params, requestBody?.all_department, requestBody?.user_id);
                     } else if (requestBody?.params == "location_transfer") {
                         departmentList = cm_model.getAllManufacturingDepartments(null, requestBody?.params, requestBody?.all_department, requestBody?.user_id);
@@ -612,15 +622,11 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                         return { status: 'ERROR', reason: 'Total Recovered Quantity is mandatory for inventory adjustment.', data: [] };
                     }
 
-                    if (!selectedEmployee) {
-                        return { status: 'ERROR', reason: 'Employee is mandatory for inventory adjustment.', data: [] };
-                    }
-
                     let deptFields = cm_model.getDepartmentFields(departmentId);
                     let locationId = deptFields?.location;
                     let binNumber = deptFields?.bin;
                     let goodStatus = deptFields?.goodStatus;
-                    let lossStatus = deptFields?.lossStatus;
+                    let lossStatus = waxTreeRecovery ? deptFields?.lossStatus : deptFields?.lossOutsourcedStatus;
 
                     if (!locationId || !binNumber) {
                         return { status: 'ERROR', reason: 'No location or Bin found for the department', data: [] };
@@ -669,12 +675,48 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                         // Convert the grouped object back to an array  
                         formattedComponents = Object.values(groupedComponents);
                     } else {
-                        formattedComponents = selectedComponents;
+                        // For In Progress recovery: distribute recoveredQty (from Gold Details table) across lots proportionally
+                        formattedComponents = selectedComponents
+                            .filter(function (component) { return Number(component.recoveredQty || 0) > 0; })
+                            .map(function (component) {
+                                const lots = (component.inventoryDetails && component.inventoryDetails.lossOutsourcedQty) || [];
+                                const totalAvailable = lots.reduce(function (s, l) { return s + parseFloat(l.quantityAvailable || 0); }, 0);
+                                const recoveredQty = Number(component.recoveredQty || 0);
+
+                                const updatedLots = lots
+                                    .filter(function (lot) { return parseFloat(lot.quantityAvailable || 0) > 0; })
+                                    .map(function (lot) {
+                                        // Distribute recoveredQty proportionally across lots
+                                        const proportion = totalAvailable > 0 ? parseFloat(lot.quantityAvailable) / totalAvailable : 0;
+                                        const lotQty = Number(parseFloat(recoveredQty * proportion).toFixed(4));
+                                        return {
+                                            inventoryNumber: lot.inventoryNumber,
+                                            recoveredQtyPerLot: lotQty,
+                                            inventoryStatus: lossStatus
+                                        };
+                                    }).filter(function (lot) { return lot.recoveredQtyPerLot > 0; });
+
+                                // Ensure sum of lots exactly equals recoveredQty (fix rounding)
+                                const lotSum = Number(parseFloat(updatedLots.reduce(function (s, l) { return s + l.recoveredQtyPerLot; }, 0)).toFixed(4));
+                                if (updatedLots.length > 0 && lotSum !== recoveredQty) {
+                                    updatedLots[updatedLots.length - 1].recoveredQtyPerLot = Number(parseFloat(
+                                        updatedLots[updatedLots.length - 1].recoveredQtyPerLot + (recoveredQty - lotSum)
+                                    ).toFixed(4));
+                                }
+
+                                return {
+                                    itemId: component.itemId,
+                                    recoveredQty: recoveredQty,
+                                    inventoryDetails: {
+                                        lossOutsourcedQty: updatedLots
+                                    }
+                                };
+                            });
                     }
 
                     log.debug("formattedComponents", formattedComponents);
 
-                    let adjustmentStatus = cm_functions.createInventoryAdjustment(formattedComponents, locationId, binNumber, goodStatus, inventoryName, selectedMetal, totalRecoveredQty, departmentId, selectedEmployee, waxTreeRecovery);
+                    let adjustmentStatus = cm_functions.createInventoryAdjustment(formattedComponents, locationId, binNumber, goodStatus, inventoryName, selectedMetal, totalRecoveredQty, departmentId, selectedEmployee, waxTreeRecovery, 'Loss recovery');
 
                     if (adjustmentStatus.status != 'SUCCESS') {
                         return { status: 'ERROR', reason: adjustmentStatus.reason, data: [] };
@@ -865,11 +907,13 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                         from_status: fromStatus,
                         to_status: toStatus,
                         memo: memoText,
-                        weight_details: weightDetails
+                        weight_details: weightDetails,
+                        serial_sequence_map: serialSequenceMap
                     } = requestBody;
 
                     log.debug("selectedSerials", selectedSerials);
                     log.debug("weightDetails received", weightDetails);
+                    log.debug("serialSequenceMap received", serialSequenceMap);
 
                     if (!selectedSerials || selectedSerials.length == 0) {
                         return { status: 'ERROR', reason: 'No selecetd serials found', data: [] };
@@ -897,14 +941,14 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
 
                     // Condition 1: Check if Transfer Order is needed (different locations)
                     if (fromLocationId != toLocationId) {
-                        recordCreated = cm_functions.processTransferWithFulfillment(selectedSerials, fromLocationId, toLocationId, toStatus, toDepartmentId, memoText, weightDetails);
+                        recordCreated = cm_functions.processTransferWithFulfillment(selectedSerials, fromLocationId, toLocationId, toStatus, toDepartmentId, memoText, weightDetails, serialSequenceMap);
                     }
                     // Condition 2: Check if Status Change only (same location, same department, same bin)
                     else if (fromLocationId === toLocationId &&
                         fromDepartmentId === toDepartmentId &&
                         fromBinNumber && toBinNumber &&
                         fromBinNumber === toBinNumber) {
-                        recordCreated = cm_functions.processInventoryStatusChangeForSerials(selectedSerials, fromLocationId, fromBinNumber, fromStatus, toStatus, toDepartmentId, weightDetails, memoText);
+                        recordCreated = cm_functions.processInventoryStatusChangeForSerials(selectedSerials, fromLocationId, fromBinNumber, fromStatus, toStatus, toDepartmentId, weightDetails, memoText, serialSequenceMap);
                     }
                     // Condition 3: Bin Transfer (same location, but different bin or department)
                     else {
@@ -926,7 +970,7 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                         if (transformed?.status != 'SUCCESS') {
                             return { status: 'ERROR', reason: transformed?.reason, data: [] };
                         }
-                        recordCreated = cm_functions.createBinTransferRecordTest(transformed?.data, fromLocationId, null, null, null, memoText, weightDetails);
+                        recordCreated = cm_functions.createBinTransferRecordTest(transformed?.data, fromLocationId, null, null, null, memoText, weightDetails, serialSequenceMap);
                     }
 
                     log.debug('Operation Result', recordCreated);
@@ -1601,8 +1645,8 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                     // Call appropriate function based on isRepairOnly parameter
                     let efficiencyData;
                     if (isRepairOnly === true) {
-                        // Repair Efficiency Analysis - use getEfficiencyData with repair filter
-                        efficiencyData = cm_model.getEfficiencyData(locationId, startDate, endDate, isRepairOnly);
+                        // Repair Efficiency Analysis - use getRepairEfficiencyData with repair filter
+                        efficiencyData = cm_model.getRepairEfficiencyData(locationId, startDate, endDate, isRepairOnly);
                     } else {
                         // Overall Efficiency Analysis - use getOverallEfficiencyData (all operations)
                         efficiencyData = cm_model.getOverallEfficiencyData(locationId, startDate, endDate);
@@ -1712,8 +1756,8 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                         formattedComponents = selectedComponents;
                     }
 
-                    // function createInventoryAdjustment params: selectedComponents, locationId, binNumber, goodStatus, inventoryName, selectedMetal, totalRecoveredQty, departmentId, selectedEmployee, waxTreeRecovery
-                    let adjustmentStatus = cm_functions.createInventoryAdjustment(formattedComponents, locationId, binNumber, null, null, null, null, null, null, waxTreeWriteOff);
+                    // function createInventoryAdjustment params: selectedComponents, locationId, binNumber, goodStatus, inventoryName, selectedMetal, totalRecoveredQty, departmentId, selectedEmployee, waxTreeRecovery, memo
+                    let adjustmentStatus = cm_functions.createInventoryAdjustment(formattedComponents, locationId, binNumber, null, null, null, null, null, null, waxTreeWriteOff, 'Loss Write-Off');
 
                     if (adjustmentStatus.status != 'SUCCESS') {
                         return { status: 'ERROR', reason: adjustmentStatus.reason, data: [] };
@@ -2428,8 +2472,23 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                     log.debug("jsonString", jsonString);
                     log.debug("inventoryStatusChange Data", { location, fromBin, fromStatus, toStatus, groupedTransfers });
 
-                    // Step 3: Call inventory status change function
-                    let result = cm_functions.inventoryStatusChange(groupedTransfers, location, fromBin, fromStatus, toStatus, jsonString);
+                    // Step 3: Call inventory status change function with isLossTransferred flag and department
+                    let result = cm_functions.inventoryStatusChange(
+                        groupedTransfers,  // groupedTransfers
+                        location,          // location
+                        fromBin,           // fromBin
+                        fromStatus,        // fromStatus (Loss)
+                        toStatus,          // toStatus (Loss Outsourced)
+                        jsonString,        // jsonString
+                        null,              // bagIds
+                        null,              // operationIds
+                        null,              // waxTreeId
+                        null,              // weightDetails
+                        null,              // memoText
+                        null,              // serialSequenceMap
+                        true,              // isLossTransferred - Set checkbox for Move Loss operation
+                        departmentId       // lossTransferredDept - Set department dropdown
+                    );
 
                     if (result.status != "SUCCESS") {
                         return result;
@@ -2480,6 +2539,158 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                     return { status: 'ERROR', reason: error.message, data: [] }
                 }
             },
+            aggregateEmployeeLossData() {
+                try {
+                    let requestBody = rootContext.body;
+                    log.debug('aggregateEmployeeLossData requestBody', requestBody);
+                    
+                    if (!requestBody.emp_id || !requestBody.department_id) {
+                        return { status: 'ERROR', reason: 'Missing required parameters: emp_id and department_id', data: null };
+                    }
+                    
+                    // Step 1: Get the exit time from inventory adjustments
+                    const invAdjResult = cm_model.getInvAdjCreatedDate(requestBody.emp_id);
+                    log.debug('invAdjResult', invAdjResult);
+                    
+                    let exitTime = null;
+                    if (invAdjResult.status === 'SUCCESS' && invAdjResult.data && invAdjResult.data.length > 0) {
+                        // Get the most recent date (last one in the array)
+                        exitTime = invAdjResult.data[invAdjResult.data.length - 1];
+                        log.debug('exitTime extracted', exitTime);
+                    }
+                    
+                    // Step 2: Get lossLastTransferred from request body (selected loss transaction date)
+                    const lossLastTransferred = requestBody.lossLastTransferred || null;
+                    log.debug('lossLastTransferred from frontend', lossLastTransferred);
+                    
+                    // Step 3: Call aggregateEmployeeLossData with the exit time and lossLastTransferred
+                    const result = cm_model.aggregateEmployeeLossData(requestBody.emp_id, requestBody.department_id, exitTime, lossLastTransferred);
+                    log.debug('aggregateEmployeeLossData result', result);
+                    
+                    // Add exitTime to the response data
+                    if (result.status === 'SUCCESS' && result.data) {
+                        result.data.exitTime = exitTime;
+                    }
+                    
+                    return result;
+                } catch (error) {
+                    log.error('error @ aggregateEmployeeLossData', error);
+                    return { status: 'ERROR', reason: error.message, data: null };
+                }
+            },
+            getLossTransactions() {
+                try {
+                    const requestBody = rootContext.body;
+                    log.debug('getLossTransactions requestBody', requestBody);
+                    const departmentId = (requestBody && requestBody.department_id) ? requestBody.department_id : null;
+                    log.debug('getLossTransactions departmentId', departmentId);
+                    return cm_model.getLossTransactions(departmentId);
+                } catch (error) {
+                    log.error('error @ getLossTransactions', error);
+                    return { status: 'ERROR', reason: error.message, data: [] };
+                }
+            },
+            getEmployeeWiseRecoveryByTransaction() {
+                try {
+                    const requestBody = rootContext.body;
+                    const lossTranId = requestBody && requestBody.loss_transaction_id;
+                    if (!lossTranId) {
+                        return { status: 'ERROR', reason: 'loss_transaction_id is required', data: [] };
+                    }
+                    return cm_model.getEmployeeWiseRecoveryByTransaction(lossTranId);
+                } catch (error) {
+                    log.error('error @ getEmployeeWiseRecoveryByTransaction', error);
+                    return { status: 'ERROR', reason: error.message, data: [] };
+                }
+            },
+            incrementRecoveredPureQty() {
+                try {
+                    const requestBody = rootContext.body;
+                    const tranId = requestBody && requestBody.tran_id;
+                    const pureQtyToAdd = requestBody && parseFloat(requestBody.pure_qty_to_add || 0);
+                    if (!tranId || !pureQtyToAdd) {
+                        return { status: 'ERROR', reason: 'tran_id and pure_qty_to_add are required', data: null };
+                    }
+
+                    log.debug('incrementRecoveredPureQty START', { tranId, pureQtyToAdd });
+
+                    const invStatusRec = record.load({
+                        type: 'inventorystatuschange',
+                        id: tranId,
+                        isDynamic: false
+                    });
+
+                    const currentVal = parseFloat(invStatusRec.getValue({ fieldId: 'custbody_jj_recovered_pure_qty' }) || 0);
+                    const newVal = Number(parseFloat(currentVal + pureQtyToAdd).toFixed(4));
+
+                    invStatusRec.setValue({ fieldId: 'custbody_jj_recovered_pure_qty', value: newVal });
+                    invStatusRec.save({ enableSourcing: false, ignoreMandatoryFields: true });
+
+                    log.debug('incrementRecoveredPureQty SUCCESS', { tranId, currentVal, pureQtyToAdd, newVal });
+                    return { status: 'SUCCESS', reason: 'Field updated', data: { newVal } };
+                } catch (error) {
+                    log.error('error @ incrementRecoveredPureQty', error);
+                    return { status: 'ERROR', reason: error.message, data: null };
+                }
+            },
+            getRecoveryDataByDeptAndDateRange() {
+                try {
+                    const requestBody = rootContext.body;
+                    log.debug('RECOVERY-EFFICIENCY requestBody', JSON.stringify(requestBody));
+                    const startDate = (requestBody && requestBody.startDate) || '';
+                    const endDate = (requestBody && requestBody.endDate) || '';
+
+                    if (!startDate || !endDate) {
+                        return { status: 'SUCCESS', reason: 'Invalid or missing date range', data: { avgRecoveryPercentage: 0 } };
+                    }
+
+                    return cm_model.getAvgRecoveryPercentageByDateRange(startDate, endDate);
+                } catch (error) {
+                    log.error('error @ getRecoveryDataByDeptAndDateRange', error);
+                    return { status: 'ERROR', reason: error.message, data: null };
+                }
+            },
+            createEmployeeWiseRecovery() {
+                try {
+                    const requestBody = rootContext.body;
+                    log.debug('createEmployeeWiseRecovery requestBody', requestBody);
+
+                    if (!requestBody || !requestBody.records || !requestBody.records.length) {
+                        return { status: 'ERROR', reason: 'No records provided', data: [] };
+                    }
+
+                    const createdIds = [];
+                    requestBody.records.forEach(function (payload) {
+                        log.debug('createEmployeeWiseRecovery payload.inventory_adjustment_id', {
+                            raw: payload.inventory_adjustment_id,
+                            type: typeof payload.inventory_adjustment_id,
+                            asNumber: Number(payload.inventory_adjustment_id)
+                        });
+                        const rec = record.create({ type: 'customrecord_jj_employee_wise_recovery', isDynamic: true });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_recovery_department', value: payload.department_id || '' });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_recovery_employee', value: payload.employee_id || '' });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_recovery_loss_tran', value: payload.loss_transaction_id || '' });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_recovery_percentage', value: payload.employee_recovery_percentage || 0 });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_recovery_pure_rec_qty', value: payload.pure_recovered_qty || 0 });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_recovery_rec_qty', value: payload.recovered_qty || 0 });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_recovery_touch', value: payload.touch || 0 });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_rec_dept_recovery_perc', value: payload.dept_recovery_percentage || 0 });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_rec_emp_pure_loss_qty', value: payload.emp_pure_loss_qty || 0 });
+                        rec.setValue({ fieldId: 'custrecord_jj_emp_recovery_emp_loss_qty', value: payload.emp_loss_qty || 0 });
+                        if (payload.inventory_adjustment_id) {
+                            rec.setValue({ fieldId: 'custrecord_jj_emp_rec_inv_adjustment', value: Number(payload.inventory_adjustment_id) });
+                        }
+                        const id = rec.save({ enableSourcing: false, ignoreMandatoryFields: false });
+                        createdIds.push(id);
+                    });
+
+                    log.debug('createEmployeeWiseRecovery createdIds', createdIds);
+                    return { status: 'SUCCESS', reason: 'Employee wise recovery records created', data: createdIds };
+                } catch (error) {
+                    log.error('error @ createEmployeeWiseRecovery', error);
+                    return { status: 'ERROR', reason: error.message, data: [] };
+                }
+            },
         }
         jj_cm_ns_utility.applyTryCatch(apiMethods, 'apiMethods');
         const rootContext = {
@@ -2518,6 +2729,9 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                 log.debug("DEBUG: Full parameters object", this.parameters);
                 log.debug("DEBUG: apiType value", this.parameters.apiType);
                 log.debug("DEBUG: apiType type", typeof this.parameters.apiType);
+                if (this.method == "OPTION") {
+                    return { status: 'SUCCESS', reason: 'OPTIONS request - no action taken', data: null };
+                }
 
                 // log.debug("this.parameters.apiType", this.parameters.apiType);
                 if (jj_cm_ns_utility.checkForParameter(this.parameters.apiType)) {
@@ -2645,6 +2859,18 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                         case "createAssemblyUnbuild":
                             log.debug("✓ MATCHED CASE: createAssemblyUnbuild - NOW CALLING FUNCTION");
                             return apiMethods.createAssemblyUnbuild();
+                        case "aggregateEmployeeLossData":
+                            return apiMethods.aggregateEmployeeLossData();
+                        case "getLossTransactions":
+                            return apiMethods.getLossTransactions();
+                        case "createEmployeeWiseRecovery":
+                            return apiMethods.createEmployeeWiseRecovery();
+                        case "getEmployeeWiseRecoveryByTransaction":
+                            return apiMethods.getEmployeeWiseRecoveryByTransaction();
+                        case "getRecoveryDataByDeptAndDateRange":
+                            return apiMethods.getRecoveryDataByDeptAndDateRange();
+                        case "incrementRecoveredPureQty":
+                            return apiMethods.incrementRecoveredPureQty();
                         default:
                             log.debug("✗ NO MATCH FOUND - DEFAULT CASE HIT", {
                                 receivedApiType: this.parameters.apiType,
