@@ -460,7 +460,7 @@
                                 <th class="px-3 py-2 text-left font-semibold">Bag Count</th>
                                 <th class="px-3 py-2 text-left font-semibold">Bag Name</th>
 
-                                <th class="px-3 py-2 text-left font-semibold">Issued Net Weight</th>
+                                <th class="px-3 py-2 text-left font-semibold">Starting Net Weight</th>
                                 <!-- <th class="px-3 py-2 text-left font-semibold">Issued Qty Gold</th> -->
                                 <th class="px-3 py-2 text-left font-semibold">Recieved Net Weight</th>
                                 <th class="px-3 py-2 text-left font-semibold">Gross Loss</th>
@@ -512,7 +512,10 @@
                                                 <td v-if="catIndex === 0 && bagIndex === 0"
                                                     :rowspan="dept.unique_categories_array.reduce((s, c) => s + (dept.category_bag_names_map?.[c]?.length || 1), 0)"
                                                     class="px-3 py-2 group-hover:!bg-white border-r">
-                                                    <a v-if="getDeptNsUrl(dept)" :href="getDeptNsUrl(dept)" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ dept.name }}</a>
+                                                    <a v-if="getDeptNsUrl(dept)" 
+                                                       :href="getDeptNsUrl(dept)" 
+                                                       target="_blank"
+                                                       class="text-blue-600 hover:underline">{{ dept.name }}</a>
                                                     <span v-else>{{ dept.name }}</span>
                                                 </td>
 
@@ -527,11 +530,13 @@
                                                     class="px-3 py-2 group-hover:shadow-md border-r">{{ category || 'N/A' }}</td>
 
                                                 <!-- Style Number (Print Design) - rowspan = bags in category -->
-                                                <td v-if="bagIndex === 0"
-                                                    :rowspan="dept.category_bag_names_map?.[category]?.length || 1"
-                                                    class="px-3 py-2 group-hover:shadow-md">
-                                                    <a v-if="getStyleNsUrl(dept, category)" :href="getStyleNsUrl(dept, category)" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ dept.category_print_design_map?.[category] || '-' }}</a>
-                                                    <span v-else>{{ dept.category_print_design_map?.[category] || '-' }}</span>
+                                                <!-- Style Number (Print Design) - per bag, no rowspan -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">
+                                                    <a v-if="getStyleNsUrlPerBag(dept, category, bagName)" 
+                                                       :href="getStyleNsUrlPerBag(dept, category, bagName)"
+                                                       target="_blank"
+                                                       class="text-blue-600 hover:underline">{{ dept.category_bag_print_design_map?.[category]?.[bagName] || '-' }}</a>
+                                                    <span v-else>{{ dept.category_bag_print_design_map?.[category]?.[bagName] || '-' }}</span>
                                                 </td>
 
                                                 <!-- Bag Count (per category) - rowspan = bags in category -->
@@ -543,7 +548,7 @@
                                                 <td class="px-3 py-2 group-hover:shadow-md">
                                                     <a v-if="getBagNsUrl(dept, category, bagName)"
                                                        :href="getBagNsUrl(dept, category, bagName)"
-                                                       target="_blank" rel="noopener"
+                                                       target="_blank"
                                                        class="text-blue-600 hover:underline">{{ bagName }}</a>
                                                     <span v-else>{{ bagName || '-' }}</span>
                                                 </td>
@@ -710,7 +715,10 @@
                                                 <td v-if="catIndex === 0 && bagIndex === 0"
                                                     :rowspan="emp.unique_categories_array.reduce((s, c) => s + (emp.category_bag_names_map?.[c]?.length || 1), 0)"
                                                     class="px-3 py-2 group-hover:!bg-white">
-                                                    <a v-if="getEmpNsUrl(emp)" :href="getEmpNsUrl(emp)" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ emp.name }}</a>
+                                                    <a v-if="getEmpNsUrl(emp)" 
+                                                       :href="getEmpNsUrl(emp)"
+                                                       target="_blank"
+                                                       class="text-blue-600 hover:underline">{{ emp.name }}</a>
                                                     <span v-else>{{ emp.name }}</span>
                                                 </td>
 
@@ -724,12 +732,13 @@
                                                     :rowspan="emp.category_bag_names_map?.[category]?.length || 1"
                                                     class="px-3 py-2 group-hover:shadow-md border-r">{{ category || 'N/A' }}</td>
 
-                                                <!-- Style Number (Print Design) - rowspan = bags in category -->
-                                                <td v-if="bagIndex === 0"
-                                                    :rowspan="emp.category_bag_names_map?.[category]?.length || 1"
-                                                    class="px-3 py-2 group-hover:shadow-md">
-                                                    <a v-if="getStyleNsUrl(emp, category)" :href="getStyleNsUrl(emp, category)" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ emp.category_print_design_map?.[category] || '-' }}</a>
-                                                    <span v-else>{{ emp.category_print_design_map?.[category] || '-' }}</span>
+                                                <!-- Style Number (Print Design) - per bag, no rowspan -->
+                                                <td class="px-3 py-2 group-hover:shadow-md">
+                                                    <a v-if="getStyleNsUrlPerBag(emp, category, bagName)" 
+                                                       :href="getStyleNsUrlPerBag(emp, category, bagName)"
+                                                       target="_blank"
+                                                       class="text-blue-600 hover:underline">{{ emp.category_bag_print_design_map?.[category]?.[bagName] || '-' }}</a>
+                                                    <span v-else>{{ emp.category_bag_print_design_map?.[category]?.[bagName] || '-' }}</span>
                                                 </td>
 
                                                 <!-- Bag Count (per category) - rowspan = bags in category -->
@@ -741,7 +750,7 @@
                                                 <td class="px-3 py-2 group-hover:shadow-md">
                                                     <a v-if="getEmpBagNsUrl(emp, category, bagName)"
                                                        :href="getEmpBagNsUrl(emp, category, bagName)"
-                                                       target="_blank" rel="noopener"
+                                                       target="_blank"
                                                        class="text-blue-600 hover:underline">{{ bagName }}</a>
                                                     <span v-else>{{ bagName || '-' }}</span>
                                                 </td>
@@ -948,7 +957,7 @@ export default {
         const showDepartments = ref(false);
         const showEmployees = ref(false);
         const selectedDateRange = ref(null); // Holds selected date range
-        const baseTitle = props.type === 'repair' ? "Repair Efficiency Analysis" : "Overall Efficiency Analysis";
+        const baseTitle = props.type === 'repair' ? "Repair Efficiency Analysis" : props.type === 'production' ? "Production Efficiency Analysis" : "Overall Efficiency Analysis";
         const dashboardTitle = ref(baseTitle);
         const selectedDepartments = ref([]);
         const selectedEmployees = ref([]);
@@ -2461,42 +2470,49 @@ export default {
             return roundToTwo(getEmpBagLossQtyGoldRaw(emp, cat, bag) * purity);
         };
 
-        // Build a NetSuite link to the bag generation record
-        // Use app.netsuite.com (not extforms) + ns-at token for authenticated direct links
-        const _nsAppBase = ENV_VAR.NS_API.BASE_DOMAIN;
-        const _nsAt = ENV_VAR.NS_API.API.BAG_MANAGEMENT_APP_ENDPOINT.APPEND; // "&compid=...&ns-at=..."
+        // Build NetSuite record links — always use app.netsuite.com for record navigation.
+        // extforms.netsuite.com (used in dev) is for unauthenticated external forms only;
+        // record links must go to app.netsuite.com where the user's session cookie is valid.
+        const _appendRaw = ENV_VAR.NS_API.API.BAG_MANAGEMENT_APP_ENDPOINT.APPEND || '';
+        const _compidMatch = _appendRaw.match(/compid=([^&]+)/);
+        const _compidValue = _compidMatch ? _compidMatch[1] : '';
+        // Derive app.netsuite.com base from compid (strip _SB1 suffix for sandbox → use -sb1 subdomain)
+        const _isSandbox = _compidValue.includes('_SB');
+        const _sbNum = _isSandbox ? _compidValue.split('_SB')[1] : '';
+        const _accountId = _compidValue.split('_SB')[0];
+        const _appBase = _isSandbox
+            ? `https://${_accountId}-sb${_sbNum}.app.netsuite.com`
+            : `https://${_accountId}.app.netsuite.com`;
+        const _compid = _compidValue ? `&compid=${_compidValue}` : '';
 
         const getBagNsUrl = (dept, category, bagName) => {
             const bagId = dept.category_bag_ids_map?.[category]?.[bagName];
             if (!bagId) return null;
-            return `${_nsAppBase}/app/common/custom/custrecordentry.nl?rectype=1026&id=${bagId}${_nsAt}`;
+            return `${_appBase}/app/common/custom/custrecordentry.nl?rectype=1026&id=${bagId}${_compid}`;
         };
         const getEmpBagNsUrl = (emp, category, bagName) => {
             const bagId = emp.category_bag_ids_map?.[category]?.[bagName];
             if (!bagId) return null;
-            return `${_nsAppBase}/app/common/custom/custrecordentry.nl?rectype=1026&id=${bagId}${_nsAt}`;
+            return `${_appBase}/app/common/custom/custrecordentry.nl?rectype=1026&id=${bagId}${_compid}`;
         };
-
-        const APPEND = ENV_VAR.NS_API.API.BAG_MANAGEMENT_APP_ENDPOINT.APPEND;
-        const BASE = ENV_VAR.NS_API.BASE_DOMAIN;
 
         // Department link (customrecord_jj_manufacturing_dept)
         const getDeptNsUrl = (dept) => {
             if (!dept?.id) return null;
-            return `${BASE}/app/common/custom/custrecordentry.nl?rectype=1011&id=${dept.id}${_nsAt}`;
+            return `${_appBase}/app/common/custom/custrecordentry.nl?rectype=1011&id=${dept.id}${_compid}`;
         };
 
         // Employee link (standard employee record)
         const getEmpNsUrl = (emp) => {
             if (!emp?.id) return null;
-            return `${BASE}/app/common/entity/employee.nl?id=${emp.id}${_nsAt}`;
+            return `${_appBase}/app/common/entity/employee.nl?id=${emp.id}${_compid}`;
         };
 
-        // Style Number (assembly item) link
-        const getStyleNsUrl = (entity, category) => {
-            const itemId = entity?.category_print_design_id_map?.[category];
+        // Style Number (assembly item) link — per bag
+        const getStyleNsUrlPerBag = (entity, category, bagName) => {
+            const itemId = entity?.category_bag_print_design_id_map?.[category]?.[bagName];
             if (!itemId) return null;
-            return `${BASE}/app/common/item/item.nl?id=${itemId}${_nsAt}`;
+            return `${_appBase}/app/common/item/item.nl?id=${itemId}${_compid}`;
         };
         // Helper function to get category-level starting quantity for Gold
         const getCategoryStartingQtyGold = (dept, category) => {
@@ -3156,7 +3172,7 @@ export default {
                 const formattedEndDate = formatDate(selectedDateRange.value[1]);
 
                 // Fetch Efficiency Analysis Data (Overall - All Operations)
-                const isRepairOnly = props.type === 'repair' ? true : false;
+                const isRepairOnly = props.type === 'repair' ? true : props.type === 'production' ? false : null;
                 await fetchListEfficiencyAnalysis(locationId, formattedStartDate, formattedEndDate, isRepairOnly);
                 
                 // ✅ COMPREHENSIVE CONSOLE LOGS FOR FETCHED DATA
@@ -3194,6 +3210,8 @@ export default {
                                     category_bag_count_map: dept.category_bag_count_map || {},
                                     category_bag_names_map: dept.category_bag_names_map || {},
                                     category_bag_ids_map: dept.category_bag_ids_map || {},
+                                    category_bag_print_design_map: dept.category_bag_print_design_map || {},
+                                    category_bag_print_design_id_map: dept.category_bag_print_design_id_map || {},
                                     category_print_design_id_map: dept.category_print_design_id_map || {},
                                     wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
                                     wax_tree_loss_gold: dept.wax_tree_loss_gold ?? null,
@@ -3233,7 +3251,9 @@ export default {
                                             category_print_design_id_map: emp.category_print_design_id_map || {},
                                             category_bag_count_map: emp.category_bag_count_map || {},
                                             category_bag_names_map: emp.category_bag_names_map || {},
-                                            category_bag_ids_map: emp.category_bag_ids_map || {}
+                                            category_bag_ids_map: emp.category_bag_ids_map || {},
+                                            category_bag_print_design_map: emp.category_bag_print_design_map || {},
+                                            category_bag_print_design_id_map: emp.category_bag_print_design_id_map || {}
                                         };
                                         return empObj;
                                     })
@@ -3337,6 +3357,8 @@ export default {
                                             category_bag_count_map: emp.category_bag_count_map || {},
                                             category_bag_names_map: emp.category_bag_names_map || {},
                                             category_bag_ids_map: emp.category_bag_ids_map || {},
+                                            category_bag_print_design_map: emp.category_bag_print_design_map || {},
+                                            category_bag_print_design_id_map: emp.category_bag_print_design_id_map || {},
                                             category_print_design_id_map: emp.category_print_design_id_map || {}
                                         };
                                     });
@@ -3355,6 +3377,8 @@ export default {
                                         category_bag_count_map: dept.category_bag_count_map || {},
                                         category_bag_names_map: dept.category_bag_names_map || {},
                                         category_bag_ids_map: dept.category_bag_ids_map || {},
+                                        category_bag_print_design_map: dept.category_bag_print_design_map || {},
+                                        category_bag_print_design_id_map: dept.category_bag_print_design_id_map || {},
                                         category_print_design_id_map: dept.category_print_design_id_map || {},
                                         wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
                                         wax_tree_loss_gold: dept.wax_tree_loss_gold ?? null,
@@ -3969,7 +3993,7 @@ export default {
             getEmpBagNsUrl,
             getDeptNsUrl,
             getEmpNsUrl,
-            getStyleNsUrl,
+            getStyleNsUrlPerBag,
             totalDeptActualProductionGold,
             totalDeptGrossLossGold,
             totalDeptActualProductionDiamond,

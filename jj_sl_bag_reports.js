@@ -52,15 +52,35 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                     } else if (requestBody?.dept_hod) {
                         departmentList = cm_model.getAllManufacturingDepartments(null, "dept_hod");
                     } else if (requestBody?.params == "loss_recovery") {
-                        // NEW LOGIC: Get only departments that have actual loss items
-                        let materialType = requestBody?.material_type || 'gold_type'; // Default to gold
+                        // Get only departments that have actual loss items
+                        let materialType = requestBody?.material_type || 'gold_type';
                         let isInProgress = requestBody?.isInProgress || false;
+                        let includeCastingLoss = requestBody?.include_casting_loss || false;
+
                         departmentList = cm_model.getDepartmentsWithLoss(
                             materialType,
                             isInProgress,
                             requestBody?.user_id,
                             requestBody?.all_department
                         );
+
+                        // When write-off page requests, also include departments with lossStatus inventory
+                        // (e.g. Casting which bypasses In Progress and recovers directly from Loss)
+                        if (includeCastingLoss && isInProgress) {
+                            let lossModeDepts = cm_model.getDepartmentsWithLoss(
+                                materialType,
+                                false, // lossStatus
+                                requestBody?.user_id,
+                                requestBody?.all_department
+                            );
+                            // Merge — add any loss-mode dept not already in the list
+                            let existingIds = new Set(departmentList.map(d => d.value));
+                            lossModeDepts.forEach(d => {
+                                if (!existingIds.has(d.value)) {
+                                    departmentList.push(d);
+                                }
+                            });
+                        }
                     } else if (requestBody?.params == "user_specific") {
                         departmentList = cm_model.getAllManufacturingDepartments(null, requestBody?.params, requestBody?.all_department, requestBody?.user_id);
                     } else if (requestBody?.params == "location_transfer") {
@@ -672,8 +692,13 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                             return acc;
                         }, {});
 
-                        // Convert the grouped object back to an array  
-                        formattedComponents = Object.values(groupedComponents);
+                        // Convert the grouped object back to an array
+                        // Inject waxTreeInternalId from original selectedComponents so cm_functions can set the field
+                        formattedComponents = Object.values(groupedComponents).map(function (fc) {
+                            const match = selectedComponents.find(function (c) { return c.itemId === fc.itemId && c.waxTreeInternalId; });
+                            log.debug('waxTree recovery formattedComponent', { itemId: fc.itemId, waxTreeInternalId: match ? match.waxTreeInternalId : null });
+                            return Object.assign({}, fc, { waxTreeInternalId: match ? match.waxTreeInternalId : null });
+                        });
                     } else {
                         // For In Progress recovery: distribute recoveredQty (from Gold Details table) across lots proportionally
                         formattedComponents = selectedComponents
@@ -806,7 +831,7 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                     if (!requestBody || !jj_cm_ns_utility.checkForParameter(requestBody)) {
                         return { status: 'ERROR', reason: 'No Parameters Found', data: [] };
                     }
-                    let binTransferCreated = cm_functions.createBinTransferRecordTest(requestBody, requestBody[0].location_id);
+                    let binTransferCreated = cm_functions.createBinTransferRecordTest(requestBody, requestBody[0].location_id, null, null, null, "Item Transfer from UI");
                     if (binTransferCreated.status == 'SUCCESS') {
                         return { status: 'SUCCESS', reason: 'Bin Transfer Created', data: binTransferCreated.data };
                     }
@@ -1645,10 +1670,13 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                     // Call appropriate function based on isRepairOnly parameter
                     let efficiencyData;
                     if (isRepairOnly === true) {
-                        // Repair Efficiency Analysis - use getRepairEfficiencyData with repair filter
+                        // Repair Efficiency Analysis — repair orders only
                         efficiencyData = cm_model.getRepairEfficiencyData(locationId, startDate, endDate, isRepairOnly);
+                    } else if (isRepairOnly === false) {
+                        // Production Efficiency Analysis — non-repair orders only
+                        efficiencyData = cm_model.getProductionEfficiencyData(locationId, startDate, endDate);
                     } else {
-                        // Overall Efficiency Analysis - use getOverallEfficiencyData (all operations)
+                        // Overall Efficiency Analysis — all operations (repair + production)
                         efficiencyData = cm_model.getOverallEfficiencyData(locationId, startDate, endDate);
                     }
 
@@ -1751,9 +1779,33 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                         }, {});
 
                         // Convert the grouped object back to an array  
-                        formattedComponents = Object.values(groupedComponents);
+                        // Also carry waxTreeInternalId from original selectedComponents for the Related Wax Tree field
+                        formattedComponents = Object.values(groupedComponents).map(function (fc) {
+                            const waxTreeIds = selectedComponents
+                                .filter(function (c) { return c.itemId === fc.itemId && c.waxTreeInternalId; })
+                                .map(function (c) { return c.waxTreeInternalId; });
+                            return Object.assign({}, fc, { waxTreeInternalId: waxTreeIds[0] || null });
+                        });
                     } else {
-                        formattedComponents = selectedComponents;
+                        // exact sum of writeOffQtyPerLot so adjustqtyby matches the inventory detail
+                        const lossOutsourcedStatus = deptFields?.lossOutsourcedStatus;
+                        formattedComponents = selectedComponents.map(function (component) {
+                            const lots = (component.inventoryDetails && component.inventoryDetails.lossOutsourcedQty) || [];
+                            const stampedLots = lots.map(function (lot) {
+                                return { ...lot, inventoryStatus: lot.inventoryStatus || lossOutsourcedStatus };
+                            }).filter(function (lot) { return parseFloat(lot.writeOffQtyPerLot || 0) > 0; });
+                            const actualWriteOffQty = Number(parseFloat(
+                                stampedLots.reduce(function (s, l) { return s + parseFloat(l.writeOffQtyPerLot || 0); }, 0)
+                            ).toFixed(4));
+                            return {
+                                ...component,
+                                writeOffQty: actualWriteOffQty,
+                                inventoryDetails: {
+                                    ...component.inventoryDetails,
+                                    lossOutsourcedQty: stampedLots,
+                                }
+                            };
+                        }).filter(function (c) { return c.writeOffQty > 0; });
                     }
 
                     // function createInventoryAdjustment params: selectedComponents, locationId, binNumber, goodStatus, inventoryName, selectedMetal, totalRecoveredQty, departmentId, selectedEmployee, waxTreeRecovery, memo
@@ -1773,6 +1825,23 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                                 throw new Error(updateWTStatus.error);
                             }
                         });
+                    }
+
+                    // Increment custbody_jj_recovered_pure_qty on the loss transaction so the
+                    // written-off qty is treated as "consumed" — preventing further recovery
+                    const lossTranId = requestBody.loss_transaction_id;
+                    const pureQtyWrittenOff = Number(parseFloat(requestBody.pure_qty_written_off || 0).toFixed(4));
+                    if (lossTranId && pureQtyWrittenOff > 0) {
+                        try {
+                            const invStatusRec = record.load({ type: 'inventorystatuschange', id: lossTranId, isDynamic: false });
+                            const currentVal = parseFloat(invStatusRec.getValue({ fieldId: 'custbody_jj_recovered_pure_qty' }) || 0);
+                            const newVal = Number(parseFloat(currentVal + pureQtyWrittenOff).toFixed(4));
+                            invStatusRec.setValue({ fieldId: 'custbody_jj_recovered_pure_qty', value: newVal });
+                            invStatusRec.save({ enableSourcing: false, ignoreMandatoryFields: true });
+                            log.debug('createGoldLossWriteOff: incremented recoveredPureQty', { lossTranId, currentVal, pureQtyWrittenOff, newVal });
+                        } catch (e) {
+                            log.error('createGoldLossWriteOff: failed to increment recoveredPureQty', e);
+                        }
                     }
 
                     return { status: 'SUCCESS', reason: 'Gold Loss Write Off Created Successfully', data: adjustmentStatus.data };
@@ -2484,7 +2553,7 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                         null,              // operationIds
                         null,              // waxTreeId
                         null,              // weightDetails
-                        null,              // memoText
+                        "Loss Outsourced", // memoText
                         null,              // serialSequenceMap
                         true,              // isLossTransferred - Set checkbox for Move Loss operation
                         departmentId       // lossTransferredDept - Set department dropdown
@@ -2543,35 +2612,35 @@ define(['N/runtime', 'N/search', 'N/ui/serverWidget', 'N/file', 'N/format', 'N/h
                 try {
                     let requestBody = rootContext.body;
                     log.debug('aggregateEmployeeLossData requestBody', requestBody);
-                    
+
                     if (!requestBody.emp_id || !requestBody.department_id) {
                         return { status: 'ERROR', reason: 'Missing required parameters: emp_id and department_id', data: null };
                     }
-                    
+
                     // Step 1: Get the exit time from inventory adjustments
                     const invAdjResult = cm_model.getInvAdjCreatedDate(requestBody.emp_id);
                     log.debug('invAdjResult', invAdjResult);
-                    
+
                     let exitTime = null;
                     if (invAdjResult.status === 'SUCCESS' && invAdjResult.data && invAdjResult.data.length > 0) {
                         // Get the most recent date (last one in the array)
                         exitTime = invAdjResult.data[invAdjResult.data.length - 1];
                         log.debug('exitTime extracted', exitTime);
                     }
-                    
+
                     // Step 2: Get lossLastTransferred from request body (selected loss transaction date)
                     const lossLastTransferred = requestBody.lossLastTransferred || null;
                     log.debug('lossLastTransferred from frontend', lossLastTransferred);
-                    
+
                     // Step 3: Call aggregateEmployeeLossData with the exit time and lossLastTransferred
                     const result = cm_model.aggregateEmployeeLossData(requestBody.emp_id, requestBody.department_id, exitTime, lossLastTransferred);
                     log.debug('aggregateEmployeeLossData result', result);
-                    
+
                     // Add exitTime to the response data
                     if (result.status === 'SUCCESS' && result.data) {
                         result.data.exitTime = exitTime;
                     }
-                    
+
                     return result;
                 } catch (error) {
                     log.error('error @ aggregateEmployeeLossData', error);
