@@ -2498,9 +2498,7 @@ export default {
         const getDepartmentTotalActualProductionGold = (dept) => {
             // For special departments, return Wax Tree actual production gold directly
             if ([CASTING, TREE_CUTTING_CLEANING, GRINDING].includes(parseInt(dept.id))) {
-                const waxValue = parseFloat(dept.wax_tree_actual_production_gold || 0);
-                console.log(`[Wax Tree] Dept ${dept.id} (${dept.name}) actual_production_gold:`, waxValue);
-                return waxValue;
+                return parseFloat(dept.wax_tree_actual_production_gold || 0);
             }
             if (!dept.category_qty_map) return 0;
             let sum = 0;
@@ -3031,13 +3029,9 @@ export default {
 
         // Helper function to get raw numeric employee category-level starting quantity for Gold (for calculations)
         const getEmployeeCategoryStartingQtyGoldRaw = (emp, category) => {
-            if (!emp.category_qty_map) {
-                console.log(`[getEmployeeCategoryStartingQtyGoldRaw] No category_qty_map for employee:`, emp);
-                return 0;
-            }
+            if (!emp.category_qty_map) return 0;
             const key = `${emp.id}_${category}`;
             const data = emp.category_qty_map[key];
-            console.log(`[getEmployeeCategoryStartingQtyGoldRaw] Employee ID: ${emp.id}, Category: ${category}, Key: ${key}, Data:`, data);
             return data ? parseFloat(data.starting_qty_gold || 0) : 0;
         };
 
@@ -3115,13 +3109,9 @@ export default {
 
         // Helper function to get employee category-level starting quantity for Gold
         const getEmployeeCategoryStartingQtyGold = (emp, category) => {
-            if (!emp.category_qty_map) {
-                console.log(`[getEmployeeCategoryStartingQtyGold] No category_qty_map for employee:`, emp);
-                return '-';
-            }
+            if (!emp.category_qty_map) return '-';
             const key = `${emp.id}_${category}`;
             const data = emp.category_qty_map[key];
-            console.log(`[getEmployeeCategoryStartingQtyGold] Employee ID: ${emp.id}, Category: ${category}, Key: ${key}, Data:`, data);
             return data ? roundToTwo(data.starting_qty_gold) : '-';
         };
 
@@ -3584,16 +3574,16 @@ export default {
                 await fetchListEfficiencyAnalysis(locationId, formattedStartDate, formattedEndDate, isRepairOnly);
                 
                 // ✅ COMPREHENSIVE CONSOLE LOGS FOR FETCHED DATA
-                console.log("\n" + "=".repeat(60));
-                console.log("🔵 EFFICIENCY ANALYSIS DATA FETCH - FRONTEND CONSOLE");
-                console.log("=".repeat(60));
-                console.log("📅 Date Range:", formattedStartDate, "to", formattedEndDate);
-                console.log("📍 Location ID:", locationId || "All Locations");
-                console.log("=".repeat(60));
+                // console.log("\n" + "=".repeat(60));
+                // console.log("🔵 EFFICIENCY ANALYSIS DATA FETCH - FRONTEND CONSOLE");
+                // console.log("=".repeat(60));
+                // console.log("📅 Date Range:", formattedStartDate, "to", formattedEndDate);
+                // console.log("📍 Location ID:", locationId || "All Locations");
+                // console.log("=".repeat(60));
                 
                 // Raw API Response
-                console.log("\n📊 RAW API RESPONSE (listEfficiencyData):");
-                console.log(JSON.stringify(listEfficiencyData.value, null, 2));
+                // console.log("\n📊 RAW API RESPONSE (listEfficiencyData):");
+                // console.log(JSON.stringify(listEfficiencyData.value, null, 2));
                 
                 if (listEfficiencyData.value && Object.keys(listEfficiencyData.value).length > 0) {
 
@@ -3627,47 +3617,25 @@ export default {
                                     wax_tree_actual_production_gold: dept.wax_tree_actual_production_gold ?? null,
                                     wax_tree_loss_gold: dept.wax_tree_loss_gold ?? null,
                                     employees: (dept.employees_array || []).map(emp => {
-                                        // Rebuild category_bag_names_map and unique_categories_array
-                                        // directly from emp.categories (the qty data source).
-                                        // This guarantees the table iterates exactly the bags that
-                                        // have data, so getEmpBagQtyData().find() always succeeds —
-                                        // both for single-date and multi-day date ranges.
+                                        // Build category_qty_map from categories array
                                         const categoryQtyMap = {};
-                                        const derivedBagNamesMap = {};   // category → [bagName, ...]
-                                        const derivedCategoriesSet = new Set();
-                                        (emp.categories || []).forEach(cat => {
-                                            const catName = cat.category_name;
-                                            const bagName = cat.bag_name || '';
-                                            // category_qty_map (keyed by empId_category)
-                                            const key = `${emp.employee_id}_${catName}`;
-                                            if (!categoryQtyMap[key]) {
+                                        if (emp.categories && Array.isArray(emp.categories)) {
+                                            emp.categories.forEach(cat => {
+                                                const key = `${emp.employee_id}_${cat.category_name}`;
                                                 categoryQtyMap[key] = {
-                                                    starting_qty_gold: 0, starting_qty_diamond: 0,
-                                                    issued_qty_gold: 0,   issued_qty_diamond: 0,
-                                                    loss_qty_gold: 0,     loss_qty_diamond: 0,
-                                                    scrap_qty_gold: 0,    scrap_qty_diamond: 0,
-                                                    balance_qty_gold: 0,  balance_qty_diamond: 0
+                                                    starting_qty_gold: cat.starting_qty_gold || 0,
+                                                    starting_qty_diamond: cat.starting_qty_diamond || 0,
+                                                    issued_qty_gold: cat.issued_qty_gold || 0,
+                                                    issued_qty_diamond: cat.issued_qty_diamond || 0,
+                                                    loss_qty_gold: cat.loss_qty_gold || 0,
+                                                    loss_qty_diamond: cat.loss_qty_diamond || 0,
+                                                    scrap_qty_gold: cat.scrap_qty_gold || 0,
+                                                    scrap_qty_diamond: cat.scrap_qty_diamond || 0,
+                                                    balance_qty_gold: cat.balance_qty_gold || 0,
+                                                    balance_qty_diamond: cat.balance_qty_diamond || 0
                                                 };
-                                            }
-                                            categoryQtyMap[key].starting_qty_gold  += parseFloat(cat.starting_qty_gold  || 0);
-                                            categoryQtyMap[key].starting_qty_diamond += parseFloat(cat.starting_qty_diamond || 0);
-                                            categoryQtyMap[key].issued_qty_gold    += parseFloat(cat.issued_qty_gold    || 0);
-                                            categoryQtyMap[key].issued_qty_diamond += parseFloat(cat.issued_qty_diamond || 0);
-                                            categoryQtyMap[key].loss_qty_gold      += parseFloat(cat.loss_qty_gold      || 0);
-                                            categoryQtyMap[key].loss_qty_diamond   += parseFloat(cat.loss_qty_diamond   || 0);
-                                            categoryQtyMap[key].scrap_qty_gold     += parseFloat(cat.scrap_qty_gold     || 0);
-                                            categoryQtyMap[key].scrap_qty_diamond  += parseFloat(cat.scrap_qty_diamond  || 0);
-                                            categoryQtyMap[key].balance_qty_gold   += parseFloat(cat.balance_qty_gold   || 0);
-                                            categoryQtyMap[key].balance_qty_diamond += parseFloat(cat.balance_qty_diamond || 0);
-                                            // derived navigation maps
-                                            if (catName) {
-                                                derivedCategoriesSet.add(catName);
-                                                if (!derivedBagNamesMap[catName]) derivedBagNamesMap[catName] = [];
-                                                if (bagName && !derivedBagNamesMap[catName].includes(bagName)) {
-                                                    derivedBagNamesMap[catName].push(bagName);
-                                                }
-                                            }
-                                        });
+                                            });
+                                        }
                                         
                                         const empObj = {
                                             id: emp.employee_id,
@@ -3675,11 +3643,7 @@ export default {
                                             bag_count: emp.bag_count || 0,
                                             unique_bags_array: emp.unique_bags_array || [],
                                             category_count: emp.category_count || 0,
-                                            // Use derived arrays so the table only iterates bags/categories
-                                            // that actually have qty data in emp.categories
-                                            unique_categories_array: derivedCategoriesSet.size > 0
-                                                ? Array.from(derivedCategoriesSet)
-                                                : (emp.unique_categories_array || []),
+                                            unique_categories_array: emp.unique_categories_array || [],
                                             starting_qty: emp.starting_qty || 0,
                                             loss_qty: emp.loss_qty || 0,
                                             categories: emp.categories || [],
@@ -3687,10 +3651,7 @@ export default {
                                             category_print_design_map: emp.category_print_design_map || {},
                                             category_print_design_id_map: emp.category_print_design_id_map || {},
                                             category_bag_count_map: emp.category_bag_count_map || {},
-                                            // Use derived map so the table only iterates bags with actual data
-                                            category_bag_names_map: Object.keys(derivedBagNamesMap).length > 0
-                                                ? derivedBagNamesMap
-                                                : (emp.category_bag_names_map || {}),
+                                            category_bag_names_map: emp.category_bag_names_map || {},
                                             category_bag_ids_map: emp.category_bag_ids_map || {},
                                             category_bag_print_design_map: emp.category_bag_print_design_map || {},
                                             category_bag_print_design_id_map: emp.category_bag_print_design_id_map || {},
@@ -3705,42 +3666,42 @@ export default {
                         }));
 
                         // ✅ DETAILED CONSOLE LOGS - STRUCTURED DATA
-                        console.log("\n📍 PROCESSED LOCATIONS DATA:");
-                        console.log("─".repeat(60));
+                        // console.log("\n📍 PROCESSED LOCATIONS DATA:");
+                        // console.log("─".repeat(60));
                         locations.value.forEach((loc, locIdx) => {
-                            console.log(`\n[Location ${locIdx + 1}] ${loc.name.value}`);
-                            console.log(`Located ID: ${loc.internalid.value}`);
+                            // console.log(`\n[Location ${locIdx + 1}] ${loc.name.value}`);
+                            // console.log(`Located ID: ${loc.internalid.value}`);
                             
                             loc.departments.forEach((dept, deptIdx) => {
-                                console.log(`\n  [Department ${deptIdx + 1}] ${dept.name} (ID: ${dept.id})`);
-                                console.log(`    Total Bags: ${dept.bag_count}`);
-                                console.log(`    Unique Bags: [${dept.unique_bags_array.join(', ')}]`);
-                                console.log(`    Total Categories: ${dept.category_count}`);
-                                console.log(`    Unique Categories: [${dept.unique_categories_array.join(', ')}]`);
-                                console.log(`    Department Starting Qty: ${dept.starting_qty}`);
-                                console.log(`    Department Loss Qty: ${dept.loss_qty}`);
-                                console.log(`    Category Qty Map:`, dept.category_qty_map);
-                                console.log(`    Category Print Design Map:`, dept.category_print_design_map);
-                                console.log(`    Total Employees: ${dept.employees.length}`);
+                                // console.log(`\n  [Department ${deptIdx + 1}] ${dept.name} (ID: ${dept.id})`);
+                                // console.log(`    Total Bags: ${dept.bag_count}`);
+                                // console.log(`    Unique Bags: [${dept.unique_bags_array.join(', ')}]`);
+                                // console.log(`    Total Categories: ${dept.category_count}`);
+                                // console.log(`    Unique Categories: [${dept.unique_categories_array.join(', ')}]`);
+                                // console.log(`    Department Starting Qty: ${dept.starting_qty}`);
+                                // console.log(`    Department Loss Qty: ${dept.loss_qty}`);
+                                // console.log(`    Category Qty Map:`, dept.category_qty_map);
+                                // console.log(`    Category Print Design Map:`, dept.category_print_design_map);
+                                // console.log(`    Total Employees: ${dept.employees.length}`);
                                 
                                 dept.employees.forEach((emp, empIdx) => {
-                                    console.log(`\n    [Employee ${empIdx + 1}] ${emp.name} (ID: ${emp.id})`);
-                                    console.log(`      Bag Count: ${emp.bag_count}`);
-                                    console.log(`      Unique Bags: [${emp.unique_bags_array.join(', ')}]`);
-                                    console.log(`      Category Count: ${emp.category_count}`);
-                                    console.log(`      Unique Categories: [${emp.unique_categories_array.join(', ')}]`);
-                                    console.log(`      Starting Qty: ${emp.starting_qty}`);
-                                    console.log(`      Loss Qty: ${emp.loss_qty}`);
-                                    console.log(`      Categories Detail:`, emp.categories);
-                                    console.log(`      Category Qty Map:`, emp.category_qty_map);
+                                    // console.log(`\n    [Employee ${empIdx + 1}] ${emp.name} (ID: ${emp.id})`);
+                                    // console.log(`      Bag Count: ${emp.bag_count}`);
+                                    // console.log(`      Unique Bags: [${emp.unique_bags_array.join(', ')}]`);
+                                    // console.log(`      Category Count: ${emp.category_count}`);
+                                    // console.log(`      Unique Categories: [${emp.unique_categories_array.join(', ')}]`);
+                                    // console.log(`      Starting Qty: ${emp.starting_qty}`);
+                                    // console.log(`      Loss Qty: ${emp.loss_qty}`);
+                                    // console.log(`      Categories Detail:`, emp.categories);
+                                    // console.log(`      Category Qty Map:`, emp.category_qty_map);
                                 });
                             });
                         });
-                        console.log("\n" + "─".repeat(60));
+                        // console.log("\n" + "─".repeat(60));
                         
                         // ✅ SUMMARY STATISTICS
-                        console.log("\n📈 FETCH SUMMARY:");
-                        console.log("─".repeat(60));
+                        // console.log("\n📈 FETCH SUMMARY:");
+                        // console.log("─".repeat(60));
                         let totalDepts = 0, totalEmps = 0, totalBags = 0, totalCategories = 0;
                         locations.value.forEach(loc => {
                             loc.departments.forEach(dept => {
@@ -3750,14 +3711,14 @@ export default {
                                 totalEmps += dept.employees.length;
                             });
                         });
-                        console.log(`✅ Total Locations: ${locations.value.length}`);
-                        console.log(`✅ Total Departments: ${totalDepts}`);
-                        console.log(`✅ Total Employees: ${totalEmps}`);
-                        console.log(`✅ Total Bags: ${totalBags}`);
-                        console.log(`✅ Total Unique Categories: ${totalCategories}`);
-                        console.log("─".repeat(60));
-                        console.log("🟢 DATA FETCH COMPLETE - Ready for UI display");
-                        console.log("=".repeat(60) + "\n");
+                        // console.log(`✅ Total Locations: ${locations.value.length}`);
+                        // console.log(`✅ Total Departments: ${totalDepts}`);
+                        // console.log(`✅ Total Employees: ${totalEmps}`);
+                        // console.log(`✅ Total Bags: ${totalBags}`);
+                        // console.log(`✅ Total Unique Categories: ${totalCategories}`);
+                        // console.log("─".repeat(60));
+                        // console.log("🟢 DATA FETCH COMPLETE - Ready for UI display");
+                        // console.log("=".repeat(60) + "\n");
                     } else {
                         // ✅ locationId provided — update only that specific location's departments
                         const locData = listEfficiencyData.value[locationId];
@@ -3767,61 +3728,38 @@ export default {
                                 targetLoc.departments = Object.entries(locData.departments || {}).map(([deptId, dept]) => {
                                     const categoryQtyMapByEmp = {};
                                     const employees = (dept.employees_array || []).map(emp => {
-                                        // Same fix as the !locationId path:
-                                        // rebuild category_bag_names_map and unique_categories_array
-                                        // from emp.categories so the table lookup always succeeds.
                                         const empCategoryQtyMap = {};
-                                        const empDerivedBagNamesMap = {};
-                                        const empDerivedCategoriesSet = new Set();
-                                        (emp.categories || []).forEach(cat => {
-                                            const catName = cat.category_name;
-                                            const bagName = cat.bag_name || '';
-                                            const key = `${emp.employee_id}_${catName}`;
-                                            if (!empCategoryQtyMap[key]) {
+                                        if (emp.categories && Array.isArray(emp.categories)) {
+                                            emp.categories.forEach(cat => {
+                                                const key = `${emp.employee_id}_${cat.category_name}`;
                                                 empCategoryQtyMap[key] = {
-                                                    starting_qty_gold: 0, starting_qty_diamond: 0,
-                                                    issued_qty_gold: 0,   issued_qty_diamond: 0,
-                                                    loss_qty_gold: 0,     loss_qty_diamond: 0,
-                                                    scrap_qty_gold: 0,    scrap_qty_diamond: 0,
-                                                    balance_qty_gold: 0,  balance_qty_diamond: 0
+                                                    starting_qty_gold: cat.starting_qty_gold || 0,
+                                                    starting_qty_diamond: cat.starting_qty_diamond || 0,
+                                                    issued_qty_gold: cat.issued_qty_gold || 0,
+                                                    issued_qty_diamond: cat.issued_qty_diamond || 0,
+                                                    loss_qty_gold: cat.loss_qty_gold || 0,
+                                                    loss_qty_diamond: cat.loss_qty_diamond || 0,
+                                                    scrap_qty_gold: cat.scrap_qty_gold || 0,
+                                                    scrap_qty_diamond: cat.scrap_qty_diamond || 0,
+                                                    balance_qty_gold: cat.balance_qty_gold || 0,
+                                                    balance_qty_diamond: cat.balance_qty_diamond || 0
                                                 };
-                                            }
-                                            empCategoryQtyMap[key].starting_qty_gold  += parseFloat(cat.starting_qty_gold  || 0);
-                                            empCategoryQtyMap[key].starting_qty_diamond += parseFloat(cat.starting_qty_diamond || 0);
-                                            empCategoryQtyMap[key].issued_qty_gold    += parseFloat(cat.issued_qty_gold    || 0);
-                                            empCategoryQtyMap[key].issued_qty_diamond += parseFloat(cat.issued_qty_diamond || 0);
-                                            empCategoryQtyMap[key].loss_qty_gold      += parseFloat(cat.loss_qty_gold      || 0);
-                                            empCategoryQtyMap[key].loss_qty_diamond   += parseFloat(cat.loss_qty_diamond   || 0);
-                                            empCategoryQtyMap[key].scrap_qty_gold     += parseFloat(cat.scrap_qty_gold     || 0);
-                                            empCategoryQtyMap[key].scrap_qty_diamond  += parseFloat(cat.scrap_qty_diamond  || 0);
-                                            empCategoryQtyMap[key].balance_qty_gold   += parseFloat(cat.balance_qty_gold   || 0);
-                                            empCategoryQtyMap[key].balance_qty_diamond += parseFloat(cat.balance_qty_diamond || 0);
-                                            if (catName) {
-                                                empDerivedCategoriesSet.add(catName);
-                                                if (!empDerivedBagNamesMap[catName]) empDerivedBagNamesMap[catName] = [];
-                                                if (bagName && !empDerivedBagNamesMap[catName].includes(bagName)) {
-                                                    empDerivedBagNamesMap[catName].push(bagName);
-                                                }
-                                            }
-                                        });
+                                            });
+                                        }
                                         return {
                                             id: emp.employee_id,
                                             name: emp.name,
                                             bag_count: emp.bag_count || 0,
                                             unique_bags_array: emp.unique_bags_array || [],
                                             category_count: emp.category_count || 0,
-                                            unique_categories_array: empDerivedCategoriesSet.size > 0
-                                                ? Array.from(empDerivedCategoriesSet)
-                                                : (emp.unique_categories_array || []),
+                                            unique_categories_array: emp.unique_categories_array || [],
                                             starting_qty: emp.starting_qty || 0,
                                             loss_qty: emp.loss_qty || 0,
                                             categories: emp.categories || [],
                                             category_qty_map: empCategoryQtyMap,
                                             category_print_design_map: emp.category_print_design_map || {},
                                             category_bag_count_map: emp.category_bag_count_map || {},
-                                            category_bag_names_map: Object.keys(empDerivedBagNamesMap).length > 0
-                                                ? empDerivedBagNamesMap
-                                                : (emp.category_bag_names_map || {}),
+                                            category_bag_names_map: emp.category_bag_names_map || {},
                                             category_bag_ids_map: emp.category_bag_ids_map || {},
                                             category_bag_print_design_map: emp.category_bag_print_design_map || {},
                                             category_bag_print_design_id_map: emp.category_bag_print_design_id_map || {},
@@ -3862,10 +3800,10 @@ export default {
                     }
 
                     // Fetch global avg recovery % once for the selected date range
-                    console.log('[Recovery] Fetching with dates:', formattedStartDate, formattedEndDate);
+                    // console.log('[Recovery] Fetching with dates:', formattedStartDate, formattedEndDate);
                     const recoveryData = await fetchRecoveryDataByDept(formattedStartDate, formattedEndDate);
                     globalAvgRecoveryPercentage.value = parseFloat(recoveryData.avgRecoveryPercentage || 0);
-                    console.log('[Recovery] Global avg recovery %:', globalAvgRecoveryPercentage.value);
+                    // console.log('[Recovery] Global avg recovery %:', globalAvgRecoveryPercentage.value);
 
                     isInitialLoading.value = false;
                 } else {
@@ -3957,14 +3895,14 @@ export default {
                 selectedDepartmentData.value = [...selectedDepartments.value];
 
                 // Log departments with bag counts and unique bag names
-                let deptLogMsg = "=== DEPARTMENTS WITH BAG COUNTS ===\n";
-                selectedDepartments.value.forEach(dept => {
-                    const bagNames = dept.unique_bags_array || [];
-                    const categoryNames = dept.unique_categories_array || [];
-                    deptLogMsg += `Dept: ${dept.name} | Bag Count: ${dept.bag_count || 0} | Category Count: ${dept.category_count || 0} | Bags: [${bagNames.join(', ')}] | Categories: [${categoryNames.join(', ')}]\n`;
-                });
-                deptLogMsg += "===================================";
-                console.log(deptLogMsg);
+                // let deptLogMsg = "=== DEPARTMENTS WITH BAG COUNTS ===\n";
+                // selectedDepartments.value.forEach(dept => {
+                //     const bagNames = dept.unique_bags_array || [];
+                //     const categoryNames = dept.unique_categories_array || [];
+                //     deptLogMsg += `Dept: ${dept.name} | Bag Count: ${dept.bag_count || 0} | Category Count: ${dept.category_count || 0} | Bags: [${bagNames.join(', ')}] | Categories: [${categoryNames.join(', ')}]\n`;
+                // });
+                // deptLogMsg += "===================================";
+                // console.log(deptLogMsg);
                 
                 updateCharts();
             }
@@ -3988,9 +3926,9 @@ export default {
                 // Get employees from the already-populated selectedDepartments
                 const selectedDept = selectedDepartments.value.find(dept => dept.name === deptName);
                 
-                console.log(`\n🔵 TOGGLE DEPARTMENT VIEW - ${deptName}`);
-                console.log(`Selected Department:`, selectedDept);
-                console.log(`Employees Array:`, selectedDept?.employees);
+                // console.log(`\n🔵 TOGGLE DEPARTMENT VIEW - ${deptName}`);
+                // console.log(`Selected Department:`, selectedDept);
+                // console.log(`Employees Array:`, selectedDept?.employees);
                 
                 // Add department ID to each employee
                 selectedEmployees.value = (selectedDept?.employees || []).map(emp => {
@@ -4000,9 +3938,9 @@ export default {
                     };
                 });
                 
-                console.log(`✅ selectedEmployees populated with ${selectedEmployees.value.length} employees`);
-                console.log(`📋 Employee Details:`, selectedEmployees.value);
-                console.log(`Department: ${deptName} (ID: ${selectedDept?.id}) - Employees:`, selectedEmployees.value);
+                // console.log(`✅ selectedEmployees populated with ${selectedEmployees.value.length} employees`);
+                // console.log(`📋 Employee Details:`, selectedEmployees.value);
+                // console.log(`Department: ${deptName} (ID: ${selectedDept?.id}) - Employees:`, selectedEmployees.value);
             }
             updateCharts();
         };
