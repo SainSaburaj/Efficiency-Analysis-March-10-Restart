@@ -81,6 +81,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const STONE_CLASSES_IDS = ['7'];
         const JEWELRY_CLASSES_IDS = ['10'];
         const ALLOY_CLASSES_IDS = ['8']; // added for alloy qty calculation
+        const REASON_CODE_LOC_TRANSFER = "51";
 
         // const ALLOY_TYPE_ID = 6;
         // const ALLOY_ITEMS = [3206, 3207, 3208]; // [Alloy Pink (P), Alloy White (W), Alloy Yellow (Y)] (Old)
@@ -1720,6 +1721,39 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                 } catch (error) {
                     log.error("Error in getOrderTypes", error);
+                    return [];
+                }
+            },
+
+            /**
+             * Function to retrieve priority list items from customlist_jj_order_priority.
+             * @returns {Array} Array of objects containing priority name and internal ID.
+             */
+            getPriorityList() {
+                try {
+                    // Create the priority list search
+                    let prioritySearchObj = search.create({
+                        type: "customlist_jj_order_priority",
+                        filters: [
+                            ["isinactive", "is", "F"]
+                        ],
+                        
+                        columns: [
+                            search.createColumn({ name: "name", label: "name" }),
+                            search.createColumn({ name: "internalid", label: "internal_id" })
+                        ]
+                    });
+
+                    // Use jjUtil.dataSets to iterate over the search results
+                    return jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: prioritySearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(prioritySearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000
+                    });
+
+                } catch (error) {
+                    log.error("Error in getPriorityList", error);
                     return [];
                 }
             },
@@ -7048,7 +7082,13 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_metal_quality) AS metal_quality_id,
                             BUILTIN.DF(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_metal_quality) AS metal_quality_name,
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_stone_color) AS stone_color_id,
-                            BUILTIN.DF(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_stone_color) AS stone_color_name
+                            BUILTIN.DF(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_stone_color) AS stone_color_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_fg_subcategory) AS subcategory_id,
+                            BUILTIN_RESULT.TYPE_INTEGER(fg_subcategory_SUB.custrecord_jj_sub_cate_types) AS subcategory_type_id,
+                            BUILTIN_RESULT.TYPE_STRING(fg_subcategory_SUB.subcategory_type_name) AS subcategory_type_name,
+                            BUILTIN.DF(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_fg_subcategory) AS subcategory_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_fgs_category) AS category_id,
+                            BUILTIN.DF(CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_fgs_category) AS category_name
                         FROM 
                             CUSTOMRECORD_JJ_FG_SERIALS, 
                             (
@@ -7130,7 +7170,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 WHERE 
                                     CUSTOMRECORD_JJ_FG_SERIAL_COMPONENTS.custrecord_jj_fsc_item = item_0.ID(+)
                                     AND CUSTOMRECORD_JJ_FG_SERIAL_COMPONENTS.custrecord_jj_fsc_item_units = unitsTypeUom.internalid(+)
-                            ) CUSTOMRECORD_JJ_FG_SERIAL_COMPONENTS_SUB
+                            ) CUSTOMRECORD_JJ_FG_SERIAL_COMPONENTS_SUB,
+                            (
+                                SELECT 
+                                    customrecord_jj_sub_category.ID AS ID,
+                                    customrecord_jj_sub_category.ID AS id_join,
+                                    customrecord_jj_sub_category.custrecord_jj_sub_cate_types AS custrecord_jj_sub_cate_types,
+                                    BUILTIN.DF(customrecord_jj_sub_category.custrecord_jj_sub_cate_types) AS subcategory_type_name
+                                FROM 
+                                    customrecord_jj_sub_category
+                            ) fg_subcategory_SUB
                         WHERE 
                             (
                                 (
@@ -7140,7 +7189,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                             AND CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_fgs_assembly_item = item.ID(+)
                                         ) AND CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_fgs_serial = inventoryNumber_SUB.ID(+)
                                     ) AND CUSTOMRECORD_JJ_FG_SERIALS.ID = CUSTOMRECORD_JJ_FG_SERIAL_COMPONENTS_SUB.custrecord_jj_fsc_serial_number(+)
-                                )
+                                ) AND CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_fg_subcategory = fg_subcategory_SUB.ID(+)
                             ) AND (
                                 (
                                     NVL(CUSTOMRECORD_JJ_FG_SERIALS.isinactive, 'F') = 'F' 
@@ -7152,7 +7201,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 )
                             )
                         ORDER BY CUSTOMRECORD_JJ_FG_SERIALS.custrecord_jj_fgs_serial DESC
-                    `;
+                        `;
 
                     let formattedResults = [];
                     // Temporary map for grouping by FG Serial ID
@@ -7178,7 +7227,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     serial_number_id: rowData[5],                                   // Serial ID
                                     serial_number_name: rowData[6],                                 // Serial Name
                                     location_id: rowData[7],                                        // Location ID
-                                    bin_number_id: rowData[8],                                      // Bin ID
+                                    bin_id: rowData[8],                                             // Bin ID (included for client-side filtering)
                                     status_id: rowData[9],                                          // Inventory Status ID
                                     status_name: rowData[10],                                       // Inventory Status Name
                                     gold_weight: Number(parseFloat(rowData[11]).toFixed(4)),        // Gold Weight
@@ -7188,9 +7237,15 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     componentDetails: [],                                           // Array to store multiple components
                                     bag_no_id: rowData[22],                                         // Bag Number ID
                                     bag_no_name: rowData[23],                                       // Bag Number Name
-                                    bag_core_tracking: rowData[24],                                 // Bag Number Name
-                                    metal_quality_name: rowData[26],
-                                    stone_color_name: rowData[28]
+                                    bag_core_tracking: rowData[24],                                 // Bag Core Tracking
+                                    metal_quality_name: rowData[26],                                // Metal Quality Name
+                                    stone_color_name: rowData[28],                                  // Stone Color Name
+                                    subcategory_id: rowData[29],                                    // Subcategory ID
+                                    subcategory_type_id: rowData[30],                               // Subcategory Type ID
+                                    subcategory_type_name: rowData[31],                             // Subcategory Type Name
+                                    subcategory_name: rowData[32],                                  // Subcategory Name
+                                    category_id: rowData[33],                                       // Category ID
+                                    category_name: rowData[34]                                      // Category Name
                                 };
                             }
 
@@ -8337,6 +8392,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         let pageIterator = page.value.data.iterator();
                         pageIterator.each(function (row) {
                             let rowData = row.value.values;
+
+                            // let itemClassIdRaw = rowData[7];
+                            // let itemClassIdNum = Number(itemClassIdRaw);
+                            // let itemClassIdStr = String(itemClassIdRaw);
                             formattedResults.push({
                                 rmCodeId: rowData[0],
                                 rmCodeName: rowData[1],
@@ -8357,7 +8416,14 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 isColorStone: rowData[12] == MATERIAL_TYPE_ID_COLOR_STONE ? true : false,
                                 isAlloy: rowData[12] == MATERIAL_TYPE_ID_ALLOY ? true : false,
                                 isPartyDiamond: rowData[9] == PARTY_DIAMOND_QUALITY ? true : false,
-                                metalColor: rowData[14]
+                                metalColor: rowData[14],
+
+                                // // classification using class IDs
+                                // isGold: GOLD_CLASS_IDS.includes(itemClassIdNum),
+                                // isDiamond: DIAMOND_CLASSES_IDS.includes(itemClassIdStr),
+                                // isColorStone: STONE_CLASSES_IDS.includes(itemClassIdStr),
+                                // isJewelry: JEWELRY_CLASSES_IDS.includes(itemClassIdStr),
+                                // isAlloy: ALLOY_CLASSES_IDS.includes(itemClassIdStr),
                             });
                             return true;
                         });
@@ -8546,6 +8612,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno) AS bag_id,
                             BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.category_id) AS category_id,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.sub_category_name) AS sub_category_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.sub_category_id) AS sub_category_id,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_name) AS print_design_name,
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_id) AS print_design_id,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info) AS issued_pieces_diamond,
@@ -8565,16 +8634,22 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 CUSTOMRECORD_JJ_BAG_GENERATION.name AS bag_name_original,
                                 CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.category_id AS category_id,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.sub_category_name AS sub_category_name,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.sub_category_id AS sub_category_id,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_name AS print_design_name,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_id AS print_design_id
                             FROM CUSTOMRECORD_JJ_BAG_GENERATION,
                                 (SELECT CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_0,
                                         CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_join,
                                         item_SUB.name AS name_0,
+                                        item_SUB.category_id AS category_id,
+                                        item_SUB.sub_category_name AS sub_category_name,
+                                        item_SUB.sub_category_id AS sub_category_id,
                                         item_SUB.itemid AS print_design_name,
                                         item_SUB."ID" AS print_design_id
                                 FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING,
-                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, item_0.itemid AS itemid
+                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, CUSTOMRECORD_JJ_CATEGORY."ID" AS category_id, item_0.itemid AS itemid, BUILTIN.DF(item_0.custitem_jj_sub_category) AS sub_category_name, item_0.custitem_jj_sub_category AS sub_category_id
                                     FROM item item_0, CUSTOMRECORD_JJ_CATEGORY
                                     WHERE item_0.custitem_jj_category = CUSTOMRECORD_JJ_CATEGORY."ID"(+)) item_SUB
                                 WHERE CUSTOMRECORD_JJ_BAG_CORE_TRACKING.custrecord_jj_bagcore_kt_col = item_SUB."ID"(+)) CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB
@@ -8640,6 +8715,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         const bagId = record.bag_id;
                         const bagName = record.bag_name;
                         const categoryName = record.category_name;
+                        const categoryId = record.category_id;
+                        const subCategoryName = record.sub_category_name;
+                        const subCategoryId = record.sub_category_id;
                         const printDesignName = record.print_design_name;
                         const printDesignId = record.print_design_id;
 
@@ -8679,7 +8757,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 if (!groupedData[locationId].departments[departmentId].category_bags_map[categoryName]) {
                                     groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = {};
                                 }
-                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId };
+                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId, subCategoryName: subCategoryName, categoryId: categoryId, subCategoryId: subCategoryId };
                             }
                         }
 
@@ -8705,7 +8783,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     if (!groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName]) {
                                         groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = {};
                                     }
-                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId };
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId, subCategoryName: subCategoryName, categoryId: categoryId, subCategoryId: subCategoryId };
                                 }
                             }
                         }
@@ -8719,6 +8797,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             const deptCategoryBagIdsMap = {};
                             const deptCategoryBagPrintDesignMap = {};
                             const deptCategoryBagPrintDesignIdMap = {};
+                            const deptCategoryBagSubCategoryMap = {};
+                            const deptCategoryBagCategoryIdMap = {};
+                            const deptCategoryBagSubCategoryIdMap = {};
                             Object.keys(dept.category_bags_map).forEach(cat => {
                                 const bagMap = dept.category_bags_map[cat];
                                 const names = Object.keys(bagMap);
@@ -8727,10 +8808,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 deptCategoryBagIdsMap[cat] = {};
                                 deptCategoryBagPrintDesignMap[cat] = {};
                                 deptCategoryBagPrintDesignIdMap[cat] = {};
+                                deptCategoryBagSubCategoryMap[cat] = {};
+                                deptCategoryBagCategoryIdMap[cat] = {};
+                                deptCategoryBagSubCategoryIdMap[cat] = {};
                                 names.forEach(n => {
                                     deptCategoryBagIdsMap[cat][n] = bagMap[n].id;
                                     deptCategoryBagPrintDesignMap[cat][n] = bagMap[n].printDesign;
                                     deptCategoryBagPrintDesignIdMap[cat][n] = bagMap[n].printDesignId;
+                                    deptCategoryBagSubCategoryMap[cat][n] = bagMap[n].subCategoryName;
+                                    deptCategoryBagCategoryIdMap[cat][n] = bagMap[n].categoryId;
+                                    deptCategoryBagSubCategoryIdMap[cat][n] = bagMap[n].subCategoryId;
                                 });
                             });
                             dept.employees_array = Object.values(dept.employees).map(emp => {
@@ -8739,6 +8826,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 const empCategoryBagIdsMap = {};
                                 const empCategoryBagPrintDesignMap = {};
                                 const empCategoryBagPrintDesignIdMap = {};
+                                const empCategoryBagSubCategoryMap = {};
+                                const empCategoryBagCategoryIdMap = {};
+                                const empCategoryBagSubCategoryIdMap = {};
                                 Object.keys(emp.category_bags_map).forEach(cat => {
                                     const bagMap = emp.category_bags_map[cat];
                                     const names = Object.keys(bagMap);
@@ -8747,10 +8837,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     empCategoryBagIdsMap[cat] = {};
                                     empCategoryBagPrintDesignMap[cat] = {};
                                     empCategoryBagPrintDesignIdMap[cat] = {};
+                                    empCategoryBagSubCategoryMap[cat] = {};
+                                    empCategoryBagCategoryIdMap[cat] = {};
+                                    empCategoryBagSubCategoryIdMap[cat] = {};
                                     names.forEach(n => {
                                         empCategoryBagIdsMap[cat][n] = bagMap[n].id;
                                         empCategoryBagPrintDesignMap[cat][n] = bagMap[n].printDesign;
                                         empCategoryBagPrintDesignIdMap[cat][n] = bagMap[n].printDesignId;
+                                        empCategoryBagSubCategoryMap[cat][n] = bagMap[n].subCategoryName;
+                                        empCategoryBagCategoryIdMap[cat][n] = bagMap[n].categoryId;
+                                        empCategoryBagSubCategoryIdMap[cat][n] = bagMap[n].subCategoryId;
                                     });
                                 });
                                 return {
@@ -8767,6 +8863,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     category_bag_ids_map: empCategoryBagIdsMap,
                                     category_bag_print_design_map: empCategoryBagPrintDesignMap,
                                     category_bag_print_design_id_map: empCategoryBagPrintDesignIdMap,
+                                    category_bag_sub_category_map: empCategoryBagSubCategoryMap,
+                                    category_bag_category_id_map: empCategoryBagCategoryIdMap,
+                                    category_bag_sub_category_id_map: empCategoryBagSubCategoryIdMap,
                                     starting_qty: 0,
                                     loss_qty: 0,
                                     categories: []
@@ -8781,6 +8880,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             dept.category_bag_ids_map = deptCategoryBagIdsMap;
                             dept.category_bag_print_design_map = deptCategoryBagPrintDesignMap;
                             dept.category_bag_print_design_id_map = deptCategoryBagPrintDesignIdMap;
+                            dept.category_bag_sub_category_map = deptCategoryBagSubCategoryMap;
+                            dept.category_bag_category_id_map = deptCategoryBagCategoryIdMap;
+                            dept.category_bag_sub_category_id_map = deptCategoryBagSubCategoryIdMap;
                             delete dept.employees;
                             delete dept.unique_bags;
                             delete dept.unique_categories;
@@ -9077,6 +9179,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno) AS bag_id,
                             BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.category_id) AS category_id,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.sub_category_name) AS sub_category_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.sub_category_id) AS sub_category_id,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_name) AS print_design_name,
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_id) AS print_design_id,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info) AS issued_pieces_diamond,
@@ -9096,16 +9201,22 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 CUSTOMRECORD_JJ_BAG_GENERATION.name AS bag_name_original,
                                 CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.category_id AS category_id,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.sub_category_name AS sub_category_name,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.sub_category_id AS sub_category_id,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_name AS print_design_name,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_id AS print_design_id
                             FROM CUSTOMRECORD_JJ_BAG_GENERATION,
                                 (SELECT CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_0,
                                         CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_join,
                                         item_SUB.name AS name_0,
+                                        item_SUB.category_id AS category_id,
+                                        item_SUB.sub_category_name AS sub_category_name,
+                                        item_SUB.sub_category_id AS sub_category_id,
                                         item_SUB.itemid AS print_design_name,
                                         item_SUB."ID" AS print_design_id
                                 FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING,
-                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, item_0.itemid AS itemid
+                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, CUSTOMRECORD_JJ_CATEGORY."ID" AS category_id, item_0.itemid AS itemid, BUILTIN.DF(item_0.custitem_jj_sub_category) AS sub_category_name, item_0.custitem_jj_sub_category AS sub_category_id
                                     FROM item item_0, CUSTOMRECORD_JJ_CATEGORY
                                     WHERE item_0.custitem_jj_category = CUSTOMRECORD_JJ_CATEGORY."ID"(+)) item_SUB
                                 WHERE CUSTOMRECORD_JJ_BAG_CORE_TRACKING.custrecord_jj_bagcore_kt_col = item_SUB."ID"(+)) CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB
@@ -9172,6 +9283,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         const bagId = record.bag_id;
                         const bagName = record.bag_name;
                         const categoryName = record.category_name;
+                        const categoryId = record.category_id;
+                        const subCategoryName = record.sub_category_name;
+                        const subCategoryId = record.sub_category_id;
                         const printDesignName = record.print_design_name;
                         const printDesignId = record.print_design_id;
 
@@ -9215,7 +9329,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 if (!groupedData[locationId].departments[departmentId].category_bags_map[categoryName]) {
                                     groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = {};
                                 }
-                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId };
+                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId, subCategoryName: subCategoryName, categoryId: categoryId, subCategoryId: subCategoryId };
                             }
                         }
 
@@ -9245,7 +9359,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     if (!groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName]) {
                                         groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = {};
                                     }
-                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId };
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId, subCategoryName: subCategoryName, categoryId: categoryId, subCategoryId: subCategoryId };
                                 }
                             }
                         }
@@ -9260,6 +9374,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             const deptCategoryBagIdsMap = {};
                             const deptCategoryBagPrintDesignMap = {};
                             const deptCategoryBagPrintDesignIdMap = {};
+                            const deptCategoryBagSubCategoryMap = {};
+                            const deptCategoryBagCategoryIdMap = {};
+                            const deptCategoryBagSubCategoryIdMap = {};
                             Object.keys(dept.category_bags_map).forEach(cat => {
                                 const bagMap = dept.category_bags_map[cat];
                                 const names = Object.keys(bagMap);
@@ -9268,10 +9385,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 deptCategoryBagIdsMap[cat] = {};
                                 deptCategoryBagPrintDesignMap[cat] = {};
                                 deptCategoryBagPrintDesignIdMap[cat] = {};
+                                deptCategoryBagSubCategoryMap[cat] = {};
+                                deptCategoryBagCategoryIdMap[cat] = {};
+                                deptCategoryBagSubCategoryIdMap[cat] = {};
                                 names.forEach(n => {
                                     deptCategoryBagIdsMap[cat][n] = bagMap[n].id;
                                     deptCategoryBagPrintDesignMap[cat][n] = bagMap[n].printDesign;
                                     deptCategoryBagPrintDesignIdMap[cat][n] = bagMap[n].printDesignId;
+                                    deptCategoryBagSubCategoryMap[cat][n] = bagMap[n].subCategoryName;
+                                    deptCategoryBagCategoryIdMap[cat][n] = bagMap[n].categoryId;
+                                    deptCategoryBagSubCategoryIdMap[cat][n] = bagMap[n].subCategoryId;
                                 });
                             });
                             dept.employees_array = Object.values(dept.employees).map(emp => {
@@ -9280,6 +9403,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 const empCategoryBagIdsMap = {};
                                 const empCategoryBagPrintDesignMap = {};
                                 const empCategoryBagPrintDesignIdMap = {};
+                                const empCategoryBagSubCategoryMap = {};
+                                const empCategoryBagCategoryIdMap = {};
+                                const empCategoryBagSubCategoryIdMap = {};
                                 Object.keys(emp.category_bags_map).forEach(cat => {
                                     const bagMap = emp.category_bags_map[cat];
                                     const names = Object.keys(bagMap);
@@ -9288,10 +9414,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     empCategoryBagIdsMap[cat] = {};
                                     empCategoryBagPrintDesignMap[cat] = {};
                                     empCategoryBagPrintDesignIdMap[cat] = {};
+                                    empCategoryBagSubCategoryMap[cat] = {};
+                                    empCategoryBagCategoryIdMap[cat] = {};
+                                    empCategoryBagSubCategoryIdMap[cat] = {};
                                     names.forEach(n => {
                                         empCategoryBagIdsMap[cat][n] = bagMap[n].id;
                                         empCategoryBagPrintDesignMap[cat][n] = bagMap[n].printDesign;
                                         empCategoryBagPrintDesignIdMap[cat][n] = bagMap[n].printDesignId;
+                                        empCategoryBagSubCategoryMap[cat][n] = bagMap[n].subCategoryName;
+                                        empCategoryBagCategoryIdMap[cat][n] = bagMap[n].categoryId;
+                                        empCategoryBagSubCategoryIdMap[cat][n] = bagMap[n].subCategoryId;
                                     });
                                 });
                                 return {
@@ -9308,6 +9440,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     category_bag_ids_map: empCategoryBagIdsMap,
                                     category_bag_print_design_map: empCategoryBagPrintDesignMap,
                                     category_bag_print_design_id_map: empCategoryBagPrintDesignIdMap,
+                                    category_bag_sub_category_map: empCategoryBagSubCategoryMap,
+                                    category_bag_category_id_map: empCategoryBagCategoryIdMap,
+                                    category_bag_sub_category_id_map: empCategoryBagSubCategoryIdMap,
                                     starting_qty: 0,
                                     loss_qty: 0,
                                     categories: []
@@ -9322,6 +9457,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             dept.category_bag_ids_map = deptCategoryBagIdsMap;
                             dept.category_bag_print_design_map = deptCategoryBagPrintDesignMap;
                             dept.category_bag_print_design_id_map = deptCategoryBagPrintDesignIdMap;
+                            dept.category_bag_sub_category_map = deptCategoryBagSubCategoryMap;
+                            dept.category_bag_category_id_map = deptCategoryBagCategoryIdMap;
+                            dept.category_bag_sub_category_id_map = deptCategoryBagSubCategoryIdMap;
                             dept.category_print_design_map = dept.category_print_design_map;
                             dept.category_print_design_id_map = dept.category_print_design_id_map;
                             delete dept.employees;
@@ -9596,8 +9734,12 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
             runQuery(sql) {
                 const results = [];
                 try {
-                    query.runSuiteQL({ query: sql }).iterator().each(function (row) {
-                        results.push(row.value.asMap());
+                    const pagedQuery = query.runSuiteQLPaged({ query: sql, pageSize: 1000 });
+                    pagedQuery.iterator().each(function (page) {
+                        page.value.data.iterator().each(function (row) {
+                            results.push(row.value.asMap());
+                            return true;
+                        });
                         return true;
                     });
                 } catch (e) {
@@ -9646,6 +9788,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_bagno) AS bag_id,
                             BUILTIN_RESULT.TYPE_STRING(NVL(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.altname, CUSTOMRECORD_JJ_BAG_GENERATION_SUB.bag_name_original)) AS bag_name,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.name_0_0) AS category_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.category_id) AS category_id,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.sub_category_name) AS sub_category_name,
+                            BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.sub_category_id) AS sub_category_id,
                             BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_name) AS print_design_name,
                             BUILTIN_RESULT.TYPE_INTEGER(CUSTOMRECORD_JJ_BAG_GENERATION_SUB.print_design_id) AS print_design_id,
                             BUILTIN_RESULT.TYPE_FLOAT(CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN_SUB.custrecord_jj_dir_issued_pieces_info) AS issued_pieces_diamond,
@@ -9665,16 +9810,22 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 CUSTOMRECORD_JJ_BAG_GENERATION.name AS bag_name_original,
                                 CUSTOMRECORD_JJ_BAG_GENERATION.altname AS altname,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.name_0 AS name_0_0,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.category_id AS category_id,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.sub_category_name AS sub_category_name,
+                                CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.sub_category_id AS sub_category_id,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_name AS print_design_name,
                                 CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB.print_design_id AS print_design_id
                             FROM CUSTOMRECORD_JJ_BAG_GENERATION,
                                 (SELECT CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_0,
                                         CUSTOMRECORD_JJ_BAG_CORE_TRACKING."ID" AS id_join,
                                         item_SUB.name AS name_0,
+                                        item_SUB.category_id AS category_id,
+                                        item_SUB.sub_category_name AS sub_category_name,
+                                        item_SUB.sub_category_id AS sub_category_id,
                                         item_SUB.itemid AS print_design_name,
                                         item_SUB."ID" AS print_design_id
                                 FROM CUSTOMRECORD_JJ_BAG_CORE_TRACKING,
-                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, item_0.itemid AS itemid
+                                    (SELECT item_0."ID" AS "ID", item_0."ID" AS id_join, CUSTOMRECORD_JJ_CATEGORY.name AS name, CUSTOMRECORD_JJ_CATEGORY."ID" AS category_id, item_0.itemid AS itemid, BUILTIN.DF(item_0.custitem_jj_sub_category) AS sub_category_name, item_0.custitem_jj_sub_category AS sub_category_id
                                     FROM item item_0, CUSTOMRECORD_JJ_CATEGORY
                                     WHERE item_0.custitem_jj_category = CUSTOMRECORD_JJ_CATEGORY."ID"(+)) item_SUB
                                 WHERE CUSTOMRECORD_JJ_BAG_CORE_TRACKING.custrecord_jj_bagcore_kt_col = item_SUB."ID"(+)) CUSTOMRECORD_JJ_BAG_CORE_TRACKING_SUB
@@ -9737,6 +9888,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         const bagId = record.bag_id;
                         const bagName = record.bag_name;
                         const categoryName = record.category_name;
+                        const categoryId = record.category_id;
+                        const subCategoryName = record.sub_category_name;
+                        const subCategoryId = record.sub_category_id;
                         const printDesignName = record.print_design_name;
                         const printDesignId = record.print_design_id;
 
@@ -9786,7 +9940,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 if (!groupedData[locationId].departments[departmentId].category_bags_map[categoryName]) {
                                     groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = {};
                                 }
-                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId };
+                                groupedData[locationId].departments[departmentId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId, subCategoryName: subCategoryName, categoryId: categoryId, subCategoryId: subCategoryId };
                             }
                         }
 
@@ -9820,7 +9974,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     if (!groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName]) {
                                         groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = {};
                                     }
-                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId };
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName][bagName] = { id: bagId, printDesign: printDesignName, printDesignId: printDesignId, subCategoryName: subCategoryName, categoryId: categoryId, subCategoryId: subCategoryId };
                                 }
                             }
                         }
@@ -9836,6 +9990,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             const deptCategoryBagIdsMap = {};
                             const deptCategoryBagPrintDesignMap = {};
                             const deptCategoryBagPrintDesignIdMap = {};
+                            const deptCategoryBagSubCategoryMap = {};
+                            const deptCategoryBagCategoryIdMap = {};
+                            const deptCategoryBagSubCategoryIdMap = {};
                             Object.keys(dept.category_bags_map).forEach(cat => {
                                 const bagMap = dept.category_bags_map[cat];
                                 const names = Object.keys(bagMap);
@@ -9844,10 +10001,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 deptCategoryBagIdsMap[cat] = {};
                                 deptCategoryBagPrintDesignMap[cat] = {};
                                 deptCategoryBagPrintDesignIdMap[cat] = {};
+                                deptCategoryBagSubCategoryMap[cat] = {};
+                                deptCategoryBagCategoryIdMap[cat] = {};
+                                deptCategoryBagSubCategoryIdMap[cat] = {};
                                 names.forEach(n => {
                                     deptCategoryBagIdsMap[cat][n] = bagMap[n].id;
                                     deptCategoryBagPrintDesignMap[cat][n] = bagMap[n].printDesign;
                                     deptCategoryBagPrintDesignIdMap[cat][n] = bagMap[n].printDesignId;
+                                    deptCategoryBagSubCategoryMap[cat][n] = bagMap[n].subCategoryName;
+                                    deptCategoryBagCategoryIdMap[cat][n] = bagMap[n].categoryId;
+                                    deptCategoryBagSubCategoryIdMap[cat][n] = bagMap[n].subCategoryId;
                                 });
                             });
                             dept.employees_array = Object.values(dept.employees).map(emp => {
@@ -9856,6 +10019,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 const empCategoryBagIdsMap = {};
                                 const empCategoryBagPrintDesignMap = {};
                                 const empCategoryBagPrintDesignIdMap = {};
+                                const empCategoryBagSubCategoryMap = {};
+                                const empCategoryBagCategoryIdMap = {};
+                                const empCategoryBagSubCategoryIdMap = {};
                                 Object.keys(emp.category_bags_map).forEach(cat => {
                                     const bagMap = emp.category_bags_map[cat];
                                     const names = Object.keys(bagMap);
@@ -9864,10 +10030,16 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     empCategoryBagIdsMap[cat] = {};
                                     empCategoryBagPrintDesignMap[cat] = {};
                                     empCategoryBagPrintDesignIdMap[cat] = {};
+                                    empCategoryBagSubCategoryMap[cat] = {};
+                                    empCategoryBagCategoryIdMap[cat] = {};
+                                    empCategoryBagSubCategoryIdMap[cat] = {};
                                     names.forEach(n => {
                                         empCategoryBagIdsMap[cat][n] = bagMap[n].id;
                                         empCategoryBagPrintDesignMap[cat][n] = bagMap[n].printDesign;
                                         empCategoryBagPrintDesignIdMap[cat][n] = bagMap[n].printDesignId;
+                                        empCategoryBagSubCategoryMap[cat][n] = bagMap[n].subCategoryName;
+                                        empCategoryBagCategoryIdMap[cat][n] = bagMap[n].categoryId;
+                                        empCategoryBagSubCategoryIdMap[cat][n] = bagMap[n].subCategoryId;
                                     });
                                 });
                                 return {
@@ -9884,6 +10056,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     category_bag_ids_map: empCategoryBagIdsMap,
                                     category_bag_print_design_map: empCategoryBagPrintDesignMap,
                                     category_bag_print_design_id_map: empCategoryBagPrintDesignIdMap,
+                                    category_bag_sub_category_map: empCategoryBagSubCategoryMap,
+                                    category_bag_category_id_map: empCategoryBagCategoryIdMap,
+                                    category_bag_sub_category_id_map: empCategoryBagSubCategoryIdMap,
                                     starting_qty: 0,
                                     loss_qty: 0,
                                     categories: []
@@ -9899,7 +10074,9 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             dept.category_bag_ids_map = deptCategoryBagIdsMap;
                             dept.category_bag_print_design_map = deptCategoryBagPrintDesignMap;
                             dept.category_bag_print_design_id_map = deptCategoryBagPrintDesignIdMap;
-
+                            dept.category_bag_sub_category_map = deptCategoryBagSubCategoryMap;
+                            dept.category_bag_category_id_map = deptCategoryBagCategoryIdMap;
+                            dept.category_bag_sub_category_id_map = deptCategoryBagSubCategoryIdMap;
                             delete dept.employees;
                             delete dept.unique_bags;
                             delete dept.unique_categories;
@@ -10260,7 +10437,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     return {};
                 }
             },
-
+            
             /**
              * Retrieves inventory adjustments within a specified date range.
              *
@@ -11689,25 +11866,42 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
              * Returns grouped Item Receipt serial data by Transfer Order
              * @returns {Object}
              */
-            getTransferOrderSerials() {
+            getTransferOrderSerials(transferOrderIds) {
                 const resultObj = {};
                 const usedSerials = new Set(); // global duplicate tracker
+                log.debug('getTransferOrderSerials - Model Method', {
+                    transferOrderIds: transferOrderIds,
+                    count: transferOrderIds ? transferOrderIds.length : 0,
+                    isArray: Array.isArray(transferOrderIds)
+                });
 
                 try {
-                    let itemreceiptSearchObj = search.create({
-                        type: "itemreceipt",
-                        settings: [
-                            { name: "consolidationtype", value: "ACCTTYPE" }
-                        ],
-                        filters: [
+
+
+                    // Build filters
+                    let filters = [
                         ["type", "anyof", "ItemRcpt"],
                         "AND", ["createdfrom.type", "anyof", "TrnfrOrd"],
                         "AND", ["mainline", "is", "F"],
                         "AND", ["taxline", "is", "F"],
                         "AND", ["cogs", "is", "F"],
-                            "AND", ["inventorydetail.location", "noneof", "@NONE@"],
-                            // "AND", ["createdfrom", "anyof", "15188", "15191"]
+                        "AND", ["inventorydetail.location", "noneof", "@NONE@"]
+                    ];
+
+                    // Add filter for specific Transfer Orders if provided
+                    if (transferOrderIds && transferOrderIds.length > 0) {
+                        filters.push("AND", ["createdfrom", "anyof", transferOrderIds]);
+                        log.debug('getTransferOrderSerials - Filtering by specific TOs', transferOrderIds);
+                    } else {
+                        log.debug('getTransferOrderSerials - No filter, fetching all TOs');
+                    }
+
+                    let itemreceiptSearchObj = search.create({
+                        type: "itemreceipt",
+                        settings: [
+                            { name: "consolidationtype", value: "ACCTTYPE" }
                         ],
+                        filters: filters,
                         columns: [
                             search.createColumn({ name: "createdfrom", sort: search.Sort.DESC, label: "createdFrom" }),
                             search.createColumn({ name: "inventorynumber", join: "inventoryDetail", label: "inventoryNumber" }),
@@ -11793,6 +11987,278 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                 return resultObj;
             },
+            /**
+            * Returns grouped Bin Transfer serial data
+            * @param {Array} binTransferIds - Optional array of Bin Transfer internal IDs to filter
+            * @returns {Object}
+            */
+            getInventoryStatusChangeSerials(inventoryStatusChangeIds) {
+                const resultObj = {};
+                const usedSerials = new Set(); // global duplicate tracker
+
+                log.debug('getInventoryStatusChangeSerials - Model Method', {
+                    inventoryStatusChangeIds: inventoryStatusChangeIds,
+                    count: inventoryStatusChangeIds ? inventoryStatusChangeIds.length : 0,
+                    isArray: Array.isArray(inventoryStatusChangeIds)
+                });
+
+                try {
+                    // Build filters
+                    let filters = [
+                        ["type", "anyof", "StatChng"],
+                        "AND", ["custbody_jj_reason_code", "anyof", REASON_CODE_LOC_TRANSFER],
+                        "AND", ["mainline", "is", "F"],
+                        "AND", ["taxline", "is", "F"],
+                        "AND", ["cogs", "is", "F"],
+                        "AND", ["inventorydetail.location", "noneof", "@NONE@"],
+                        "AND", ["formulanumeric: MOD({linesequencenumber}, 2)", "equalto", "0"]
+                    ];
+
+                    // Filter by specific Inventory Status Change records if provided
+                    if (inventoryStatusChangeIds && inventoryStatusChangeIds.length > 0) {
+                        filters.push("AND", ["internalid", "anyof", inventoryStatusChangeIds]);
+                        log.debug('getInventoryStatusChangeSerials - Filtering by specific records', inventoryStatusChangeIds);
+                    } else {
+                        log.debug('getInventoryStatusChangeSerials - No filter, fetching all Inventory Status Change records');
+                    }
+
+                    const inventorystatuschangeSearchObj = search.create({
+                        type: "inventorystatuschange",
+                        settings: [{ name: "consolidationtype", value: "ACCTTYPE" }],
+                        filters: filters,
+                        columns: [
+                            search.createColumn({
+                                name: "internalid",
+                                label: "internalId"
+                            }),
+                            search.createColumn({
+                                name: "inventorynumber",
+                                join: "inventoryDetail",
+                                label: "serialNumber"
+                            }),
+                            search.createColumn({
+                                name: "location",
+                                join: "inventoryDetail",
+                                label: "location"
+                            }),
+                            search.createColumn({
+                                name: "binnumber",
+                                join: "inventoryDetail",
+                                label: "binNumber"
+                            }),
+                            search.createColumn({
+                                name: "status",
+                                join: "inventoryDetail",
+                                label: "status"
+                            })
+                        ]
+                    });
+
+                    const pagedData = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: inventorystatuschangeSearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(inventorystatuschangeSearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000,
+                    });
+
+                    pagedData.forEach((row) => {
+                        try {
+                            const iscId = row.internalId?.value;
+                            if (!iscId) return;
+
+                            const serialId = row.serialNumber?.value;
+                            if (!serialId || usedSerials.has(serialId)) return; // skip duplicates
+
+                            usedSerials.add(serialId);
+
+                            const serialText = row.serialNumber?.text;
+                            const locationId = row.location?.value;
+                            const locationText = row.location?.text;
+                            const binId = row.binNumber?.value;
+                            const binText = row.binNumber?.text;
+                            const statusId = row.status?.value;
+                            const statusText = row.status?.text;
+
+                            if (!resultObj[iscId]) {
+                                resultObj[iscId] = {
+                                    inventoryStatusChangeText: iscId, // replace with tranid/text if needed
+                                    serialLines: []
+                                };
+                            }
+
+                            const serialExists = resultObj[iscId].serialLines.some(
+                                s => s.serialId === serialId
+                            );
+
+                            if (!serialExists) {
+                                resultObj[iscId].serialLines.push({
+                                    serialId,
+                                    serialText,
+                                    locationId,
+                                    locationText,
+                                    binId,
+                                    binText,
+                                    statusId,
+                                    statusText
+                                });
+                            }
+                        } catch (rowErr) {
+                            log.error('getInventoryStatusChangeSerials - Row Processing Error', rowErr);
+                        }
+                    });
+
+                    log.debug('getInventoryStatusChangeSerials - Final Result', resultObj);
+                    return resultObj;
+
+                } catch (e) {
+                    log.error('getInventoryStatusChangeSerials - Error', e);
+                    return {};
+                }
+            },
+
+            /**
+            * Returns grouped Inventory Status Change serial data
+            * @param {Array} invStatusChangeIds - Optional array of Inventory Status Change internal IDs to filter
+            * @returns {Object}
+            */
+            getBinTransferSerials(binTransferIds) {
+                const resultObj = {};
+                const usedSerials = new Set(); // global duplicate tracker
+
+                log.debug('getBinTransferSerials - Model Method', {
+                    binTransferIds: binTransferIds,
+                    count: binTransferIds ? binTransferIds.length : 0,
+                    isArray: Array.isArray(binTransferIds)
+                });
+
+                try {
+                    // Build filters
+                    let filters = [
+                        ["type", "anyof", "BinTrnfr"],
+                        "AND", ["mainline", "is", "F"],
+                        "AND", ["cogs", "is", "F"],
+                        "AND", ["taxline", "is", "F"],
+                        "AND", ["location", "noneof", "@NONE@"]
+                    ];
+
+                    // Filter by specific Bin Transfers if provided
+                    if (binTransferIds && binTransferIds.length > 0) {
+                        filters.push("AND", ["internalid", "anyof", binTransferIds]);
+                        log.debug('getBinTransferSerials - Filtering by specific BTs', binTransferIds);
+                    } else {
+                        log.debug('getBinTransferSerials - No filter, fetching all Bin Transfers');
+                    }
+
+                    // Even line sequence only
+                    filters.push("AND", ["formulanumeric: MOD({linesequencenumber}, 2)", "equalto", "0"]);
+
+                    const bintransferSearchObj = search.create({
+                        type: "bintransfer",
+                        settings: [{ name: "consolidationtype", value: "ACCTTYPE" }],
+                        filters: filters,
+                        columns: [
+                            search.createColumn({
+                                name: "internalid",
+                                label: "internalId"
+                            }),
+                            search.createColumn({
+                                name: "inventorynumber",
+                                join: "inventoryDetail",
+                                label: "serialNumber"
+                            }),
+                            search.createColumn({
+                                name: "binnumber",
+                                join: "inventoryDetail",
+                                label: "binNumber"
+                            }),
+                            search.createColumn({
+                                name: "internalid",
+                                join: "inventoryDetail",
+                                label: "inventoryDetailId"
+                            }),
+                            search.createColumn({
+                                name: "location",
+                                join: "inventoryDetail",
+                                label: "location"
+                            }),
+                            search.createColumn({
+                                name: "status",
+                                join: "inventoryDetail",
+                                label: "status"
+                            })
+                        ]
+                    });
+
+                    const pagedData = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: bintransferSearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(bintransferSearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000,
+                    });
+
+                    pagedData.forEach((row) => {
+                        try {
+                            const btId = row.internalId?.value;
+                            if (!btId) return;
+
+                            const serialId = row.serialNumber?.value;
+                            if (!serialId || usedSerials.has(serialId)) return;
+
+                            usedSerials.add(serialId);
+
+                            const serialText = row.serialNumber?.text;
+                            const binId = row.binNumber?.value;
+                            const binText = row.binNumber?.text;
+                            const inventoryDetailId = row.inventoryDetailId?.value;
+                            const statusId = row.status?.value;
+                            const statusText = row.status?.text;
+                            const locationId = row.location?.value;
+                            const locationText = row.location?.text;
+
+                            if (!resultObj[btId]) {
+                                resultObj[btId] = {
+                                    binTransferText: btId,
+                                    serialLines: []
+                                };
+                            }
+
+                            const serialExists = resultObj[btId].serialLines.some(
+                                s => s.serialId === serialId
+                            );
+
+                            if (!serialExists) {
+                                resultObj[btId].serialLines.push({
+                                    serialId,
+                                    serialText,
+                                    binId,
+                                    binText,
+                                    inventoryDetailId,
+                                    statusId,
+                                    statusText,
+                                    locationId,
+                                    locationText
+                                });
+                            }
+
+                        } catch (errRow) {
+                            log.error("getBinTransferSerials - Row Error", errRow);
+                        }
+                    });
+
+                    // Remove empty Bin Transfers
+                    Object.keys(resultObj).forEach(key => {
+                        if (!resultObj[key].serialLines.length) delete resultObj[key];
+                    });
+
+                } catch (error) {
+                    log.error("getBinTransferSerials - Search Error", error);
+                    return {};
+                }
+
+                log.debug("Bin Transfer serials", resultObj);
+                return resultObj;
+            },
+
 
             /**
              * Returns inventory number texts from customrecord_jj_fg_serials
@@ -14030,38 +14496,38 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     log.debug('Departments with loss found', departmentsWithLoss.length);
 
                     // Step 5: Filter by user permissions if not admin
-                    if (!isAdmin && userId) {
-                        try {
-                            // Get user's assigned departments
-                            let userDeptFilters = [
-                                ["isinactive", "is", "F"],
-                                "AND", ["custrecord_jj_mandept_employees", "anyof", userId]
-                            ];
+                    // if (!isAdmin && userId) {
+                    //     try {
+                    //         // Get user's assigned departments
+                    //         let userDeptFilters = [
+                    //             ["isinactive", "is", "F"],
+                    //             "AND", ["custrecord_jj_mandept_employees", "anyof", userId]
+                    //         ];
 
-                            let userDeptSearch = search.create({
-                                type: "customrecord_jj_manufacturing_dept",
-                                filters: userDeptFilters,
-                                columns: [search.createColumn({ name: "internalid" })]
-                            });
+                    //         let userDeptSearch = search.create({
+                    //             type: "customrecord_jj_manufacturing_dept",
+                    //             filters: userDeptFilters,
+                    //             columns: [search.createColumn({ name: "internalid" })]
+                    //         });
 
-                            let userDepartmentIds = [];
-                            userDeptSearch.run().each(function (result) {
-                                userDepartmentIds.push(result.getValue('internalid'));
-                                return true;
-                            });
+                    //         let userDepartmentIds = [];
+                    //         userDeptSearch.run().each(function (result) {
+                    //             userDepartmentIds.push(result.getValue('internalid'));
+                    //             return true;
+                    //         });
 
-                            log.debug('User departments', userDepartmentIds);
+                    //         log.debug('User departments', userDepartmentIds);
 
-                            // Filter departments with loss to only those user has access to
-                            departmentsWithLoss = departmentsWithLoss.filter(dept =>
-                                userDepartmentIds.includes(dept.value)
-                            );
+                    //         // Filter departments with loss to only those user has access to
+                    //         departmentsWithLoss = departmentsWithLoss.filter(dept =>
+                    //             userDepartmentIds.includes(dept.value)
+                    //         );
 
-                            log.debug('Departments after user filter', departmentsWithLoss.length);
-                        } catch (e) {
-                            log.error('Error filtering by user', e.message);
-                        }
-                    }
+                    //         log.debug('Departments after user filter', departmentsWithLoss.length);
+                    //     } catch (e) {
+                    //         log.error('Error filtering by user', e.message);
+                    //     }
+                    // }
 
                     return departmentsWithLoss;
 
@@ -14082,13 +14548,13 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                 try {
                     log.debug("adjustmentId, itemMap", { adjustmentId, itemMap });
                     if (!adjustmentId) {
-                        log.error("Error jobWorkLotMapping", "Empty adjustment ID");
+                        log.debug("Error jobWorkLotMapping", "Empty adjustment ID");
                         return {};
                     }
                     const adjustmentIds = Array.isArray(adjustmentId) ? adjustmentId : [adjustmentId];
 
                     if (!adjustmentIds?.length) {
-                        log.error("Error jobWorkLotMapping", "Empty adjustment Array");
+                        log.debug("Error jobWorkLotMapping", "Empty adjustment Array");
                         return {};
                     }
 
