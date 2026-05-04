@@ -45,6 +45,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
         const BARCODING_AND_FG_DEPT_ID = 24;
         const PAGE_SIZE = 10; // Number of records per page
         const OPERATION_STATUS_IN_TRANSIT = 2;
+        const OPERATION_STATUS_IN_PROGRESS = 1;
 
         const PROCESS_STATUS_READY_TO_PROCESS = 2;
 
@@ -669,6 +670,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         columns.push(
                             search.createColumn({ name: "name", join: "CUSTRECORD_JJ_OPRTNS_BAGNO", label: "bag_no_name" }),
                             search.createColumn({ name: "custrecord_jj_oprtns_department", label: "department" }),
+                            search.createColumn({ name: "name", join: "CUSTRECORD_JJ_OPRTNS_DEPARTMENT", label: "department_name" }),
                             search.createColumn({ name: "custrecord_jj_oprtns_bagcore", label: "bag_core_tracking" }),
                             search.createColumn({ name: "custrecord_jj_baggen_time", join: "CUSTRECORD_JJ_OPRTNS_BAGNO", label: "date" }),
                             search.createColumn({ name: "custrecord_jj_baggen_qty", join: "CUSTRECORD_JJ_OPRTNS_BAGNO", label: "quantity" }),
@@ -701,7 +703,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                     if ((params == 'active_bags' || params == 'bag_print_all') && date) {
                         let formatedDate = dateFormat(date);
-                        if (formatedDate) filters.push("AND", ["custrecord_jj_oprtns_bagno.custrecord_jj_baggen_time", "onorafter", formatedDate]);
+                        if (formatedDate) filters.push("AND", ["custrecord_jj_oprtns_entry", "onorafter", formatedDate]);
                     }
 
                     if (params == 'active_bags' || params == 'bag_print_all') {
@@ -1177,6 +1179,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custrecord_jj_scrap_pieces_info", label: "scrap_pieces_info" }),
                             search.createColumn({ name: "custitem_jj_metal_purity_percent", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "purity" }),
                             search.createColumn({ name: "custitem_jj_metal_color", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "metal_color" }),
+                            search.createColumn({ name: "custitem_jj_metal_quality", join: "CUSTRECORD_JJ_BAGCOREMAT_ITEM", label: "metal_quality" }),
                         ]
                     });
                     let searchResult =
@@ -1416,6 +1419,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 purchasePrice: Number(result.cost?.value || 0),
 
                                 metalColor: result.metal_color,
+                                metalQuality: result.metal_quality,
                                 purity: result.purity,
 
                                 inventoryDetail: [],
@@ -1494,6 +1498,133 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                 }
             },
 
+            /**
+            * Fetches the Assembly Item's metal quality and color for each bag.
+            * This follows the hierarchy: Bag Generation → Bag Core Tracking → Assembly Item → Metal Quality/Color
+            * Uses saved search to get both ID and text values.
+            * Returns ONE quality/color per bag (from the Assembly Item).
+            * 
+            * @param {Array} bagIds - Array of bag generation IDs
+            * @returns {Object} Map of bagId → { quality: {text, value}, color: {text, value} }
+            */
+            getBagAssemblyItemQualityAndColor(bagIds) {
+                try {
+                    if (!bagIds || bagIds.length === 0) {
+                        log.debug("getBagAssemblyItemQualityAndColor - No bag IDs provided");
+                        return {};
+                    }
+
+                    log.debug("getBagAssemblyItemQualityAndColor - Processing bag IDs:", bagIds);
+
+                    const bagQualityColorMap = {}; // bagId → { quality, color }
+
+                    // Use saved search to fetch Bag Generation with Assembly Item quality/color
+                    // First, get the Assembly Item IDs and their quality/color
+                    let bagGenSearchObj = search.create({
+                        type: "customrecord_jj_bag_generation",
+                        filters: [
+                            ["internalid", "anyof", bagIds],
+                            "AND", ["isinactive", "is", "F"]
+                        ],
+                        columns: [
+                            search.createColumn({ name: "internalid", label: "bagGenId" }),
+                            // Get Assembly Item ID from Bag Core Tracking
+                            search.createColumn({ name: "custrecord_jj_bagcore_kt_col", join: "CUSTRECORD_JJ_BAGGEN_BAGCORE", label: "assemblyItemId" })
+                        ]
+                    });
+
+                    let searchResult = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: bagGenSearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(bagGenSearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000
+                    });
+
+                    log.debug("getBagAssemblyItemQualityAndColor - Search executed, results count:", searchResult.length);
+
+                    // Now for each Assembly Item, fetch its quality and color
+                    const assemblyItemIds = [];
+                    const bagToAssemblyMap = {}; // bagId → assemblyItemId
+                    
+                    searchResult.forEach((result) => {
+                        const bagGenId = result.bagGenId?.value;
+                        const assemblyItemId = result.assemblyItemId?.value;
+                        
+                        if (bagGenId && assemblyItemId) {
+                            assemblyItemIds.push(assemblyItemId);
+                            bagToAssemblyMap[bagGenId] = assemblyItemId;
+                        }
+                    });
+
+                    log.debug("getBagAssemblyItemQualityAndColor - Assembly Item IDs:", assemblyItemIds);
+
+                    if (assemblyItemIds.length === 0) {
+                        log.debug("getBagAssemblyItemQualityAndColor - No Assembly Items found");
+                        return {};
+                    }
+
+                    // Fetch quality and color for all Assembly Items
+                    let itemSearchObj = search.create({
+                        type: "item",
+                        filters: [
+                            ["internalid", "anyof", assemblyItemIds]
+                        ],
+                        columns: [
+                            search.createColumn({ name: "internalid", label: "itemId" }),
+                            search.createColumn({ name: "custitem_jj_metal_quality", label: "metalQuality" }),
+                            search.createColumn({ name: "custitem_jj_metal_color", label: "metalColor" })
+                        ]
+                    });
+
+                    let itemSearchResult = jjUtil.dataSets.iterateSavedSearch({
+                        searchObj: itemSearchObj,
+                        columns: jjUtil.dataSets.fetchSavedSearchColumn(itemSearchObj, 'label'),
+                        PAGE_INDEX: null,
+                        PAGE_SIZE: 1000
+                    });
+
+                    log.debug("getBagAssemblyItemQualityAndColor - Item search results count:", itemSearchResult.length);
+
+                    // Build a map of assemblyItemId → {quality, color}
+                    const itemQualityColorMap = {};
+                    itemSearchResult.forEach((result) => {
+                        const itemId = result.itemId?.value;
+                        const metalQuality = result.metalQuality;
+                        const metalColor = result.metalColor;
+
+                        log.debug(`getBagAssemblyItemQualityAndColor - Item ${itemId}: quality=${JSON.stringify(metalQuality)}, color=${JSON.stringify(metalColor)}`);
+
+                        if (itemId) {
+                            itemQualityColorMap[itemId] = {
+                                quality: metalQuality || { text: null, value: null },
+                                color: metalColor || { text: null, value: null }
+                            };
+                        }
+                    });
+
+                    // Now map back to bags
+                    Object.entries(bagToAssemblyMap).forEach(([bagGenId, assemblyItemId]) => {
+                        const qualityColor = itemQualityColorMap[assemblyItemId];
+                        if (qualityColor) {
+                            bagQualityColorMap[bagGenId] = qualityColor;
+                        } else {
+                            bagQualityColorMap[bagGenId] = {
+                                quality: { text: null, value: null },
+                                color: { text: null, value: null }
+                            };
+                        }
+                    });
+
+                    log.debug("getBagAssemblyItemQualityAndColor - Result Map", JSON.stringify(bagQualityColorMap));
+                    return bagQualityColorMap;
+
+                } catch (error) {
+                    log.error('Error in getBagAssemblyItemQualityAndColor', error);
+                    log.error('Error stack:', error.stack);
+                    return {};
+                }
+            },
+
 
             /**
             * Calculates total gold, diamond, and color stone weight for multiple bags
@@ -1545,7 +1676,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         PAGE_SIZE: 1000
                     });
 
-                    log.debug('getTotalMaterialWeightsForBags - searchResults:', searchResults);
+                    // log.debug('getTotalMaterialWeightsForBags - searchResults:', searchResults);
 
                     if (searchResults && Array.isArray(searchResults)) {
                         searchResults.forEach((result) => {
@@ -1656,7 +1787,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                     log.debug("getBinsForLocation: Fetching bins for locationId:", locationId);
 
-                    const binSearchFilters = [['location', 'anyof', locationId]];
+                    const binSearchFilters = [['location', 'anyof', locationId], "AND", ["inactive", "is", "F"]];
                     const binSearchColInternalId = search.createColumn({ name: 'internalid' });
                     const binSearchColBinNumber = search.createColumn({ name: 'binnumber', sort: search.Sort.ASC });
                     const binSearchColLocation = search.createColumn({ name: 'location' });
@@ -1737,7 +1868,6 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                         filters: [
                             ["isinactive", "is", "F"]
                         ],
-                        
                         columns: [
                             search.createColumn({ name: "name", label: "name" }),
                             search.createColumn({ name: "internalid", label: "internal_id" })
@@ -7930,6 +8060,12 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             search.createColumn({ name: "custbody_jj_from_so", join: "createdFrom", label: "sales_order" }),
                             search.createColumn({ name: "custitem_jj_metal_color", join: "item", label: "metal_color" }),
                             search.createColumn({ name: "custitem_jj_metal_purity_percent", join: "item", label: "purity" }),
+
+                            search.createColumn({ name: "custitem_jj_metal_quality", join: "item", label: "metal_quality" }),
+                            search.createColumn({ name: "custitem_jj_stone_color", join: "item", label: "stone_color" }),
+                            search.createColumn({ name: "custitem_jj_stone_quality", join: "item", label: "stone_quality" }),
+                            search.createColumn({ name: "custitem_jj_colorstonecolour", join: "item", label: "color_stone_colour" }),
+                            search.createColumn({ name: "custitem_jj_color_stone_shape", join: "item", label: "color_stone_shape" }),
                         ]
                     });
 
@@ -7942,6 +8078,15 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                     let groupedResults = {};
                     let commonDetails = {};
+                    let qualityIdSet = new Set();
+
+                    searchResult.forEach(result => {
+                        if (result.metal_quality?.value) {
+                            qualityIdSet.add(result.metal_quality.value);
+                        }
+                    });
+
+                    const purityMap = this.getMetalQualityPurityMap([...qualityIdSet]);
 
                     searchResult.forEach(result => {
                         let lineId = result.line_id?.value; // Unique key
@@ -7983,7 +8128,26 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     uom: { value: result.unit_id.value, text: result.units_name.value },
                                     material_type: result.material_type,
                                     metalColor: result.metal_color?.value,
-                                    purity: result.purity?.value,
+                                    purity: result.purity?.value || Number(purityMap[result.metal_quality?.value]?.purityText || 0),
+                                    metalColorName: result.metal_color?.text,
+                                    metalQualityName: result.metal_quality?.text,
+                                    metalQualityId: result.metal_quality?.value,
+                                    stoneColorName: result.stone_color?.text,
+                                    stoneColorId: result.stone_color?.value,
+                                    stoneQualityName: result.stone_quality?.text,
+                                    stoneQualityId: result.stone_quality?.value,
+                                    csColorName: result.color_stone_colour?.text,
+                                    csColorId: result.color_stone_colour?.vaue,
+                                    csShapeName: result.color_stone_shape?.text,
+                                    csShapeId: result.color_stone_shape?.vaue,
+                                    goldPurityId: result.metal_quality?.value ? purityMap[result.metal_quality?.value]?.purityId || "" : "",
+
+                                    isGold: (Number(result.material_type?.value) == MATERIAL_TYPE_ID_GOLD) ? true : false,
+                                    isDiamond: (Number(result.material_type?.value) == MATERIAL_TYPE_ID_DIAMOND) ? true : false,
+                                    isColorStone: (Number(result.material_type?.value) == MATERIAL_TYPE_ID_COLOR_STONE) ? true : false,
+                                    isAlloy: (Number(result.material_type?.value) == MATERIAL_TYPE_ID_ALLOY) ? true : false,
+                                    isPartyDiamond: (Number(result.stone_quality_group?.value) == PARTY_DIAMOND_QUALITY) ? true : false,
+
                                     inventory: [] // Initialize inventory array
                                 };
                             }
@@ -8312,76 +8476,96 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
             listRevisionComponents(revisionId) {
                 try {
                     let sqlQuery = `
-                        SELECT 
-                            BUILTIN_RESULT.TYPE_INTEGER(BomRevisionComponent.item) AS rmCodeId, 
-                            BUILTIN_RESULT.TYPE_STRING(item_SUB.itemid) AS rmCodeName, 
-                            BUILTIN_RESULT.TYPE_FLOAT(BomRevisionComponent.quantity) AS quantity, 
-                            BUILTIN_RESULT.TYPE_INTEGER(BomRevisionComponent.custrecord_jj_bom_rev_pieces) AS pieces, 
-                            BUILTIN_RESULT.TYPE_INTEGER(BomRevisionComponent.units) AS uomId, 
-                            BUILTIN_RESULT.TYPE_STRING(unitsTypeUom.unitname) AS uomName, 
-                            BUILTIN_RESULT.TYPE_STRING(item_SUB.itemtype) AS itemtype, 
-                            BUILTIN_RESULT.TYPE_INTEGER(item_SUB.CLASS) AS itemClassId, 
-                            BUILTIN_RESULT.TYPE_BOOLEAN(item_SUB.isserialitem) AS isSerialized, 
-                            BUILTIN_RESULT.TYPE_INTEGER(item_SUB.custitem_jj_stone_quality_group) AS stoneQualityGroup, 
-                            BUILTIN_RESULT.TYPE_CURRENCY_HIGH_PRECISION(item_SUB.COST, BUILTIN.CURRENCY(item_SUB.COST)) AS cost, 
-                            BUILTIN_RESULT.TYPE_STRING(item_SUB.name_0) AS goldQuality, 
+                        SELECT
+                            BUILTIN_RESULT.TYPE_INTEGER(BomRevisionComponent.item) AS rmCodeId,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.itemid) AS rmCodeName,
+                            BUILTIN_RESULT.TYPE_FLOAT(BomRevisionComponent.quantity) AS quantity,
+                            BUILTIN_RESULT.TYPE_INTEGER(BomRevisionComponent.custrecord_jj_bom_rev_pieces) AS pieces,
+                            BUILTIN_RESULT.TYPE_INTEGER(BomRevisionComponent.units) AS uomId,
+                            BUILTIN_RESULT.TYPE_STRING(unitsTypeUom.unitname) AS uomName,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.itemtype) AS itemtype,
+                            BUILTIN_RESULT.TYPE_INTEGER(item_SUB.CLASS) AS itemClassId,
+                            BUILTIN_RESULT.TYPE_BOOLEAN(item_SUB.isserialitem) AS isSerialized,
+                            BUILTIN_RESULT.TYPE_INTEGER(item_SUB.custitem_jj_stone_quality_group) AS stoneQualityGroup,
+                            BUILTIN_RESULT.TYPE_CURRENCY_HIGH_PRECISION(item_SUB.COST, BUILTIN.CURRENCY(item_SUB.COST)) AS cost,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.purity_name) AS goldPurity,
                             BUILTIN_RESULT.TYPE_INTEGER(item_SUB.cseg_jj_raw_type) AS materialType,
                             BUILTIN_RESULT.TYPE_CURRENCY(item_SUB.lastpurchaseprice, BUILTIN.CURRENCY(item_SUB.lastpurchaseprice)) AS lastpurchaseprice,
-                            BUILTIN_RESULT.TYPE_STRING(item_SUB.custitem_jj_metal_color) AS custitem_jj_metal_color
-                        FROM 
-                            BomRevisionComponent, 
+
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item_SUB.custitem_jj_metal_color)) AS custitem_jj_metal_color_name,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.custitem_jj_metal_color) AS custitem_jj_metal_color_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item_SUB.custitem_jj_metal_quality)) AS quality_name,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.custitem_jj_metal_quality) AS quality_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item_SUB.custitem_jj_stone_color)) AS stone_color_name,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.custitem_jj_stone_color) AS stone_color_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item_SUB.custitem_jj_stone_quality)) AS stone_quality_name,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.custitem_jj_stone_quality) AS stone_quality_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item_SUB.custitem_jj_colorstonecolour)) AS cs_color_name,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.custitem_jj_colorstonecolour) AS cs_color_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item_SUB.custitem_jj_color_stone_shape)) AS cs_shape_name,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.custitem_jj_color_stone_shape) AS cs_shape_id,
+                            BUILTIN_RESULT.TYPE_STRING(item_SUB.purity_id) AS purity_id
+                        FROM
+                            BomRevisionComponent,
                             (
-                                SELECT 
-                                    item.ID AS id_0, 
-                                    item.ID AS id_join, 
-                                    item.itemid AS itemid, 
-                                    item.itemtype AS itemtype, 
-                                    item.CLASS AS CLASS, 
-                                    item.isserialitem AS isserialitem, 
-                                    item.custitem_jj_stone_quality_group AS custitem_jj_stone_quality_group, 
-                                    item.COST AS COST, 
-                                    CUSTOMRECORD_JJ_DD_METAL_QUALITY_SUB.name AS name_0, 
-                                    ACCOUNT.cseg_jj_raw_type AS cseg_jj_raw_type, 
+                                SELECT
+                                    item.ID AS id_0,
+                                    item.ID AS id_join,
+                                    item.itemid AS itemid,
+                                    item.itemtype AS itemtype,
+                                    item.CLASS AS CLASS,
+                                    item.isserialitem AS isserialitem,
+                                    item.custitem_jj_stone_quality_group AS custitem_jj_stone_quality_group,
+                                    item.COST AS COST,
+                                    CUSTOMRECORD_JJ_DD_METAL_QUALITY_SUB.name AS purity_name,
+                                    CUSTOMRECORD_JJ_DD_METAL_QUALITY_SUB.purity_id AS purity_id,
+                                    ACCOUNT.cseg_jj_raw_type AS cseg_jj_raw_type,
                                     item.lastpurchaseprice AS lastpurchaseprice,
                                     item.isinactive AS isinactive_crit,
                                     item.itemtype AS itemtype_crit,
-                                    item.custitem_jj_metal_color AS custitem_jj_metal_color
-                                FROM 
-                                    item, 
-                                    ACCOUNT, 
+                                    item.custitem_jj_metal_color AS custitem_jj_metal_color,
+                                    item.custitem_jj_metal_quality AS custitem_jj_metal_quality,
+                                    item.custitem_jj_stone_color AS custitem_jj_stone_color,
+                                    item.custitem_jj_stone_quality AS custitem_jj_stone_quality,
+                                    item.custitem_jj_colorstonecolour AS custitem_jj_colorstonecolour,
+                                    item.custitem_jj_color_stone_shape AS custitem_jj_color_stone_shape
+                                FROM
+                                    item,
+                                    ACCOUNT,
                                     (
-                                        SELECT 
-                                            CUSTOMRECORD_JJ_DD_METAL_QUALITY.ID AS ID, 
-                                            CUSTOMRECORD_JJ_DD_METAL_QUALITY.ID AS id_join, 
-                                            CUSTOMLIST_JJ_METAL_PURITY_LIST.name AS name
-                                        FROM 
-                                            CUSTOMRECORD_JJ_DD_METAL_QUALITY, 
+                                        SELECT
+                                            CUSTOMRECORD_JJ_DD_METAL_QUALITY.ID AS ID,
+                                            CUSTOMRECORD_JJ_DD_METAL_QUALITY.ID AS id_join,
+                                            CUSTOMLIST_JJ_METAL_PURITY_LIST.name AS name,
+                                            CUSTOMLIST_JJ_METAL_PURITY_LIST.ID AS purity_id
+                                        FROM
+                                            CUSTOMRECORD_JJ_DD_METAL_QUALITY,
                                             CUSTOMLIST_JJ_METAL_PURITY_LIST
-                                        WHERE 
+                                        WHERE
                                             CUSTOMRECORD_JJ_DD_METAL_QUALITY.custrecord_jj_dd_metal_quality_purity = CUSTOMLIST_JJ_METAL_PURITY_LIST.ID(+)
                                     ) CUSTOMRECORD_JJ_DD_METAL_QUALITY_SUB
-                                WHERE 
+                                WHERE
                                     item.assetaccount = ACCOUNT.ID(+)
                                     AND item.custitem_jj_metal_quality = CUSTOMRECORD_JJ_DD_METAL_QUALITY_SUB.ID(+)
-                                ) item_SUB, 
+                            ) item_SUB,
                             unitsTypeUom
-                        WHERE 
-                        (
+                        WHERE
                             (
-                                BomRevisionComponent.item = item_SUB.id_0(+) 
-                                AND BomRevisionComponent.units = unitsTypeUom.internalid(+)
-                            )
-                        ) AND (
-                            (
-                                NVL(item_SUB.isinactive_crit, 'F') = 'F' 
-                                AND BomRevisionComponent.bomrevision IN (${revisionId})
-                                AND (
-                                    NOT (
-                                        item_SUB.itemtype_crit IN ('OthCharge', 'Service')
-                                    ) OR item_SUB.itemtype_crit IS NULL
+                                (
+                                    BomRevisionComponent.item = item_SUB.id_0(+)
+                                    AND BomRevisionComponent.units = unitsTypeUom.internalid(+)
+                                )
+                            ) AND (
+                                (
+                                    NVL(item_SUB.isinactive_crit, 'F') = 'F'
+                                    AND BomRevisionComponent.bomrevision IN (${revisionId})
+                                    AND (
+                                        NOT (
+                                            item_SUB.itemtype_crit IN ('OthCharge', 'Service')
+                                        ) OR item_SUB.itemtype_crit IS NULL
+                                    )
                                 )
                             )
-                        )
                     `;
 
                     let results = query.runSuiteQLPaged({ query: sqlQuery, pageSize: 1000 });
@@ -8408,7 +8592,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 isSerialized: rowData[8],
                                 stoneQualityGroup: rowData[9],
                                 cost: Number(rowData[10] || rowData[13] || 0),
-                                goldQuality: rowData[11],
+                                goldPurity: rowData[11],
                                 materialType: rowData[12],
                                 // isSerialLotItem: rowData[7] == SERIAL_LOT_ITEM_CLASS ? true : false,
                                 isGold: rowData[12] == MATERIAL_TYPE_ID_GOLD ? true : false,
@@ -8416,7 +8600,21 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 isColorStone: rowData[12] == MATERIAL_TYPE_ID_COLOR_STONE ? true : false,
                                 isAlloy: rowData[12] == MATERIAL_TYPE_ID_ALLOY ? true : false,
                                 isPartyDiamond: rowData[9] == PARTY_DIAMOND_QUALITY ? true : false,
-                                metalColor: rowData[14],
+
+                                // metalColor: rowData[14],
+                                metalColorName: rowData[14],
+                                metalColor: rowData[15],
+                                metalQualityName: rowData[16],
+                                metalQualityId: rowData[17],
+                                stoneColorName: rowData[18],
+                                stoneColorId: rowData[19],
+                                stoneQualityName: rowData[20],
+                                stoneQualityId: rowData[21],
+                                csColorName: rowData[22],
+                                csColorId: rowData[23],
+                                csShapeName: rowData[24],
+                                csShapeId: rowData[25],
+                                goldPurityId: rowData[26],
 
                                 // // classification using class IDs
                                 // isGold: GOLD_CLASS_IDS.includes(itemClassIdNum),
@@ -8497,7 +8695,20 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             BUILTIN_RESULT.TYPE_STRING(unitsTypeUom.unitname) AS unitname, 
                             BUILTIN_RESULT.TYPE_INTEGER(ACCOUNT.cseg_jj_raw_type) AS cseg_jj_raw_type, 
                             BUILTIN_RESULT.TYPE_CURRENCY_HIGH_PRECISION(item.COST, BUILTIN.CURRENCY(item.COST)) AS COST,
-                            BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_metal_color) AS custitem_jj_metal_color
+
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item.custitem_jj_metal_color)) AS custitem_jj_metal_color_name,
+                            BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_metal_color) AS custitem_jj_metal_color_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item.custitem_jj_metal_quality)) AS quality_name,
+                            BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_metal_quality) AS quality_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item.custitem_jj_stone_color)) AS stone_color_name,
+                            BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_stone_color) AS stone_color_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item.custitem_jj_stone_quality)) AS stone_quality_name,
+                            BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_stone_quality) AS stone_quality_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item.custitem_jj_colorstonecolour)) AS cs_color_name,
+                            BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_colorstonecolour) AS cs_color_id,
+                            BUILTIN_RESULT.TYPE_STRING(BUILTIN.DF(item.custitem_jj_color_stone_shape)) AS cs_shape_name,
+                            BUILTIN_RESULT.TYPE_STRING(item.custitem_jj_color_stone_shape) AS cs_shape_id,
+                            BUILTIN_RESULT.TYPE_STRING(CUSTOMRECORD_JJ_DD_METAL_QUALITY_SUB.purity_id) AS purity_id
                         FROM 
                             item, 
                             ACCOUNT, 
@@ -8506,7 +8717,8 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 SELECT 
                                     CUSTOMRECORD_JJ_DD_METAL_QUALITY.ID AS ID, 
                                     CUSTOMRECORD_JJ_DD_METAL_QUALITY.ID AS id_join, 
-                                    CUSTOMLIST_JJ_METAL_PURITY_LIST.name AS name
+                                    CUSTOMLIST_JJ_METAL_PURITY_LIST.name AS name,
+                                    CUSTOMLIST_JJ_METAL_PURITY_LIST.id AS purity_id
                                 FROM 
                                     CUSTOMRECORD_JJ_DD_METAL_QUALITY, 
                                     CUSTOMLIST_JJ_METAL_PURITY_LIST
@@ -8546,7 +8758,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 isSerialItem: rowData[3],
                                 itemClass: rowData[4],
                                 stoneQualityGroup: rowData[5],
-                                goldQuality: rowData[6],
+                                goldPurity: rowData[6],
                                 uomId: rowData[7],
                                 uomName: rowData[8],
                                 materialType: rowData[9],
@@ -8557,7 +8769,21 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                 isColorStone: rowData[9] == MATERIAL_TYPE_ID_COLOR_STONE ? true : false,
                                 isAlloy: rowData[9] == MATERIAL_TYPE_ID_ALLOY ? true : false,
                                 isPartyDiamond: rowData[5] == PARTY_DIAMOND_QUALITY ? true : false,
-                                metalColor: rowData[11],
+
+                                // metalColor: rowData[11],
+                                metalColorName: rowData[11],
+                                metalColor: rowData[12],
+                                metalQualityName: rowData[13],
+                                metalQualityId: rowData[14],
+                                stoneColorName: rowData[15],
+                                stoneColorId: rowData[16],
+                                stoneQualityName: rowData[17],
+                                stoneQualityId: rowData[18],
+                                csColorName: rowData[19],
+                                csColorId: rowData[20],
+                                csShapeName: rowData[21],
+                                csShapeId: rowData[22],
+                                goldPurityId: rowData[23],
                             });
                             return true;
                         });
@@ -8683,19 +8909,17 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             AND BUILTIN.CAST_AS(CUSTOMRECORD_JJ_OPERATIONS.custrecord_jj_oprtns_exit, 'TIMESTAMP_TZ_TRUNCED') < TO_DATE('${sqlEndDate}', 'YYYY-MM-DD HH24:MI:SS')
                     `;
 
+                    // Add location filter if provided
                     if (location) {
                         sqlQuery += `
                             AND CUSTOMRECORD_JJ_MANUFACTURING_DEPT_SUB.custrecord_jj_mandept_location_crit IN ('${location}')
                         `;
                     }
 
-                    sqlQuery += `
-                        ORDER BY location_name, department_name, firstname, lastname
-                    `;
-
                     log.debug("getProductionEfficiencyData - Executing Query", "Query length: " + sqlQuery.length);
 
                     let rawResults = this.runQuery(sqlQuery);
+
                     log.debug("getProductionEfficiencyData - Raw Results Count", rawResults.length);
 
                     let rawLogMsg = "=== RAW QUERY RESULTS (First 10) ===\n";
@@ -8704,6 +8928,35 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     });
                     rawLogMsg += "====================================";
                     log.debug("getProductionEfficiencyData - Raw Results Sample", rawLogMsg);
+
+                    // ===== PRODUCTION EFFICIENCY DATA FETCH DEBUG =====
+                    // FUNCTION: getProductionEfficiencyData (Production Operations Only)
+                    // FILTER: custrecord_jj_repair_order = 'F' (production orders only, excludes repairs)
+                    // DATA FETCHED:
+                    //   - Total Records: ${rawResults.length}
+                    //   - Source Tables: CUSTOMRECORD_JJ_OPERATIONS, CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN, CUSTOMRECORD_JJ_BAG_GENERATION, CUSTOMRECORD_JJ_MANUFACTURING_DEPT, employee
+                    //   - Diamond Pieces Fields: custrecord_jj_dir_issued_pieces_info, custrecord_jj_dir_loss_pieces_info (from DIRECT_ISSUE_RETURN)
+                    //   - Key Filters Applied:
+                    //     * custrecord_jj_repair_order = 'F' (production orders only, excludes repairs)
+                    //     * custrecord_jj_issued_quantity > 0 OR custrecord_jj_dir_starting_qty > 0
+                    //     * Date Range: ${sqlStartDate} to ${sqlEndDate}
+                    //     * Location: ${location || 'All'}
+                    //   - Sample Data: ${rawResults.length > 0 ? `Dept: ${rawResults[0].department_name}, Bag: ${rawResults[0].bag_name}, Employee: ${rawResults[0].firstname} ${rawResults[0].lastname}` : 'NO DATA RETURNED'}
+                    // ================================================
+                    log.debug("PRODUCTION_EFFICIENCY_DATA_FETCH", {
+                        totalRecords: rawResults.length,
+                        dateRange: { start: sqlStartDate, end: sqlEndDate },
+                        location: location || 'All',
+                        repairFilter: 'F (Production Only)',
+                        diamondPiecesSource: 'CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN',
+                        firstRecordSample: rawResults.length > 0 ? {
+                            department: rawResults[0].department_name,
+                            bag: rawResults[0].bag_name,
+                            employee: `${rawResults[0].firstname} ${rawResults[0].lastname}`,
+                            issuedPiecesDiamond: rawResults[0].issued_pieces_diamond,
+                            lossPiecesDiamond: rawResults[0].loss_pieces_diamond
+                        } : 'NO DATA'
+                    });
 
                     const groupedData = {};
                     const deptPiecesMap = {};
@@ -8723,16 +8976,19 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
 
                         if (!locationId || !departmentId) return;
 
+                        // Aggregate pieces data per department
                         if (!deptPiecesMap[departmentId]) {
                             deptPiecesMap[departmentId] = { issued_pieces_diamond: 0, loss_pieces_diamond: 0 };
                         }
                         deptPiecesMap[departmentId].issued_pieces_diamond += parseFloat(record.issued_pieces_diamond || 0);
                         deptPiecesMap[departmentId].loss_pieces_diamond += parseFloat(record.loss_pieces_diamond || 0);
 
+                        // Initialize location if not exists
                         if (!groupedData[locationId]) {
                             groupedData[locationId] = { location_name: record.location_name, departments: {} };
                         }
 
+                        // Initialize department if not exists
                         if (!groupedData[locationId].departments[departmentId]) {
                             groupedData[locationId].departments[departmentId] = {
                                 department_id: departmentId,
@@ -8748,11 +9004,18 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             };
                         }
 
+                        // Add unique bag to department
                         if (bagName) groupedData[locationId].departments[departmentId].unique_bags.add(bagName);
+
+                        // Add unique category to department
                         if (categoryName) {
                             groupedData[locationId].departments[departmentId].unique_categories.add(categoryName);
-                            if (printDesignName) groupedData[locationId].departments[departmentId].category_print_design_map[categoryName] = printDesignName;
-                            if (printDesignId) groupedData[locationId].departments[departmentId].category_print_design_id_map[categoryName] = printDesignId;
+                            if (printDesignName) {
+                                groupedData[locationId].departments[departmentId].category_print_design_map[categoryName] = printDesignName;
+                            }
+                            if (printDesignId) {
+                                groupedData[locationId].departments[departmentId].category_print_design_id_map[categoryName] = printDesignId;
+                            }
                             if (bagName) {
                                 if (!groupedData[locationId].departments[departmentId].category_bags_map[categoryName]) {
                                     groupedData[locationId].departments[departmentId].category_bags_map[categoryName] = {};
@@ -8761,6 +9024,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             }
                         }
 
+                        // Add employee to department if employee exists
                         if (employeeId) {
                             if (!groupedData[locationId].departments[departmentId].employees[employeeId]) {
                                 const fullName = [record.firstname, record.lastname].filter(Boolean).join(" ");
@@ -8774,11 +9038,18 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                                     category_bags_map: {}
                                 };
                             }
+                            // Add unique bag to employee
                             if (bagName) groupedData[locationId].departments[departmentId].employees[employeeId].unique_bags.add(bagName);
+
+                            // Add unique category to employee
                             if (categoryName) {
                                 groupedData[locationId].departments[departmentId].employees[employeeId].unique_categories.add(categoryName);
-                                if (printDesignName) groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_map[categoryName] = printDesignName;
-                                if (printDesignId) groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_id_map[categoryName] = printDesignId;
+                                if (printDesignName) {
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_map[categoryName] = printDesignName;
+                                }
+                                if (printDesignId) {
+                                    groupedData[locationId].departments[departmentId].employees[employeeId].category_print_design_id_map[categoryName] = printDesignId;
+                                }
                                 if (bagName) {
                                     if (!groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName]) {
                                         groupedData[locationId].departments[departmentId].employees[employeeId].category_bags_map[categoryName] = {};
@@ -9272,6 +9543,35 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     });
                     rawLogMsg += "====================================";
                     log.debug("getRepairEfficiencyData - Raw Results Sample", rawLogMsg);
+
+                    // ===== REPAIR EFFICIENCY DATA FETCH DEBUG =====
+                    // FUNCTION: getRepairEfficiencyData (Repair Operations Only)
+                    // FILTER: custrecord_jj_repair_order = 'T' (repair orders only)
+                    // DATA FETCHED:
+                    //   - Total Records: ${rawResults.length}
+                    //   - Source Tables: CUSTOMRECORD_JJ_OPERATIONS, CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN, CUSTOMRECORD_JJ_BAG_GENERATION, CUSTOMRECORD_JJ_MANUFACTURING_DEPT, employee
+                    //   - Diamond Pieces Fields: custrecord_jj_dir_issued_pieces_info, custrecord_jj_dir_loss_pieces_info (from DIRECT_ISSUE_RETURN)
+                    //   - Key Filters Applied:
+                    //     * custrecord_jj_repair_order = 'T' (repair only, no production)
+                    //     * custrecord_jj_issued_quantity > 0 OR custrecord_jj_dir_starting_qty > 0
+                    //     * Date Range: ${sqlStartDate} to ${sqlEndDate}
+                    //     * Location: ${location || 'All'}
+                    //   - Sample Data: ${rawResults.length > 0 ? `Dept: ${rawResults[0].department_name}, Bag: ${rawResults[0].bag_name}, Employee: ${rawResults[0].firstname} ${rawResults[0].lastname}` : 'NO DATA RETURNED'}
+                    // ================================================
+                    log.debug("REPAIR_EFFICIENCY_DATA_FETCH", {
+                        totalRecords: rawResults.length,
+                        dateRange: { start: sqlStartDate, end: sqlEndDate },
+                        location: location || 'All',
+                        repairFilter: 'T (Repair Only)',
+                        diamondPiecesSource: 'CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN',
+                        firstRecordSample: rawResults.length > 0 ? {
+                            department: rawResults[0].department_name,
+                            bag: rawResults[0].bag_name,
+                            employee: `${rawResults[0].firstname} ${rawResults[0].lastname}`,
+                            issuedPiecesDiamond: rawResults[0].issued_pieces_diamond,
+                            lossPiecesDiamond: rawResults[0].loss_pieces_diamond
+                        } : 'NO DATA'
+                    });
 
                     const groupedData = {};
                     const deptPiecesMap = {};
@@ -9878,6 +10178,35 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     rawLogMsg += "====================================";
                     log.debug("getOverallEfficiencyData - Raw Results Sample", rawLogMsg);
 
+                    // ===== OVERALL EFFICIENCY DATA FETCH DEBUG =====
+                    // FUNCTION: getOverallEfficiencyData (All Operations - Production + Repair)
+                    // FILTER: NO repair_order filter (includes both production and repair)
+                    // DATA FETCHED:
+                    //   - Total Records: ${rawResults.length}
+                    //   - Source Tables: CUSTOMRECORD_JJ_OPERATIONS, CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN, CUSTOMRECORD_JJ_BAG_GENERATION, CUSTOMRECORD_JJ_MANUFACTURING_DEPT, employee
+                    //   - Diamond Pieces Fields: custrecord_jj_dir_issued_pieces_info, custrecord_jj_dir_loss_pieces_info (from DIRECT_ISSUE_RETURN)
+                    //   - Key Filters Applied:
+                    //     * NO repair_order filter (includes both production AND repair operations)
+                    //     * custrecord_jj_issued_quantity > 0 OR custrecord_jj_dir_starting_qty > 0
+                    //     * Date Range: ${sqlStartDate} to ${sqlEndDate}
+                    //     * Location: ${location || 'All'}
+                    //   - Sample Data: ${rawResults.length > 0 ? `Dept: ${rawResults[0].department_name}, Bag: ${rawResults[0].bag_name}, Employee: ${rawResults[0].firstname} ${rawResults[0].lastname}` : 'NO DATA RETURNED'}
+                    // ================================================
+                    log.debug("OVERALL_EFFICIENCY_DATA_FETCH", {
+                        totalRecords: rawResults.length,
+                        dateRange: { start: sqlStartDate, end: sqlEndDate },
+                        location: location || 'All',
+                        repairFilter: 'NONE (All Operations)',
+                        diamondPiecesSource: 'CUSTOMRECORD_JJ_DIRECT_ISSUE_RETURN',
+                        firstRecordSample: rawResults.length > 0 ? {
+                            department: rawResults[0].department_name,
+                            bag: rawResults[0].bag_name,
+                            employee: `${rawResults[0].firstname} ${rawResults[0].lastname}`,
+                            issuedPiecesDiamond: rawResults[0].issued_pieces_diamond,
+                            lossPiecesDiamond: rawResults[0].loss_pieces_diamond
+                        } : 'NO DATA'
+                    });
+
                     const groupedData = {};
                     const deptPiecesMap = {};
 
@@ -10437,7 +10766,7 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     return {};
                 }
             },
-            
+
             /**
              * Retrieves inventory adjustments within a specified date range.
              *
@@ -13651,9 +13980,10 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
              * Checks whether a bag has multiple open (non-exited) operations
              *
              * @param {number|string} bagInternalId - Internal ID of the bag
+             * @param {number|string} operationId - Internal ID of the operation
              * @returns {boolean}
              */
-            hasDuplicateOperations(bagInternalId) {
+            hasDuplicateOperations(bagInternalId, operationId) {
                 try {
                     if (!bagInternalId) {
                         return false;
@@ -13667,15 +13997,34 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                             "AND", ["custrecord_jj_oprtns_exit", "isempty", ""]
                         ],
                         columns: [
-                            search.createColumn({ name: "internalid" })
+                            search.createColumn({ name: "internalid" }),
+                            search.createColumn({ name: "custrecord_jj_oprtns_status" })
                         ]
                     });
 
-                    let resultCount = operationSearch.runPaged().count;
+                    let results = operationSearch.run().getRange({ start: 0, end: 10 }) || [];
+                    let resultCount = results.length;
 
                     log.debug("hasDuplicateOperations resultCount", { bagInternalId, resultCount });
 
-                    return resultCount > 1;
+                    // Case 1: Only one record exists
+                    if (resultCount == 1) {
+                        let record = results[0];
+                        let recordId = record.getValue({ name: "internalid" });
+                        let status = record.getValue({ name: "custrecord_jj_oprtns_status" });
+
+                        log.debug("Single Operation Check", { recordId, operationId, status });
+
+                        if (
+                            recordId == operationId &&
+                            status == OPERATION_STATUS_IN_PROGRESS
+                        ) {
+                            return false; // valid case
+                        }
+                    }
+
+                    // All other cases → duplicate/problem
+                    return true;
 
                 } catch (error) {
                     log.error("hasDuplicateOperations error", error);
@@ -15066,7 +15415,150 @@ define(['N/search', 'N/record', 'N/config', 'N/url', 'N/query', 'N/runtime', 'N/
                     log.error("Error in getInventoryItemCostDetails", e);
                     return [];
                 }
-            }
+            },
+
+            /**
+             * Fetch bag lot details and return summary + grouped data
+             *
+             * @param {Array<string|number>} lotIds - Array of lot internal IDs
+             * @returns {{
+             *   summary: Object,
+             *   grouped: Object
+             * }}
+             */
+            getBagLotSummary(lotIds) {
+                try {
+
+                    if (!lotIds || !Array.isArray(lotIds) || !lotIds.length) {
+                        log.error("Invalid lotIds input", { lotIds });
+                        return { summary: {}, grouped: {} };
+                    }
+
+                    // Initialize overall summary object
+                    const summary = {
+                        goldQty: 0,
+                        goldPieces: 0,
+                        diamondQty: 0,
+                        diamondPieces: 0,
+                        colorStoneQty: 0,
+                        colorStonePieces: 0,
+                        totalQty: 0,
+                        totalPieces: 0,
+
+                        goldReceivedQty: 0,
+                        goldReceivedPieces: 0,
+                        diamondReceivedQty: 0,
+                        diamondReceivedPieces: 0,
+                        colorStoneReceivedQty: 0,
+                        colorStoneReceivedPieces: 0,
+                        totalReceivedQty: 0,
+                        totalReceivedPieces: 0
+                    };
+
+                    // Grouped structure: quality -> color -> same structure as summary
+                    const grouped = {};
+
+                    // Create search
+                    const searchObj = search.create({
+                        type: "customrecord_jj_bag_lot_details",
+                        filters: [
+                            ["custrecord_jj_lot_number", "anyof", lotIds],
+                            "AND", ["isinactive", "is", "F"]
+                        ],
+                        columns: [
+                            "custrecord_jj_newly_issue_qty",
+
+                            search.createColumn({ name: "custitemnumber_jj_serial_num_diamond_pieces", join: "CUSTRECORD_JJ_LOT_NUMBER" }),
+                            search.createColumn({ name: "custitemnumber_jj_serial_num_cs_pieces", join: "CUSTRECORD_JJ_LOT_NUMBER" }),
+                            search.createColumn({ name: "custitemnumber_jj_serial_num_cs_weight", join: "CUSTRECORD_JJ_LOT_NUMBER" }),
+                            search.createColumn({ name: "custitemnumber_jj_serial_num_diamond_weight", join: "CUSTRECORD_JJ_LOT_NUMBER" }),
+                            search.createColumn({ name: "custitemnumber_jj_serial_num_net_weight", join: "CUSTRECORD_JJ_LOT_NUMBER" }),
+
+                            search.createColumn({ name: "custitemnumber_jj_fg_metal_quality", join: "CUSTRECORD_JJ_LOT_NUMBER" }),
+                            search.createColumn({ name: "custitemnumber_jj_fg_metal_colour", join: "CUSTRECORD_JJ_LOT_NUMBER" })
+                        ]
+                    });
+
+                    // Run search
+                    searchObj.run().each(result => {
+
+                        // Extract values
+                        const diamondPieces = Number(result.getValue({ name: "custitemnumber_jj_serial_num_diamond_pieces", join: "CUSTRECORD_JJ_LOT_NUMBER" })) || 0;
+                        const csPieces = Number(result.getValue({ name: "custitemnumber_jj_serial_num_cs_pieces", join: "CUSTRECORD_JJ_LOT_NUMBER" })) || 0;
+                        const csWeight = Number(result.getValue({ name: "custitemnumber_jj_serial_num_cs_weight", join: "CUSTRECORD_JJ_LOT_NUMBER" })) || 0;
+                        const diamondWeight = Number(result.getValue({ name: "custitemnumber_jj_serial_num_diamond_weight", join: "CUSTRECORD_JJ_LOT_NUMBER" })) || 0;
+                        const netWeight = Number(result.getValue({ name: "custitemnumber_jj_serial_num_net_weight", join: "CUSTRECORD_JJ_LOT_NUMBER" })) || 0;
+
+                        const newlyIssuedQty = Number(result.getValue("custrecord_jj_newly_issue_qty")) || 0;
+                        const metalQuality = result.getText({ name: "custitemnumber_jj_fg_metal_quality", join: "CUSTRECORD_JJ_LOT_NUMBER" }) || "UNKNOWN";
+                        const metalColor = result.getText({ name: "custitemnumber_jj_fg_metal_colour", join: "CUSTRECORD_JJ_LOT_NUMBER" }) || "UNKNOWN";
+
+                        // Determine if received bucket
+                        const isReceived = !newlyIssuedQty || newlyIssuedQty === 0;
+
+                        // Helper to update object
+                        const update = (obj, isReceivedFlag) => {
+
+                            if (isReceivedFlag) {
+                                obj.goldReceivedQty += netWeight;
+                                obj.goldReceivedPieces += 0;
+
+                                obj.diamondReceivedQty += diamondWeight;
+                                obj.diamondReceivedPieces += diamondPieces;
+
+                                obj.colorStoneReceivedQty += csWeight;
+                                obj.colorStoneReceivedPieces += csPieces;
+
+                                obj.totalReceivedQty += (netWeight + diamondWeight + csWeight);
+                                obj.totalReceivedPieces += (diamondPieces + csPieces);
+                            }
+
+                            obj.goldQty += netWeight;
+                            obj.goldPieces += 0;
+
+                            obj.diamondQty += diamondWeight;
+                            obj.diamondPieces += diamondPieces;
+
+                            obj.colorStoneQty += csWeight;
+                            obj.colorStonePieces += csPieces;
+
+                            obj.totalQty += (netWeight + diamondWeight + csWeight);
+                            obj.totalPieces += (diamondPieces + csPieces);
+                        };
+
+                        // Update global summary
+                        update(summary, isReceived);
+
+                        // Initialize grouping
+                        if (!grouped[metalQuality]) {
+                            grouped[metalQuality] = {};
+                        }
+
+                        if (!grouped[metalQuality][metalColor]) {
+                            grouped[metalQuality][metalColor] = JSON.parse(JSON.stringify(summary)).constructor === Object
+                                ? {
+                                    goldQty: 0, goldPieces: 0, diamondQty: 0, diamondPieces: 0,
+                                    colorStoneQty: 0, colorStonePieces: 0, totalQty: 0, totalPieces: 0,
+                                    goldReceivedQty: 0, goldReceivedPieces: 0, diamondReceivedQty: 0, diamondReceivedPieces: 0,
+                                    colorStoneReceivedQty: 0, colorStoneReceivedPieces: 0,
+                                    totalReceivedQty: 0, totalReceivedPieces: 0
+                                }
+                                : {};
+                        }
+
+                        // Update grouped
+                        update(grouped[metalQuality][metalColor], isReceived);
+
+                        return true;
+                    });
+
+                    return { summary, grouped };
+
+                } catch (error) {
+                    log.error("Error in getBagLotSummary", error);
+                    return { summary: {}, grouped: {} };
+                }
+            },
         };
         jjUtil.applyTryCatch(searchResults, 'searchResults');
         return searchResults;
